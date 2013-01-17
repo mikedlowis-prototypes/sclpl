@@ -16,7 +16,7 @@ flist = $(shell env find $(1) -name "*.$(strip $(2))" -print)
 # Project and Artifact Names
 #---------------------------
 BIN_NAME    = sclpl
-TEST_RUNNER = sclpl-test
+TEST_RUNNER = $(BIN_NAME)-test
 
 # File and Directory Settings
 #----------------------------
@@ -45,7 +45,7 @@ TEST_INCS = -I inc
 # Compiler and Linker Options
 #----------------------------
 CSC = csc
-CSCFLAGS = -c -explicit-use
+CSCFLAGS = -c -explicit-use -compile-syntax
 
 # Build Rules
 #------------
