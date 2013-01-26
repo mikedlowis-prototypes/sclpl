@@ -1,42 +1,78 @@
 (declare (uses library))
 
-(define primitive-types '(Num Char String))
+; Grammar Creation Procedures
+;------------------------------------------------------------------------------
+(define (patt-matches? e patt)
+  (print "patt-matches? " e " " patt)
+  (cond [(procedure? patt) (patt e)]
+        [(list? patt)      (patt-list-matches? e patt)]
+        [(symbol? patt)    (equal? e patt)]
+        [else              (error "Malformed pattern detected")]))
 
-(define (literal e)
-  (if (not (or (number? e) (char? e) (string? e) (symbol? e)))
-      (syn-error e "Not a recognized literal type")))
+(define (patt-list-matches? e patt)
+  (print "patt-list-matches? " e " " patt)
+  (cond [(and (null? patt) (null? e))         #t]
+        [(null? e)                            #f]
+        [(null? patt)                         #f]
+        [(patt-matches? (car e) (car patt))   (patt-list-matches? (cdr e) (cdr patt))]
+        [else                                 #f]))
 
-(define (prim-type e)
-  (if (or (not (symbol? e))
-          (not (member e primitive-types)))
-    (syn-error e "Not a recognized primitive type")))
+(define (patt-matches-one-of? e lpatts)
+  (print "patt-matches-one-of? " e " " lpatts)
+  (if (null? lpatts) #f
+      (if (patt-matches? e (car lpatts)) #t
+          (patt-matches-one-of? e (cdr lpatts)))))
 
-(define (typed-sym sym)
-  (if (not (pair? sym))
-      (syn-error sym "Expected a type/symbol pair"))
-  (if (not (symbol? (car sym)))
-      (syn-error sym "Expected a symbol name"))
-  (prim-type (cdr sym)))
+(define (n-of proc)
+  (define (match-fn e)
+    (and (list? e)
+         (or (null? e)
+             (and (proc (car e))
+                  (match-fn (cdr e))))))
+  match-fn)
 
-(define (list-of-types lst)
-  (if (null? lst) lst
-      (begin (typed-sym (car lst))
-             (list-of-types (cdr lst)))))
+; Helper Macros
+;------------------------------------------------------------------------------
+(define-syntax rule
+  (syntax-rules (:)
+    [(_ name : patt ...) (define (name e)
+                           (patt-matches-one-of? e (list patt ...)))]))
 
-(define (definition e)
-  (if (or (not (list? e))
-          (< (length e) 3))
-    (syn-error e "Definitions require a type and a body or value"))
-  (if (list? (cadr e)) (list-of-types (cadr e)) (typed-sym (cadr e))))
+(define-syntax grammar
+  (syntax-rules (:> :)
+    [(_ name :> start patts ...) (define (name e) patts ... (start e))]))
 
+; Grammar
+;------------------------------------------------------------------------------
+(grammar SCLPL :> Expression
+  (rule Expression : Literal
+                     Conditional
+                     Definition)
 
+  (rule Literal : number?
+                  char?
+                  string?
+                  symbol?)
 
-(define (syn-error expr msg)
-  (print (string-append "Error: " msg))
-  (display "\n")
-  (pretty-print expr)
-  (exit 1))
+  (rule Conditional : `(if ,Expression)
+                      `(if ,Expression ,Expression))
+
+  (rule Definition : `(def ,TypePair ,Expression)
+                     `(def ,TypePairList ,ExpList))
+
+  (rule ExpList : (n-of Expression))
+  (rule TypePairList : (n-of TypePair))
+  (rule TypePair : `(,Id : ,PrimType))
+  (rule Id : symbol?)
+  (rule PrimType : prim-type?))
+
+; Grammar Predicates
+;------------------------------------------------------------------------------
+(define (prim-type? e)
+  (if (member e '(Num Char String Sym)) #t #f))
+
+; Grammar Actions
+;------------------------------------------------------------------------------
 
 ; Main
 ;------------------------------------------------------------------------------
-
