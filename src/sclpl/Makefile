@@ -16,7 +16,7 @@ flist = $(shell env find $(1) -name "*.$(strip $(2))" -print)
 # Project and Artifact Names
 #---------------------------
 BIN_NAME    = sclpl
-TEST_RUNNER = $(BIN_NAME)-test
+#TEST_RUNNER = $(BIN_NAME)-test
 
 # File and Directory Settings
 #----------------------------
@@ -24,23 +24,23 @@ TEST_RUNNER = $(BIN_NAME)-test
 PROJ_ROOT = ../../
 DIST_ROOT = $(PROJ_ROOT)/dist
 SRC_ROOT  = src/
-TEST_ROOT = test/
+#TEST_ROOT = test/
 
 # File Extensions
 SRC_EXT  = scm
-TEST_EXT = scm
+#TEST_EXT = scm
 
 # Source File Lists
 SRC_FILES = $(call flist, $(SRC_ROOT), $(SRC_EXT))
-TEST_FILES = $(call flist, $(TEST_ROOT), $(TEST_EXT))
+#TEST_FILES = $(call flist, $(TEST_ROOT), $(TEST_EXT))
 
 # Object File Lists
 SRC_OBJS  = $(SRC_FILES:%.$(SRC_EXT)=%.o)
-TEST_OBJS = $(TEST_FILES:%.$(TEST_EXT)=%.o)
+#TEST_OBJS = $(TEST_FILES:%.$(TEST_EXT)=%.o)
 
 # Include Directories
 SRC_INCS  = -I inc
-TEST_INCS = -I inc
+#TEST_INCS = -I inc
 
 # Compiler and Linker Options
 #----------------------------
@@ -69,9 +69,9 @@ $(BIN_NAME): $(SRC_OBJS)
 	@echo Linking $@...
 	@$(CSC) -o $@ $(SRC_OBJS) $(LIBS)
 
-$(TEST_RUNNER): $(SRC_OBJS) $(TEST_OBJS)
-	@echo Linking $@...
-	@$(CSC) -o $@ $(TEST_OBJS) $(filter-out src/main.o,$(SRC_OBJS))
+#$(TEST_RUNNER): $(SRC_OBJS) $(TEST_OBJS)
+#	@echo Linking $@...
+#	@$(CSC) -o $@ $(TEST_OBJS) $(filter-out src/main.o,$(SRC_OBJS))
 
 # Object Files
 $(SRC_OBJS): %.o : %.$(SRC_EXT)
@@ -88,8 +88,8 @@ $(DIST_ROOT):
 # Cleanup
 clean:
 	@echo Cleaning up...
-	@$(RM) $(TEST_OBJS)
 	@$(RM) $(SRC_OBJS)
 	@$(RM) $(BIN_NAME)*
+#	@$(RM) $(TEST_OBJS)
 #	@$(RM) $(TEST_RUNNER)*
 
