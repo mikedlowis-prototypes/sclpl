@@ -7,6 +7,8 @@
 #ifndef GC_H
 #define GC_H
 
+#include <stdlib.h>
+
 typedef struct {
     void*  next;
     size_t size;

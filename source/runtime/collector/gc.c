@@ -173,7 +173,7 @@ void gc_free_blocks(block_t* p_blocks)
 }
 
 /*****************************************************************************/
-#if 1
+#if 0
 #include <stdio.h>
 #include <time.h>
 
