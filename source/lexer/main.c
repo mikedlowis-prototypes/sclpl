@@ -1,16 +1,56 @@
+#include <stdio.h>
 #include "gc.h"
+#include "file.h"
+
+int lex_files(int argc, char** argv);
+int lex_input(FILE* outfile);
 
 int main(int argc, char** argv)
 {
-    /* init the collector */
-    int foo;
-    gc_set_stack_base(&foo);
+    int ret;
+    if (argc > 1)
+    {
+        ret = lex_files(argc,argv);
+    }
+    else
+    {
+        file_open(NULL);
+        ret = lex_input(stdout);
+        file_close();
+    }
+    return ret;
+}
 
-    /* main program */
+int lex_files(int argc, char** argv)
+{
+    int ret = 0;
+    int i;
+    for (i = 1; i < argc; i++)
+    {
+        if (file_open(argv[i]))
+        {
+            fprintf(stdout, "@file %s\n", file_name());
+            ret = lex_input(stdout);
+            file_close();
+        }
+        else
+        {
+            fprintf(stderr, "@error File not found: %s\n", argv[i]);
+            ret = 1;
+            break;
+        }
+    }
+    return ret;
+}
 
-
-    /* shutdown the collector */
-    gc_shutdown();
-    return 0;
+int lex_input(FILE* outfile)
+{
+    int ret = 0;
+    while (!file_eof())
+    {
+        char ch = file_get();
+        fprintf(stdout,"%s %d %d %c\n","char",file_line(),file_column(),ch);
+    }
+    return ret;
 }
 

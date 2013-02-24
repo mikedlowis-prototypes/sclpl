@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- SCLPL Distribution Build Configuration
 -------------------------------------------------------------------------------
-solution "SCLPL Distribtution"
+solution "SCLPL Distribution"
 configurations { "Release" }
 targetdir "build"
 
