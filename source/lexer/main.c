@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "gc.h"
 #include "file.h"
+#include "buf.h"
+#include "lex.h"
 
 int lex_files(int argc, char** argv);
 int lex_input(FILE* outfile);
@@ -8,6 +10,7 @@ int lex_input(FILE* outfile);
 int main(int argc, char** argv)
 {
     int ret;
+    buf_init();
     if (argc > 1)
     {
         ret = lex_files(argc,argv);
@@ -48,8 +51,9 @@ int lex_input(FILE* outfile)
     int ret = 0;
     while (!file_eof())
     {
-        char ch = file_get();
-        fprintf(stdout,"%s %d %d %c\n","char",file_line(),file_column(),ch);
+        tok_t token = next_token();
+        fprintf(stdout, "%s %d %d %s\n", token.type, token.line, token.column, token.str);
+        free(token.str);
     }
     return ret;
 }

@@ -8,8 +8,8 @@ FILE* Handle = NULL;
 
 bool file_open(char* fname)
 {
-    Line   = 0;
-    Column = 0;
+    Line   = 1;
+    Column = 1;
     Name   = fname;
     if (NULL == Name)
     {
@@ -53,6 +53,16 @@ char file_get(void)
         {
             Column++;
         }
+    }
+    return ret;
+}
+
+char file_peek(void)
+{
+    char ret = fgetc(Handle);
+    if (EOF != ret)
+    {
+        ungetc(ret,Handle);
     }
     return ret;
 }
