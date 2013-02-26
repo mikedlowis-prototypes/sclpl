@@ -13,18 +13,26 @@
 tok_t Token = { 0u };
 
 const char* Token_Strings[TOK_MAX] = {
-    "id",  /* TOK_ID  */
-    "num", /* TOK_NUM */
+    "EOF",    /* TOK_EOF */
+    "ID",     /* TOK_ID  */
+    "NUM",    /* TOK_NUM */
+    "LPAREN", /* TOK_LPAR */
+    "RPAREN", /* TOK_RPAR */
+    "LBRACK", /* TOK_LBRACK */
+    "RBRACK", /* TOK_RBRACK */
+    "LBRACE", /* TOK_LBRACE */
+    "RBRACE", /* TOK_RBRACE */
+    "TERM",   /* TOK_TERM */
 };
 
 tok_t next_token(void)
 {
-    (void)memset(&Token,0,sizeof(Token));
+    prepare_for_token();
     if (!file_eof())
     {
-        consume_whitespace();
-        record_position();
-        if (digit())
+        if (matches_any("()[]{};"))
+            punctuation();
+        else if (digit())
             number();
         //else if (matches('\''))
         //    character();
@@ -32,8 +40,27 @@ tok_t next_token(void)
         //    string();
         else
             identifier();
+
+        /* the keyword "end" is actually a TOK_TERM */
+        if (0 == strcmp(Token.str,"end"))
+            set_type(TOK_TERM);
     }
     return Token;
+}
+
+void punctuation(void)
+{
+    switch (file_peek())
+    {
+        case '(': accept_char( TOK_LPAR ); break;
+        case ')': accept_char( TOK_RPAR ); break;
+        case '[': accept_char( TOK_LBRACK ); break;
+        case ']': accept_char( TOK_RBRACK ); break;
+        case '{': accept_char( TOK_LBRACE ); break;
+        case '}': accept_char( TOK_RBRACE ); break;
+        case ';': accept_char( TOK_TERM ); break;
+        default:  identifier(); break;
+    }
 }
 
 void number()
@@ -51,7 +78,7 @@ void number()
 void identifier()
 {
     set_type(TOK_ID);
-    while (!token_end()) consume();
+    while (!token_end() && !matches_any("()[]{};")) consume();
     accept();
 }
 
@@ -71,10 +98,19 @@ void consume(void)
     buf_put( file_get() );
 }
 
-void consume_whitespace(void)
+void prepare_for_token(void)
 {
+    (void)memset(&Token,0,sizeof(Token));
     while( whitespace() )
         (void)file_get();
+    record_position();
+}
+
+void accept_char(tok_type_t type)
+{
+    set_type(type);
+    consume();
+    accept();
 }
 
 void accept()

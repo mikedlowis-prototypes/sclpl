@@ -52,7 +52,8 @@ int lex_input(FILE* outfile)
     while (!file_eof())
     {
         tok_t token = next_token();
-        fprintf(stdout, "%s %d %d %s\n", token.type, token.line, token.column, token.str);
+        if (token.type != NULL)
+            fprintf(outfile, "%s\t%d\t%d\t%s\n", token.type, token.line, token.column, token.str);
         free(token.str);
     }
     return ret;

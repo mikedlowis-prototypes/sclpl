@@ -13,5 +13,7 @@ bool whitespace(void);
 bool digit(void);
 bool hex_digit(void);
 bool token_end(void);
+bool matches(char ch);
+bool matches_any(char* str);
 
 #endif /* CLASSES_H */

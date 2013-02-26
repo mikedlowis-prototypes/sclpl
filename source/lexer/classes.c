@@ -4,6 +4,7 @@
     $Revision$
     $HeadURL$
 */
+#include <string.h>
 #include "classes.h"
 #include "file.h"
 
@@ -30,5 +31,27 @@ bool hex_digit(void)
 bool token_end(void)
 {
     return (whitespace() || file_eof());
+}
+
+bool matches(char ch)
+{
+    return (ch == file_peek());
+}
+
+bool matches_any(char* str)
+{
+    bool ret = false;
+    char ch = file_peek();
+    int len = strlen(str);
+    int i;
+    for (i=0; i < len; i++)
+    {
+        if (ch == str[i])
+        {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
 }
 
