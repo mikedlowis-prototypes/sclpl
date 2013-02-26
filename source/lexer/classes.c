@@ -30,7 +30,7 @@ bool hex_digit(void)
 
 bool token_end(void)
 {
-    return (whitespace() || file_eof());
+    return (whitespace() || matches_any("()[]{};") || file_eof());
 }
 
 bool matches(char ch)

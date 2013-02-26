@@ -7,6 +7,8 @@
 #ifndef LEX_H
 #define LEX_H
 
+#include "classes.h"
+
 typedef struct
 {
     int line;
@@ -34,10 +36,15 @@ void punctuation(void);
 void record_position(void);
 void identifier(void);
 void number(void);
+void hexadecimal(void);
+void floating_point(void);
 void set_type(tok_type_t type);
 void consume(void);
+void match_consume(char ch);
 void prepare_for_token(void);
 void accept_char(tok_type_t type);
 void accept(void);
+void abort(void);
+bool one_or_more(predicate_t pfn);
 
 #endif /* LEX_H */
