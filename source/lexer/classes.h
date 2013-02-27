@@ -17,6 +17,5 @@ bool hex_digit(void);
 bool token_end(void);
 bool matches(char ch);
 bool matches_any(char* str);
-bool one_or_more(predicate_t pfn);
 
 #endif /* CLASSES_H */

@@ -7,15 +7,8 @@
 #ifndef LEX_H
 #define LEX_H
 
+#include "tok.h"
 #include "classes.h"
-
-typedef struct
-{
-    int line;
-    int column;
-    const char* type;
-    char* str;
-} tok_t;
 
 typedef enum {
     TOK_EOF    = 0,
@@ -29,22 +22,8 @@ typedef enum {
     TOK_RBRACE = 8,
     TOK_TERM   = 9,
     TOK_MAX    = 10,
-} tok_type_t;
+} lex_tok_t;
 
-tok_t next_token(void);
-void punctuation(void);
-void record_position(void);
-void identifier(void);
-void number(void);
-void hexadecimal(void);
-void floating_point(void);
-void set_type(tok_type_t type);
-void consume(void);
-void match_consume(char ch);
-void prepare_for_token(void);
-void accept_char(tok_type_t type);
-void accept(void);
-void abort(void);
-bool one_or_more(predicate_t pfn);
+void next_token(tok_t* p_token);
 
 #endif /* LEX_H */

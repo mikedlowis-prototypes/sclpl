@@ -7,15 +7,30 @@
 #include <string.h>
 #include <setjmp.h>
 #include "lex.h"
+#include "tok.h"
 #include "classes.h"
 #include "file.h"
 #include "buf.h"
 
+/* Prototypes
+ *****************************************************************************/
+static void accept(void);
+static void accept_char(tok_type_t tok);
+static void abort(void);
+static void reset(void);
+static void match_and_consume(char ch);
+static bool one_or_more(predicate_t pfn);
+static void punctuation(void);
+static void number(void);
+static void hexadecimal(void);
+static void floating_point(void);
+static void identifier(void);
+
 /* Global Variables
  *****************************************************************************/
-tok_t Token;
 jmp_buf Jump_Point;
-const char* Token_Strings[TOK_MAX] = {
+
+const char* Types[TOK_MAX] = {
     "EOF",    /* TOK_EOF */
     "ID",     /* TOK_ID  */
     "NUM",    /* TOK_NUM */
@@ -30,69 +45,52 @@ const char* Token_Strings[TOK_MAX] = {
 
 /* Control Functions
  *****************************************************************************/
-void record_position(void)
-{
-    Token.line   = file_line();
-    Token.column = file_column();
-}
-
-void set_type(tok_type_t type)
-{
-    Token.type = Token_Strings[type];
-}
-
-void consume(void)
-{
-    buf_put( file_get() );
-}
-
-void match_consume(char ch)
-{
-    if (matches(ch))
-        consume();
-    else
-        abort();
-}
-
-void prepare_for_token(void)
-{
-    (void)memset(&Token,0,sizeof(Token));
-    while( whitespace() )
-        (void)file_get();
-    record_position();
-}
-
-void accept_char(tok_type_t type)
-{
-    set_type(type);
-    consume();
-    accept();
-}
-
-void accept(void)
+static void accept(void)
 {
     if (!token_end())
         abort();
     else
-        Token.str = buf_accept();
+        tok_accept();
 }
 
-void abort(void)
+static void accept_char(tok_type_t tok)
+{
+    tok_set_type( Types[tok] );
+    tok_consume();
+    tok_accept();
+}
+
+static void abort(void)
 {
     longjmp(Jump_Point,1);
 }
 
-bool one_or_more(predicate_t pfn)
+static void reset(void)
+{
+    while( whitespace() )
+        tok_discard();
+    tok_reset();
+}
+
+static void match_and_consume(char ch)
+{
+    if (matches(ch))
+        tok_consume();
+    else
+        abort();
+}
+
+static bool one_or_more(predicate_t pfn)
 {
     if (!pfn()) abort();
-    while (pfn()) consume();
+    while (pfn()) tok_consume();
 }
 
 /* Token Matching Functions
  *****************************************************************************/
-tok_t next_token(void)
+void next_token(tok_t* p_token)
 {
-    prepare_for_token();
+    reset();
     if (!file_eof())
     {
         /* Mark our starting point so we can resume if we abort */
@@ -115,30 +113,31 @@ tok_t next_token(void)
         }
 
         /* the keyword "end" is actually a TOK_TERM */
-        if (0 == strcmp(Token.str,"end"))
-            set_type(TOK_TERM);
+        if (0 == strcmp(tok_string(),"end"))
+            tok_set_type(Types[TOK_TERM]);
+
     }
-    return Token;
+    tok_copy( p_token );
 }
 
-void punctuation(void)
+static void punctuation(void)
 {
     switch (file_peek())
     {
-        case '(': accept_char( TOK_LPAR ); break;
-        case ')': accept_char( TOK_RPAR ); break;
+        case '(': accept_char( TOK_LPAR );   break;
+        case ')': accept_char( TOK_RPAR );   break;
         case '[': accept_char( TOK_LBRACK ); break;
         case ']': accept_char( TOK_RBRACK ); break;
         case '{': accept_char( TOK_LBRACE ); break;
         case '}': accept_char( TOK_RBRACE ); break;
-        case ';': accept_char( TOK_TERM ); break;
+        case ';': accept_char( TOK_TERM );   break;
         default:  identifier(); break;
     }
 }
 
-void number(void)
+static void number(void)
 {
-    set_type(TOK_NUM);
+    tok_set_type(Types[TOK_NUM]);
     if (matches('h'))
     {
         hexadecimal();
@@ -148,35 +147,35 @@ void number(void)
         floating_point();
         if (matches_any("eE"))
         {
-            consume();
+            tok_consume();
             floating_point();
         }
     }
     accept();
 }
 
-void hexadecimal(void)
+static void hexadecimal(void)
 {
-    match_consume('h');
+    match_and_consume('h');
     one_or_more( hex_digit );
 }
 
-void floating_point(void)
+static void floating_point(void)
 {
-    if (matches('-')) consume();
+    if (matches('-')) tok_consume();
     one_or_more( digit );
     if (matches('.'))
     {
-        consume();
+        tok_consume();
         one_or_more( digit );
     }
 }
 
-void identifier(void)
+static void identifier(void)
 {
-    set_type(TOK_ID);
+    tok_set_type(Types[TOK_ID]);
     while (!token_end())
-        consume();
+        tok_consume();
     accept();
 }
 

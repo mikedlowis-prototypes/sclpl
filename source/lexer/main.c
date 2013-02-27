@@ -48,10 +48,11 @@ int lex_files(int argc, char** argv)
 
 int lex_input(FILE* outfile)
 {
+    tok_t token;
     int ret = 0;
     while (!file_eof())
     {
-        tok_t token = next_token();
+        next_token( &token );
         if (token.type != NULL)
             fprintf(outfile, "%s\t%d\t%d\t%s\n", token.type, token.line, token.column, token.str);
         free(token.str);
