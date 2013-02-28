@@ -20,6 +20,7 @@ static void abort(void);
 static void reset(void);
 static void match_and_consume(char ch);
 static bool one_or_more(predicate_t pfn);
+static void comment(void);
 static void punctuation(void);
 static void number(void);
 static void hexadecimal(void);
@@ -96,6 +97,8 @@ void next_token(tok_t* p_token)
         /* Mark our starting point so we can resume if we abort */
         if (0 == setjmp(Jump_Point))
         {
+            if (matches('#')) comment();
+
             if (matches_any("()[]{};"))
                 punctuation();
             else if (matches('-') || digit() || matches('h'))
@@ -118,6 +121,14 @@ void next_token(tok_t* p_token)
 
     }
     tok_copy( p_token );
+}
+
+static void comment(void)
+{
+    while (!matches('\n'))
+        tok_discard();
+    while( whitespace() )
+        tok_discard();
 }
 
 static void punctuation(void)
