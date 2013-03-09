@@ -21,8 +21,14 @@ typedef enum {
     TOK_LBRACE = 7,
     TOK_RBRACE = 8,
     TOK_TERM   = 9,
-    TOK_MAX    = 10,
+    TOK_BOOL   = 10,
+    TOK_MAX    = 11,
 } lex_tok_t;
+
+typedef struct {
+    const char* p_text;
+    tok_type_t type;
+} lex_keyword_t;
 
 void next_token(tok_t* p_token);
 

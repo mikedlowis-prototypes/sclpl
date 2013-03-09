@@ -20,11 +20,13 @@ static void abort(void);
 static void reset(void);
 static void match_and_consume(char ch);
 static bool one_or_more(predicate_t pfn);
+static void keyword(void);
 static void comment(void);
 static void punctuation(void);
 static void number(void);
 static void hexadecimal(void);
 static void floating_point(void);
+static void exponent(void);
 static void identifier(void);
 
 /* Global Variables
@@ -42,6 +44,14 @@ const char* Types[TOK_MAX] = {
     "LBRACE", /* TOK_LBRACE */
     "RBRACE", /* TOK_RBRACE */
     "TERM",   /* TOK_TERM */
+    "BOOL",   /* TOK_BOOL */
+};
+
+const lex_keyword_t Keywords[] = {
+    { "end",   TOK_TERM },
+    { "true",  TOK_BOOL },
+    { "false", TOK_BOOL },
+    { NULL,    TOK_MAX}
 };
 
 /* Control Functions
@@ -101,7 +111,7 @@ void next_token(tok_t* p_token)
 
             if (matches_any("()[]{};"))
                 punctuation();
-            else if (matches('-') || digit() || matches('h'))
+            else if (matches('-') || digit())
                 number();
             //else if (matches('\''))
             //    character();
@@ -114,13 +124,24 @@ void next_token(tok_t* p_token)
         {
             identifier();
         }
-
-        /* the keyword "end" is actually a TOK_TERM */
-        if (0 == strcmp(tok_string(),"end"))
-            tok_set_type(Types[TOK_TERM]);
-
+        keyword();
     }
     tok_copy( p_token );
+}
+
+static void keyword(void)
+{
+    const char* p_text = tok_string();
+    int i = 0;
+    while ( Keywords[i].p_text != NULL)
+    {
+        if (0 == strcmp( p_text, Keywords[i].p_text ))
+        {
+            tok_set_type( Types[ Keywords[i].type ] );
+            break;
+        }
+        i++;
+    }
 }
 
 static void comment(void)
@@ -149,25 +170,32 @@ static void punctuation(void)
 static void number(void)
 {
     tok_set_type(Types[TOK_NUM]);
-    if (matches('h'))
+    if (matches('0'))
     {
-        hexadecimal();
+        tok_consume();
+        if (matches('x'))
+        {
+            tok_consume();
+            hexadecimal();
+        }
+        else if (matches('-'))
+            abort();
+        else if (!token_end())
+        {
+            floating_point();
+            if (!token_end()) exponent();
+        }
     }
     else
     {
         floating_point();
-        if (matches_any("eE"))
-        {
-            tok_consume();
-            floating_point();
-        }
+        if (!token_end()) exponent();
     }
     accept();
 }
 
 static void hexadecimal(void)
 {
-    match_and_consume('h');
     one_or_more( hex_digit );
 }
 
@@ -180,6 +208,12 @@ static void floating_point(void)
         tok_consume();
         one_or_more( digit );
     }
+}
+
+static void exponent(void)
+{
+    match_and_consume('e');
+    floating_point();
 }
 
 static void identifier(void)

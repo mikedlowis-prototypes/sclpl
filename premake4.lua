@@ -49,8 +49,16 @@ project "sclpl-parse"
     kind "ConsoleApp"
     language "C"
     location "build"
-    includedirs { "source/lexer/**", "source/runtime/**" }
-    files { "source/parser/**.*", "source/runtime/collector/**.*"}
+    includedirs {
+        "source/lexer/**",
+        "source/runtime/**",
+        "source/common/**"
+    }
+    files {
+        "source/parser/**.*",
+        "source/common/**.*",
+        "source/runtime/collector/**.*"
+    }
 
 project "sclpl-parse-tests"
     kind "ConsoleApp"

@@ -24,7 +24,6 @@ bool hex_digit(void)
 {
     char ch = file_peek();
     return (('0' <= ch) && (ch <= '9')) ||
-           (('a' <= ch) && (ch <= 'f')) ||
            (('A' <= ch) && (ch <= 'F'));
 }
 
