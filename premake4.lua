@@ -30,8 +30,15 @@ project "sclpl-lex"
     kind "ConsoleApp"
     language "C"
     location "build"
-    includedirs { "source/lexer/**", "source/runtime/**" }
-    files { "source/lexer/**.*", "source/runtime/collector/**.*"}
+    includedirs {
+        "source/lexer/**",
+        "source/common/",
+        "source/runtime/**"
+    }
+    files {
+        "source/lexer/**.*",
+        "source/runtime/collector/**.*"
+    }
 
 project "sclpl-lex-tests"
     kind "ConsoleApp"

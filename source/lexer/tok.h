@@ -7,8 +7,6 @@
 #ifndef TOK_H
 #define TOK_H
 
-typedef int tok_type_t;
-
 typedef struct
 {
     int line;
