@@ -17,7 +17,6 @@ bool file_open(char* fname)
     }
     else
     {
-        printf("%s\n",fname);
         Handle = fopen(fname,"r");
     }
     return (NULL != Handle);

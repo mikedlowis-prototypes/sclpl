@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     return ret;
 }
 
-int lex_files(int argc, char** argv)
+int parse_files(int argc, char** argv)
 {
     int ret = 0;
     int i;
@@ -46,7 +46,7 @@ int lex_files(int argc, char** argv)
     return ret;
 }
 
-int lex_input(FILE* outfile)
+int parse_input(FILE* outfile)
 {
     tok_t token;
     int ret = 0;
