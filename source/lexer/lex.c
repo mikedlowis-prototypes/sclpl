@@ -11,6 +11,7 @@
 #include "classes.h"
 #include "file.h"
 #include "buf.h"
+#include "tokens.h"
 
 /* Prototypes
  *****************************************************************************/
@@ -33,20 +34,6 @@ static void identifier(void);
  *****************************************************************************/
 jmp_buf Jump_Point;
 
-const char* Types[TOK_MAX] = {
-    "EOF",    /* TOK_EOF */
-    "ID",     /* TOK_ID  */
-    "NUM",    /* TOK_NUM */
-    "LPAREN", /* TOK_LPAR */
-    "RPAREN", /* TOK_RPAR */
-    "LBRACK", /* TOK_LBRACK */
-    "RBRACK", /* TOK_RBRACK */
-    "LBRACE", /* TOK_LBRACE */
-    "RBRACE", /* TOK_RBRACE */
-    "TERM",   /* TOK_TERM */
-    "BOOL",   /* TOK_BOOL */
-};
-
 const lex_keyword_t Keywords[] = {
     { "end",   TOK_TERM },
     { "true",  TOK_BOOL },
@@ -66,7 +53,7 @@ static void accept(void)
 
 static void accept_char(tok_type_t tok)
 {
-    tok_set_type( Types[tok] );
+    tok_set_type( Token_Types[tok] );
     tok_consume();
     tok_accept();
 }
@@ -137,7 +124,7 @@ static void keyword(void)
     {
         if (0 == strcmp( p_text, Keywords[i].p_text ))
         {
-            tok_set_type( Types[ Keywords[i].type ] );
+            tok_set_type( Token_Types[ Keywords[i].type ] );
             break;
         }
         i++;
@@ -169,7 +156,7 @@ static void punctuation(void)
 
 static void number(void)
 {
-    tok_set_type(Types[TOK_NUM]);
+    tok_set_type(Token_Types[TOK_NUM]);
     if (matches('0'))
     {
         tok_consume();
@@ -218,7 +205,7 @@ static void exponent(void)
 
 static void identifier(void)
 {
-    tok_set_type(Types[TOK_ID]);
+    tok_set_type(Token_Types[TOK_ID]);
     while (!token_end())
         tok_consume();
     accept();

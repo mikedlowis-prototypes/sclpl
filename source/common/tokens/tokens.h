@@ -22,4 +22,6 @@ typedef enum {
     TOK_MAX    = 11,
 } tok_type_t;
 
+extern const char* Token_Types[TOK_MAX];
+
 #endif /* TOKENS_H */

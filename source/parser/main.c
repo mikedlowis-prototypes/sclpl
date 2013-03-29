@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "tok.h"
 
 int parse_files(int num_files, char** fnames);
 int parse_input(char* outfile);
@@ -29,9 +30,25 @@ int parse_files(int num_files, char** fnames)
 
 int parse_input(char* outfile)
 {
-    //tok_open(outfile);
-
-    //tok_close();
+    int ret = 0;
+    if (tok_source(outfile))
+    {
+        while (!tok_eof())
+        {
+            tok_t* p_tok = tok_read();
+            if (NULL != p_tok)
+            {
+                printf( "%s:%d:%d:\t%d\t%s",
+                        p_tok->p_file_name,
+                        p_tok->line,
+                        p_tok->column,
+                        p_tok->type,
+                        p_tok->p_text );
+            }
+        }
+        tok_finish();
+    }
+    return ret;
 }
 
 

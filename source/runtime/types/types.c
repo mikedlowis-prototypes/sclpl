@@ -5,6 +5,7 @@
     $HeadURL$
 */
 #include "types.h"
+//#include "gc.h"
 
 var_t new_num(double val)
 {

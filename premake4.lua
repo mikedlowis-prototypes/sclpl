@@ -12,16 +12,28 @@ project "sclpl-rt"
     kind "SharedLib"
     language "C"
     location "build"
-    files { "source/runtime/**.*" }
+    files {
+        "source/runtime/**.*"
+    }
 
 project "sclpl-rt-tests"
     kind "ConsoleApp"
     language "C++"
     location "build"
-    links { "UnitTest++", "sclpl-rt" }
-    includedirs { "source/runtime/**", "tools/UnitTest++/**" }
-    files { "tests/runtime/*.c*" }
-    postbuildcommands { "./sclpl-rt-tests" }
+    links {
+        "UnitTest++",
+        "sclpl-rt"
+    }
+    includedirs {
+        "source/runtime/**",
+        "tools/UnitTest++/**"
+    }
+    files {
+        "tests/runtime/*.c*"
+    }
+    postbuildcommands {
+        "./sclpl-rt-tests"
+    }
 
 -------------------------------------------------------------------------------
 -- SCLPL Lexer
@@ -32,22 +44,31 @@ project "sclpl-lex"
     location "build"
     includedirs {
         "source/lexer/**",
-        "source/common/",
-        "source/runtime/**"
+        "source/runtime/**",
+        "source/common/**",
     }
     files {
         "source/lexer/**.*",
-        "source/runtime/collector/**.*"
+        "source/common/**.*",
     }
 
 project "sclpl-lex-tests"
     kind "ConsoleApp"
     language "C++"
     location "build"
-    links { "UnitTest++" }
-    includedirs { "source/lexer/**", "tools/UnitTest++/**" }
-    files { "tests/lexer/*.c*" }
-    postbuildcommands { "./sclpl-lex-tests" }
+    links {
+        "UnitTest++"
+    }
+    includedirs {
+        "source/lexer/**",
+        "tools/UnitTest++/**"
+    }
+    files {
+        "tests/lexer/*.c*"
+    }
+    postbuildcommands {
+        "./sclpl-lex-tests"
+    }
 
 -------------------------------------------------------------------------------
 -- SCLPL Parser
@@ -59,7 +80,7 @@ project "sclpl-parse"
     includedirs {
         "source/lexer/**",
         "source/runtime/**",
-        "source/common/**"
+        "source/common/**",
     }
     files {
         "source/parser/**.*",
@@ -71,10 +92,19 @@ project "sclpl-parse-tests"
     kind "ConsoleApp"
     language "C++"
     location "build"
-    links { "UnitTest++" }
-    includedirs { "source/parser/**", "tools/UnitTest++/**" }
-    files { "tests/parser/*.c*" }
-    postbuildcommands { "./sclpl-parse-tests" }
+    links {
+        "UnitTest++"
+    }
+    includedirs {
+        "source/parser/**",
+        "tools/UnitTest++/**"
+    }
+    files {
+        "tests/parser/*.c*"
+    }
+    postbuildcommands {
+        "./sclpl-parse-tests"
+    }
 
 -------------------------------------------------------------------------------
 -- UnitTest++ - A C/C++ unit testing library
