@@ -14,16 +14,25 @@ def find_files(dir,pattern):
             matches.append(os.path.join(root, filename))
     return matches
 
-# Scheme program builder
-scheme_builder = Builder(
-    action = 'csc -o $TARGET $SOURCE',
-    suffix = '.exe' if (platform.system() == 'Windows') else ''
+# Scheme Source Compiler
+scheme_compiler = Builder(
+    action     = 'csc -c -o $TARGET $SOURCE',
+    suffix     = '.o',
+    src_suffix = '.scm',
+    single_source = True
+)
+
+# Scheme Binary Linker
+scheme_linker = Builder(
+    action  = 'csc -o $TARGET $SOURCE',
+    suffix = "$PROGSUFFIX",
+    src_builder = [ scheme_compiler ]
 )
 
 # Create the Environment for this project
 env = Environment(
-    ENV = os.environ,
-    BUILDERS = { 'SchemeProgram': scheme_builder }
+        ENV = os.environ,
+        BUILDERS = { 'SchemeProgram': scheme_linker }
 )
 
 #------------------------------------------------------------------------------
@@ -32,7 +41,7 @@ env = Environment(
 
 # SCLPL Compiler
 env.SchemeProgram(
-    target = 'sclpl-cc.exe',
+    target = 'sclpl-cc',
     source = find_files('source/compiler/','*.scm')
 )
 
