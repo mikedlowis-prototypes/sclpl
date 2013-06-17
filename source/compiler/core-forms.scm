@@ -1,4 +1,4 @@
-(use srfi-1)
+(declare (unit core-forms) (uses srfi-1))
 
 ; Formal Syntax
 ;------------------------------------------------------------------------------
@@ -7,16 +7,16 @@
 ;
 ; Form ::= Definition | Expression
 ;
-; Definition ::= '(:def' Variable Expression ')'
-;              | '(:begin' Definition* ')'
+; Definition ::= '(def' Variable Expression ')'
+;              | '(begin' Definition* ')'
 ;
 ; Expression ::= Constant
 ;              | Variable
-;              | '(:quote' Datum ')'
-;              | '(:func' ArgList Expression Expression* ')'
-;              | '(:if' Expression Expression Expression ')'
-;              | '(:set' Variable Expression ')'
-;              | '(:apply' Expression Expression* ')'
+;              | '(quote' Datum ')'
+;              | '(func' ArgList Expression Expression* ')'
+;              | '(if' Expression Expression Expression ')'
+;              | '(set!' Variable Expression ')'
+;              | '(' Expression Expression* ')'
 ;
 ; Constant ::= Boolean
 ;            | Number
@@ -28,12 +28,26 @@
 ;
 
 (define (validate-form frm)
+  (if (definition? frm)
+      (validate-definition frm)
+      (validate-expression frm)))
+
+(define (validate-definition frm)
+  (if (and (list? frm) (not (null? frm)))
+      (case (car frm)
+            [(begin) (map validate-definition (cdr frm))]
+            [(def)   (if (not (def? frm))
+                         (syntx-err frm "Not a valid def expression"))]
+            [else    (syntx-err frm "Not a valid definition")])
+      (syntx-err frm "Not a valid definition")))
+
+(define (validate-expression frm)
   (if (and (list? frm) (not (null? frm)))
       (case (car frm)
             [(quote) (validate-quotation frm)]
             [(func)  (validate-func frm)]
             [(if)    (validate-if frm)]
-            [(set)   (validate-set frm)]
+            [(set!)   (validate-set frm)]
             [else    (validate-apply frm)])
       (validate-constant frm)))
 
@@ -104,7 +118,7 @@
 
 (define (set? frm)
   (and (list-of-length? frm 3)
-       (equal? 'set (car frm))
+       (equal? 'set! (car frm))
        (symbol? (cadr frm))
        (expression? (caddr frm))))
 
@@ -132,7 +146,7 @@
 (define (get-free-vars expr)
   (if (symbol? expr) expr
       (case (if (list? expr) (car expr) '())
-            [(def set)  (list (cadr expr) (get-free-vars (caddr expr)))]
+            [(def set!) (list (cadr expr) (get-free-vars (caddr expr)))]
             [(begin if) (map get-free-vars (cdr expr))]
             [(func)     (filter-vars (cadr expr) (map get-free-vars (cddr expr)))]
             [else       (map get-free-vars expr)])))
@@ -143,16 +157,8 @@
 ; Utility Procedures
 ;------------------------------------------------------------------------------
 (define (syntx-err frm msg)
+  (print "Error: " msg "\n")
   (pretty-print frm)
-  (error msg))
-
-; Compilation Procedures
-;------------------------------------------------------------------------------
-(define (compile-file file) '())
-
-(define (compile-port port) '())
-
-(define (translate-expr expr) '())
-
-(print "foo")
+  (display "\n")
+  (exit 1))
 
