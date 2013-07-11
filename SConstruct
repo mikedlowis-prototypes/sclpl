@@ -30,12 +30,21 @@ scheme_linker = Builder(
     src_builder = [ scheme_compiler ]
 )
 
+# Scheme Test Linker
+scheme_tester = Builder(
+    action      = 'csc $LDFLAGS -o $TARGET $SOURCES && $TARGET',
+    suffix      = "$PROGSUFFIX",
+    src_suffix  = '.o',
+    src_builder = [ scheme_compiler ]
+)
+
 # Create the Environment for this project
 env = Environment(
         ENV      = os.environ,
         CCFLAGS  = [ '-explicit-use' ],
         LDFLAGS  = [],
-        BUILDERS = { 'SchemeProgram': scheme_linker }
+        BUILDERS = { 'SchemeProgram': scheme_linker,
+                     'SchemeTestRunner': scheme_tester }
 )
 
 #------------------------------------------------------------------------------
@@ -47,4 +56,12 @@ env.SchemeProgram(
     target = 'sclpl-cc',
     source = find_files('source/compiler/','*.scm')
 )
+
+env.Command('tests.log', find_files('tests/compiler/','*.scm'), "csi -q $SOURCES >> $TARGET")
+
+#env.SchemeTestRunner(
+#    target = 'sclpl-cc-tests',
+#    source = find_files('source/compiler/','*.scm') +
+#             find_files('tests/compiler/','*.scm')
+#)
 

@@ -27,138 +27,113 @@
 ;           | '(' Variable Variable '.' Variable ')'
 ;
 
-(define (validate-form frm)
+(define (core-syntax-errors frm)
   (if (definition? frm)
-      (validate-definition frm)
-      (validate-expression frm)))
+      (definition-errors frm)
+      (expr-errors frm)))
 
-(define (validate-definition frm)
-  (if (and (list? frm) (not (null? frm)))
+(define (definition-errors frm)
+  (case (if (pair? frm) (car frm) '())
+        [(def)   (def-errors frm)]
+        [(begin) (begin-errors frm)]
+        [else    (list (cons frm 'not-a-def-or-begin))]))
+
+(define (def-errors frm)
+  (cond [(not (pair? frm))          (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'def)) (list (cons frm 'not-a-def))]
+        [(< (length frm) 2)         (list (cons frm 'missing-name))]
+        [(< (length frm) 3)         (list (cons frm 'missing-value))]
+        [(> (length frm) 3)         (list (cons frm 'too-many-items))]
+        [else                       (if (not (symbol? (cadr frm)))
+                                        (list (cons frm 'def-needs-symbol))
+                                        (expr-errors (cddr frm)))]))
+
+(define (begin-errors frm)
+  (cond [(not (pair? frm))            (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'begin)) (list (cons frm 'not-a-begin))]
+        [(< (length frm) 2)           (list (cons frm 'no-defs))]
+        [else                         (def-list-errors (cdr frm))]))
+
+(define (expr-errors frm)
+  (if (pair? frm)
       (case (car frm)
-            [(begin) (map validate-definition (cdr frm))]
-            [(def)   (if (not (def? frm))
-                         (syntx-err frm "Not a valid def expression"))]
-            [else    (syntx-err frm "Not a valid definition")])
-      (syntx-err frm "Not a valid definition")))
+            [(quote) (quote-errors frm)]
+            [(func)  (func-errors frm)]
+            [(if)    (if-errors frm)]
+            [(set!)  (set!-errors frm)]
+            [else    (app-errors frm)])
+      (const-errors frm)))
 
-(define (validate-expression frm)
-  (if (and (list? frm) (not (null? frm)))
-      (case (car frm)
-            [(quote) (validate-quotation frm)]
-            [(func)  (validate-func frm)]
-            [(if)    (validate-if frm)]
-            [(set!)   (validate-set frm)]
-            [else    (validate-apply frm)])
-      (validate-constant frm)))
+(define (quote-errors frm)
+  (cond [(not (pair? frm))            (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'quote)) (list (cons frm 'not-a-quote))]
+        [(< (length frm) 2)           (list (cons frm 'no-datum))]
+        [(> (length frm) 2)           (list (cons frm 'too-many-items))]
+        [else                         '()]))
 
-(define (validate-quotation frm)
-  (if (not (quote? frm))
-      (syntx-err frm "Invalid quotation")))
+(define (func-errors frm)
+  (cond [(not (pair? frm))           (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'func)) (list (cons frm 'not-a-func))]
+        [(< (length frm) 2)          (list (cons frm 'no-args-list))]
+        [(< (length frm) 3)          (list (cons frm 'no-body))]
+        [else                        (append (args-errors (cadr frm))
+                                             (exp-list-errors (cddr frm)))]))
 
-(define (validate-func frm)
-  (if (not (func? frm))
-      (syntx-err frm "Invalid function definition")))
+(define (if-errors frm)
+  (cond [(not (pair? frm))         (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'if)) (list (cons frm 'not-an-if))]
+        [(< (length frm) 2)        (list (cons frm 'missing-cond))]
+        [(< (length frm) 3)        (list (cons frm 'too-few-branches))]
+        [(> (length frm) 4)        (list (cons frm 'too-many-branches))]
+        [else                      (exp-list-errors (cdr frm))]))
 
-(define (validate-if frm)
-  (if (not (if? frm))
-      (syntx-err frm "Invalid if statement")))
+(define (set!-errors frm)
+  (cond [(not (pair? frm))           (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'set!)) (list (cons frm 'not-a-set!))]
+        [(< (length frm) 2)          (list (cons frm 'missing-name))]
+        [(< (length frm) 3)          (list (cons frm 'missing-value))]
+        [(> (length frm) 3)          (list (cons frm 'too-many-items))]
+        [else                        (exp-list-errors (cdr frm))]))
 
-(define (validate-set frm)
-  (if (not (set? frm))
-      (syntx-err frm "Invalid assignment expression")))
+(define (app-errors frm)
+  (exp-list-errors frm))
 
-(define (validate-apply frm)
-  (if (not (apply? frm))
-      (syntx-err frm "Invalid application expression")))
+(define (const-errors frm)
+  (if (or (boolean? frm) (number? frm) (char? frm) (string? frm) (symbol? frm))
+      '()
+      (list (cons frm 'not-a-const ))))
 
-(define (validate-constant frm)
-  (if (not (constant? frm))
-      (syntx-err frm "Not a valid constant")))
+(define (args-errors frm)
+  (if (or (null? frm) (list-of? frm symbol?))
+      '()
+      (list (cons frm 'malformed-args))))
+
+(define (def-list-errors dlst)
+  (apply append (map definition-errors dlst)))
+
+(define (exp-list-errors elst)
+  (apply append (map core-syntax-errors elst)))
 
 ;------------------------------------------------------------------------------
 
-(define (form? frm)
-  (or (definition? frm) (expression? frm)))
+(define (list-of? lst prdfn)
+  (if (and (pair? lst)
+           (prdfn (car lst))
+           (if (null? (cdr lst)) #t (list-of? (cdr lst) prdfn)))
+      #t #f))
+
+(define (form-of-type? frm type)
+  (and (pair? frm) (eq? (car frm) type)))
 
 (define (definition? frm)
-  (or (def? frm) (begin? frm)))
+  (or (form-of-type? frm 'def)
+      (form-of-type? frm 'begin)))
 
-(define (def? frm)
-  (and (list-of-length? frm 3)
-       (equal? 'def (car frm))
-       (symbol? (cadr frm))
-       (expression? (caddr frm))))
-
-(define (begin? frm)
-  (and (list-of->=-length? frm 2)
-       (equal? 'begin (car frm))
-       (list-of? (cdr frm) definition?)))
-
-(define (expression? expr)
-  (if (constant? expr) #t
-      (and (list? expr)
-           (not (null? expr))
-           (case (car expr) [(begin def) #f]
-                            [else        #t]))))
-
-(define (quote? frm)
-  (and (list-of-length? frm 2)
-       (equal? 'quote (car frm))))
-
-(define (func? frm)
-  (and (list-of->=-length? frm 3)
-       (equal? 'func (car frm))
-       (list-of? (cadr frm) symbol?)
-       (list-of? (cddr frm) expression?)))
-
-(define (if? frm)
-  (and (list-of-length? frm 4)
-       (equal? 'if (car frm))
-       (list-of? (cdr frm) expression?)))
-
-(define (set? frm)
-  (and (list-of-length? frm 3)
-       (equal? 'set! (car frm))
-       (symbol? (cadr frm))
-       (expression? (caddr frm))))
-
-(define (apply? frm)
-  (and (not (null? frm))
-       (list-of? frm expression?)))
-
-(define (constant? frm)
-  (or (number? frm) (string? frm) (symbol? frm) (char? frm) (boolean? frm)))
-
-; Utility Predicate Procedures
 ;------------------------------------------------------------------------------
-(define (list-of? lst prdfn)
-  (if (not (list? lst)) #f
-      (if (null? lst) #t
-          (and (prdfn (car lst))
-               (list-of? (cdr lst) prdfn)))))
 
-(define (list-of->=-length? lst len)
-  (and (list? lst) (>= (length lst) len)))
-
-(define (list-of-length? lst len)
-  (and (list? lst) (= (length lst) len)))
-
-(define (get-free-vars expr)
-  (if (symbol? expr) expr
-      (case (if (list? expr) (car expr) '())
-            [(def set!) (list (cadr expr) (get-free-vars (caddr expr)))]
-            [(begin if) (map get-free-vars (cdr expr))]
-            [(func)     (filter-vars (cadr expr) (map get-free-vars (cddr expr)))]
-            [else       (map get-free-vars expr)])))
-
-(define (filter-vars defd lst)
-  (filter (lambda (item) (not (member item defd))) lst))
-
-; Utility Procedures
-;------------------------------------------------------------------------------
-(define (syntx-err frm msg)
-  (print "Error: " msg "\n")
-  (pretty-print frm)
-  (display "\n")
-  (exit 1))
+(define error-msgs
+  '((not-a-def . "Not a recognized definition form")
+    (not-a-def . "Not a recognized definition form")
+  )
+)
 
