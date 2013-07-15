@@ -1,4 +1,4 @@
-(declare (uses library eval core-forms srfi-13 extras))
+(declare (uses library eval core-forms desugar srfi-13 extras))
 
 (define (compile-file fname)
   (define ofname (get-output-file-name fname))
@@ -15,7 +15,7 @@
   (map core-form->scheme (read-forms (open-input-file fname))))
 
 (define (read-forms port)
-  (define form (read port))
+  (define form (desugar (read port)))
   (if (eof-object? form)
       '()
       (let [(errs (core-syntax-errors form))]
