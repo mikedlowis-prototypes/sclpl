@@ -8,20 +8,35 @@
 ; Form ::= Definition | Expression
 ;
 ; Definition ::= '(def' Variable Expression ')'
+;              | TypeAnnotation
+;              | TypeDefinition
 ;              | '(begin' Definition* ')'
+;
+; TypeAnnotation ::= '(def:' Variable TypeConstructor ')'
+;
+; TypeConstructor ::= Variable
+;                   | '(' Variable+ ')'
+;
+; TypeDefinition ::= '(data' Variable TypeConstructor+ TypeClassList? ')'
+;                  | '(type' Variable Variable ')'
+;                  | '(class' Variable OpAnnotation+ ')'
+;                  | '(instance' Variable OpDefinition+ ')'
+;
+; TypeClassList ::= '(deriving' Variable+ ')'
+;
+; OpAnnotation ::= '(' Variable TypeConstructor ')'
+;
+; OpDefinition ::= '(' TypeConstructor Expression+ ')'
 ;
 ; Expression ::= Constant
 ;              | Variable
 ;              | '(quote' Datum ')'
-;              | '(func' ArgList Expression Expression* ')'
+;              | '(func' ArgList Expression+ ')'
 ;              | '(if' Expression Expression Expression ')'
 ;              | '(set!' Variable Expression ')'
-;              | '(' Expression Expression* ')'
+;              | '(' Expression+ ')'
 ;
-; Constant ::= Boolean
-;            | Number
-;            | Character
-;            | String
+; Constant ::= Boolean | Number | Character | String
 ;
 ; ArgList ::= '(' Variable ')'
 ;           | '(' Variable Variable '.' Variable ')'
@@ -35,6 +50,7 @@
 (define (definition-errors frm)
   (case (if (pair? frm) (car frm) '())
         [(def)   (def-errors frm)]
+        [(def:)  (annotation-errors frm)]
         [(begin) (begin-errors frm)]
         [else    (list (cons frm 'not-a-def-or-begin))]))
 
@@ -47,6 +63,14 @@
         [else                       (if (not (symbol? (cadr frm)))
                                         (list (cons frm 'def-needs-symbol))
                                         (expr-errors (cddr frm)))]))
+(define (annotation-errors frm)
+  (cond [(not (pair? frm))           (list (cons frm 'not-a-form))]
+        [(not (eq? (car frm) 'def:)) (list (cons frm 'not-an-anno))]
+        [(< (length frm) 2)          (list (cons frm 'missing-name))]
+        [(< (length frm) 3)          (list (cons frm 'missing-type))]
+        [else                        (if (not (symbol? (cadr frm)))
+                                         (list (cons frm 'def-needs-symbol))
+                                         (type-errors (caddr frm)))]))
 
 (define (begin-errors frm)
   (cond [(not (pair? frm))            (list (cons frm 'not-a-form))]
@@ -114,6 +138,11 @@
 (define (exp-list-errors elst)
   (apply append (map core-syntax-errors elst)))
 
+(define (type-errors typ)
+  (if (or (symbol? typ) (list-of? typ symbol?))
+      '()
+      (list (cons typ 'not-a-type))))
+
 ;------------------------------------------------------------------------------
 
 (define (list-of? lst prdfn)
@@ -127,6 +156,7 @@
 
 (define (definition? frm)
   (or (form-of-type? frm 'def)
+      (form-of-type? frm 'def:)
       (form-of-type? frm 'begin)))
 
 ;------------------------------------------------------------------------------
@@ -137,3 +167,9 @@
   )
 )
 
+;(define (repl port)
+;  (display ":> ")
+;  (pretty-print (core-syntax-errors (read port)))
+;  (repl port))
+;
+;(repl (current-input-port))
