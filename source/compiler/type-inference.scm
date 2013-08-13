@@ -1,4 +1,5 @@
-(require 'srfi-1)
+(declare (unit type-inference) (uses srfi-1))
+
 ; Type Inference Algorithm
 ;------------------------------------------------------------------------------
 ; This section implements algorithm W from the Luis Damas and Robin Milner
@@ -17,21 +18,18 @@
            (substitute type-env type)))))
 
 (define (algorithm-w env form)
-    (cond [(symbol? form)         (get-var-type env form)]
-          [(not (pair? form))     (get-const-type form)]
-          [(eq? (car form) 'if)   (infer-cond-type env form)]
-          [(eq? (car form) 'func) (infer-func-type env form)]
-          [(eq? (car form) 'def)  (infer-def-type env form)]
-          [else                   (infer-app-type env form)]))
+  (cond [(symbol? form)          (get-var-type env form)]
+        [(not (pair? form))      (get-const-type form)]
+        [(eq? (car form) 'quote) (get-quoted-const-type form)]
+        [(eq? (car form) 'if)    (infer-cond-type env form)]
+        [(eq? (car form) 'func)  (infer-func-type env form)]
+        [(eq? (car form) 'def)   (infer-def-type env form)]
+        [else                    (infer-app-type env form)]))
 
 (define (get-var-type env form)
   (define loc-val (env-value env form))
   (if loc-val
-    (let [(kind (car loc-val))
-          (type (cadr loc-val))]
-      (if (eq? kind 'let)
-          (instance env loc-val)
-          type))
+      (cadr loc-val)
       (instance (env-empty) (env-value global-env form))))
 
 (define (get-const-type form)
@@ -39,22 +37,47 @@
         [(number? form)  'Num]
         [(char? form)    'Char]
         [(string? form)  'String]
+        [(pair? form)    (get-list-type form)]
+        [(vector? form)  (get-vector-type form)]
         [else            (type-error form)]))
+
+(define (get-quoted-const-type form)
+  (if (equal? form ''())
+    '(List ?a)
+    (get-const-type (cadr form))))
+
+(define (get-list-type form)
+  (let [(type (get-const-type (car form)))]
+    (for-each (lambda (y)
+      (if (not (equal? (get-const-type y) type))
+        (type-error "list is not homogenous")))
+        (cdr form))
+    (list 'List type)))
+
+(define (get-vector-type form)
+  (set! form (vector->list form))
+  (if (null? form)
+    (list 'Vector '?a)
+    (let [(type (get-const-type (car form)))]
+      (for-each (lambda (y)
+        (if (not (equal? (get-const-type y) type))
+          (type-error "vector is not homogenous")))
+          (cdr form))
+      (list 'Vector type))))
 
 (define (infer-cond-type env form)
   (let [(cnd (algorithm-w env (cadr form)))
         (brt (algorithm-w env (caddr form)))
         (brf (algorithm-w env (cadddr form)))]
-    (set! type-env (unify (unify env cnd 'Bool) brt brf))
+    (set! type-env (unify (unify type-env cnd 'Bool) brt brf))
     brt))
 
 (define (infer-func-type env form)
   (let* [(parms   (map (lambda (x) (new-type-var)) (cadr form)))
-         (new-env (env-join env (map (lambda (x y) (list x 'func y)) (cadr form) parms)))
+         (new-env (env-join (map (lambda (x y) (list x 'func y)) (cadr form) parms) env))
          (ext-env (env-join new-env (get-local-var-env new-env (cddr form))))
          (body    (map (lambda (expr) (algorithm-w ext-env expr))
                        (get-func-body (cddr form))))]
-
     (cons '-> (append parms (list (car (reverse body)))))))
 
 (define (get-local-var-env env body)
@@ -69,9 +92,14 @@
           lst))
 
 (define (infer-def-type env form)
-  (let [(name (cadr form))
-        (type (algorithm-w env (caddr form)))]
-    (if type (set! global-env (cons (cons name type) global-env)))
+  (let* [(name (cadr form))
+         (tenv (env-set env name
+                 (if (env-bound? global-env name)
+                   (env-value global-env name)
+                   (list 'def (new-type-var)))))
+         (type (algorithm-w tenv (caddr form)))]
+    (if type
+      (set! global-env (cons (cons name (substitute type-env type)) global-env)))
     type))
 
 (define (infer-app-type env form)
@@ -88,7 +116,6 @@
 ; principle"
 
 (define (unify env x y)
-  (print env x y)
   (let [(x* (deref env x))
         (y* (deref env y))]
     (cond [(eq? x* y*)           env]
@@ -148,10 +175,11 @@
      (-  . (-> Num Num Num))
      (*  . (-> Num Num Num))
      (/  . (-> Num Num Num))
+     (>  . (-> Num Num Bool))
      (<  . (-> Num Num Bool))
+     (>= . (-> Num Num Bool))
      (<= . (-> Num Num Bool))
      (=  . (-> Num Num Bool))
-     (>= . (-> Num Num Bool))
    )
 )
 
@@ -199,19 +227,10 @@
   (print "Type Error: Unable to determine type of expression")
   (infer-error #f))
 
-
-
-
-
-
-;(print (infer-type '(+ 123 123)))
-;(print (infer-type '(if #t 123 123)))
-;(print "type" (infer-type '((func (a b) (+ a b)) #t 123)))
-
-(print
-  (infer-type
-    '(func (a)
-       (def b 123)
-       (+ a b))))
-;(exit)
+;(require 'srfi-1)
+;(define (repl port)
+;  (display ":> ")
+;  (print (infer-type (read port)))
+;  (repl port))
+;(repl (current-input-port))
 

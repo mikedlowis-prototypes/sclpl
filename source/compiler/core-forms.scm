@@ -128,7 +128,7 @@
       (list (cons frm 'not-a-const ))))
 
 (define (args-errors frm)
-  (if (or (null? frm) (list-of? frm symbol?))
+  (if (or (null? frm) (lst-of? frm symbol?))
       '()
       (list (cons frm 'malformed-args))))
 
@@ -139,16 +139,16 @@
   (apply append (map core-syntax-errors elst)))
 
 (define (type-errors typ)
-  (if (or (symbol? typ) (list-of? typ symbol?))
+  (if (or (symbol? typ) (lst-of? typ symbol?))
       '()
       (list (cons typ 'not-a-type))))
 
 ;------------------------------------------------------------------------------
 
-(define (list-of? lst prdfn)
+(define (lst-of? lst prdfn)
   (if (and (pair? lst)
            (prdfn (car lst))
-           (if (null? (cdr lst)) #t (list-of? (cdr lst) prdfn)))
+           (if (null? (cdr lst)) #t (lst-of? (cdr lst) prdfn)))
       #t #f))
 
 (define (form-of-type? frm type)

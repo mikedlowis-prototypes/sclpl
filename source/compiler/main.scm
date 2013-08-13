@@ -1,4 +1,12 @@
-(declare (uses library eval core-forms desugar srfi-13 extras))
+(declare (uses library eval core-forms desugar srfi-13 extras type-inference))
+
+;(define compiler-phases
+;  '(expand-macros   ; Expand any user-defined or built-in macros
+;    desugar         ; Desugar to get the core-forms
+;    validate-syntax ; Validate the syntax of the core-forms
+;    type-check      ; Verify the forms are well-typed
+;    core->scheme    ; Convert to the equivalent scheme output
+;))
 
 (define (compile-file fname)
   (define ofname (get-output-file-name fname))
@@ -20,6 +28,7 @@
       '()
       (let [(errs (core-syntax-errors form))]
            (if (pair? errs) (begin (pprint-errors errs) (exit 1)))
+           (print (infer-type form))
            (cons form (read-forms port)))))
 
 (define (core-form->scheme frm)
