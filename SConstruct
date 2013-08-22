@@ -16,52 +16,53 @@ def find_files(path,pattern):
 
 # Scheme Source Compiler
 scheme_compiler = Builder(
-    action        = 'csc $CCFLAGS -c -o $TARGET $SOURCE',
-    suffix        = '.o',
-    src_suffix    = '.scm',
-    single_source = True
-)
+        action        = 'csc $CCFLAGS -c -o $TARGET $SOURCE',
+        suffix        = '.o',
+        src_suffix    = '.scm',
+        single_source = True
+        )
 
 # Scheme Binary Linker
 scheme_linker = Builder(
-    action      = 'csc $LDFLAGS -o $TARGET $SOURCES',
-    suffix      = "$PROGSUFFIX",
-    src_suffix  = '.o',
-    src_builder = [ scheme_compiler ]
-)
+        action      = 'csc $LDFLAGS -o $TARGET $SOURCES',
+        suffix      = "$PROGSUFFIX",
+        src_suffix  = '.o',
+        src_builder = [ scheme_compiler ]
+        )
 
 # Scheme Test Linker
 scheme_tester = Builder(
-    action      = 'csc $LDFLAGS -o $TARGET $SOURCES && $TARGET',
-    suffix      = "$PROGSUFFIX",
-    src_suffix  = '.o',
-    src_builder = [ scheme_compiler ]
-)
+        action      = 'csc $LDFLAGS -o $TARGET $SOURCES && $TARGET',
+        suffix      = "$PROGSUFFIX",
+        src_suffix  = '.o',
+        src_builder = [ scheme_compiler ]
+        )
 
 # Create the Environment for this project
 env = Environment(
         ENV      = os.environ,
-        CCFLAGS  = [ '-explicit-use' ],
+        CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
         LDFLAGS  = [],
-        BUILDERS = { 'SchemeProgram': scheme_linker,
-                     'SchemeTestRunner': scheme_tester }
-)
+        BUILDERS = {
+            'SchemeProgram': scheme_linker,
+            'SchemeTestRunner': scheme_tester }
+        )
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
 #------------------------------------------------------------------------------
 
 # SCLPL Compiler
+src_files = find_files('source/compiler/','*.scm')
 env.SchemeProgram(
-    target = 'sclpl-cc',
-    source = find_files('source/compiler/','*.scm')
-)
+        target = 'sclpl-cc',
+        source = src_files
+        )
 
-env.Command('tests.log', find_files('tests/compiler/','*.scm'), "csi -q $SOURCES >> $TARGET")
-
-#env.SchemeTestRunner(
-#    target = 'sclpl-cc-tests',
-#    source = find_files('source/compiler/','*.scm') +
-#             find_files('tests/compiler/','*.scm')
-#)
+# Test Suite
+env.SchemeTestRunner(
+        target = 'sclpl-cc-tests',
+        source = [s for s in src_files if not s.endswith("main.scm")] +
+        find_files('tests/compiler/','*.scm')
+        )
 
