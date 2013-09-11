@@ -45,12 +45,19 @@ env = Environment(
         LDFLAGS  = [],
         BUILDERS = {
             'SchemeProgram': scheme_linker,
-            'SchemeTestRunner': scheme_tester }
+            'SchemeTestRunner': scheme_tester },
+        tools = [ 'mingw' ]
         )
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
 #------------------------------------------------------------------------------
+
+# libSOF Shared Library
+env.SharedLibrary(
+        target = 'sof',
+        source = find_files('source/libsof/','*.scm')
+        )
 
 # SCLPL Compiler
 src_files = find_files('source/compiler/','*.scm')
