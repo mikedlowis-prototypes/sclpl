@@ -8,6 +8,7 @@
 #define LIBSOF_H
 
 #include "sof.h"
+#include <stdbool.h>
 
 typedef struct {
     sof_header_t*   header;

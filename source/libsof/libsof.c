@@ -6,7 +6,8 @@
   */
 #include "libsof.h"
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static void libsof_read_header(FILE* file, sof_file_t* obj);
 static void libsof_read_symbols(FILE* file, sof_file_t* obj);
@@ -18,7 +19,7 @@ static void libsof_write_symbols(FILE* file, sof_file_t* obj);
 static void libsof_write_strings(FILE* file, sof_file_t* obj);
 static void libsof_write_data(FILE* file, sof_file_t* obj);
 static void libsof_write_code(FILE* file, sof_file_t* obj);
-static bool is_big_endian(void);
+//static bool is_big_endian(void);
 
 /******************************************************************************
  * Functions for Reading an SOF file
@@ -58,7 +59,7 @@ static void libsof_read_symbols(FILE* file, sof_file_t* obj)
     {
         size_t sz = obj->header->sym_tbl_sz * sizeof(sof_st_entry_t);
         obj->symbols = (sof_st_entry_t*)malloc(sz);
-        fread(obj->symbols, sizeof(sof_st_entry_t), obj->header->sym_tbl_sz, fhndl);
+        fread(obj->symbols, sizeof(sof_st_entry_t), obj->header->sym_tbl_sz, file);
     }
 }
 
@@ -67,7 +68,7 @@ static void libsof_read_strings(FILE* file, sof_file_t* obj)
     if (obj->header->sym_str_tbl_sz)
     {
         obj->str_tbl = (uint8_t*)malloc( obj->header->sym_str_tbl_sz );
-        fread( obj->str_tbl, sizeof(uint8_t), obj->header->sym_str_tbl_sz, fhndl);
+        fread( obj->str_tbl, sizeof(uint8_t), obj->header->sym_str_tbl_sz, file);
     }
 }
 
@@ -76,7 +77,7 @@ static void libsof_read_data(FILE* file, sof_file_t* obj)
     if (obj->header->data_sz)
     {
         obj->data = (uint8_t*)malloc( obj->header->data_sz );
-        fread( obj->data, sizeof(uint8_t), obj->header->data_sz, fhndl);
+        fread( obj->data, sizeof(uint8_t), obj->header->data_sz, file);
     }
 }
 
@@ -85,8 +86,8 @@ static void libsof_read_code(FILE* file, sof_file_t* obj)
     if (obj->header->code_sz)
     {
         size_t sz = obj->header->code_sz * sizeof(uint32_t);
-        obj->code = (sof_st_entry_t*)malloc(sz);
-        fread(obj->code, sizeof(uint32_t), obj->header->code_sz, fhndl);
+        obj->code = (uint32_t*)malloc(sz);
+        fread(obj->code, sizeof(uint32_t), obj->header->code_sz, file);
     }
 }
 
@@ -122,7 +123,7 @@ static void libsof_write_symbols(FILE* file, sof_file_t* obj)
 {
     if (obj->header->sym_tbl_sz)
     {
-        fwrite(obj->symbols, sizeof(sof_st_entry_t), obj->header->sym_tbl_sz, fhndl);
+        fwrite(obj->symbols, sizeof(sof_st_entry_t), obj->header->sym_tbl_sz, file);
     }
 }
 
@@ -130,7 +131,7 @@ static void libsof_write_strings(FILE* file, sof_file_t* obj)
 {
     if (obj->header->sym_str_tbl_sz)
     {
-        fwrite( obj->str_tbl, sizeof(uint8_t), obj->header->sym_str_tbl_sz, fhndl);
+        fwrite( obj->str_tbl, sizeof(uint8_t), obj->header->sym_str_tbl_sz, file);
     }
 }
 
@@ -138,7 +139,7 @@ static void libsof_write_data(FILE* file, sof_file_t* obj)
 {
     if (obj->header->data_sz)
     {
-        fwrite( obj->data, sizeof(uint8_t), obj->header->data_sz, fhndl);
+        fwrite( obj->data, sizeof(uint8_t), obj->header->data_sz, file);
     }
 }
 
@@ -146,19 +147,19 @@ static void libsof_write_code(FILE* file, sof_file_t* obj)
 {
     if (obj->header->code_sz)
     {
-        fwrite(obj->code, sizeof(uint32_t), obj->header->code_sz, fhndl);
+        fwrite(obj->code, sizeof(uint32_t), obj->header->code_sz, file);
     }
 }
 
 /******************************************************************************
  * Static Helper Functions
  *****************************************************************************/
-static bool is_big_endian(void)
-{
-    union {
-        uint32_t i;
-        uint8_t  c[4];
-    } bint = { 0x01020304 };
-    return bint.c[0] == 1;
-}
+//static bool is_big_endian(void)
+//{
+//    union {
+//        uint32_t i;
+//        uint8_t  c[4];
+//    } bint = { 0x01020304 };
+//    return bint.c[0] == 1;
+//}
 
