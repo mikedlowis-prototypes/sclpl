@@ -39,27 +39,26 @@
 typedef struct {
     /* 32-bit date code representing the version of SOF format used by the file */
     uint32_t version;
-    /* The number of entries in the symbol table segment. Each entry consists
-     * of a single SOF_ST_Entry_T. A value of 0 indicates that the symbol table
-     * segment has been omitted from the file */
+    /* This size of the symbol table in bytes. A value of 0 indicates that the
+     * symbol table segment has been omitted from the file */
     uint32_t sym_tbl_sz;
-    /* The size in bytes of the symbol string table segment in the SOF file.
-     * Each entry in the symbol string table consists of an array of bytes
-     * terminated by a NULL byte (0x00). */
+    /* The size of the symbol string table segment in bytes. Each entry in the
+     * symbol string table consists of an array of bytes terminated by a NULL
+     * byte (0x00). */
     uint32_t sym_str_tbl_sz;
     /* The size in bytes of the constant data segment. This segment contains
      * constant data that is referenced by the code segment. */
     uint32_t data_sz;
-    /* The number of instructions contained in the code segment. Each
-     * instruction is represented by a 32-bit value and represents a single
-     * action to be performed by the bytecode interpreter. */
+    /* The size of the code segment in bytes. Each instruction is represented by
+     * a 32-bit value and represents a single action to be performed by the
+     * bytecode interpreter. */
     uint32_t code_sz;
 } sof_header_t;
 
 /* Definition of the SOF symbol table entry */
 typedef struct {
-    /* Index of the string in the symbol string table containing the name of
-     * this symbol */
+    /* Offset into the string section where the string for the symbol is
+     * located */
     uint32_t name;
     uint32_t value;
     uint32_t size;
