@@ -64,33 +64,33 @@ scheme = Environment(
 
 # SOF Shared Library
 c_cpp.SharedLibrary(
-        target = 'sof',
+        target = 'build/sof',
         source = find_files('source/libsof/','*.c'))
 
 # SBC Shared Library
 c_cpp.SharedLibrary(
-        target = 'sbc',
+        target = 'build/sbc',
         source = find_files('source/libsbc/','*.c'))
 
 # readsof Command Line Utility
 readsof = c_cpp.Clone(
         CPPPATH = [ 'source/libsof/' ],
         LIBS = [ 'sof' ],
-        LIBPATH = [ './' ])
+        LIBPATH = [ 'build' ])
 readsof.Program(
-        target = 'readsof',
+        target = 'build/readsof',
         source = find_files('source/readsof/','*.c'))
 readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
 src_files = find_files('source/compiler/','*.scm')
 scheme.Program(
-        target = 'sclpl-cc',
+        target = 'build/sclpl-cc',
         source = src_files)
 
 # Compiler Test Suite
 scheme.TestRunner(
-        target = 'sclpl-cc-tests',
+        target = 'build/tests/sclpl-cc-tests',
         source = [s for s in src_files if not s.endswith("main.scm")] +
                  find_files('tests/compiler/','*.scm'))
 
