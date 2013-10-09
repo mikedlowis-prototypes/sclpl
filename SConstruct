@@ -52,7 +52,7 @@ scheme_tester = Builder(
 # Create the Environment for this project
 scheme = Environment(
         ENV      = os.environ,
-        CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
+        CCFLAGS  = [ '-I', 'inc'],
         LDFLAGS  = [],
         BUILDERS = {
             'Program': scheme_linker,
@@ -85,12 +85,18 @@ readsof.Depends('readsof', 'sof')
 # SCLPL Compiler
 src_files = find_files('source/compiler/','*.scm')
 scheme.Program(
-        target = 'build/sclpl-cc',
+        target = 'build/slc',
+        source = src_files)
+
+# SCLPL Package Manager
+src_files = find_files('source/slpkg/','*.scm')
+scheme.Program(
+        target = 'build/slpkg',
         source = src_files)
 
 # Compiler Test Suite
-scheme.TestRunner(
-        target = 'build/tests/sclpl-cc-tests',
-        source = [s for s in src_files if not s.endswith("main.scm")] +
-                 find_files('tests/compiler/','*.scm'))
+#scheme.TestRunner(
+#        target = 'build/tests/sclpl-cc-tests',
+#        source = [s for s in src_files if not s.endswith("main.scm")] +
+#                 find_files('tests/compiler/','*.scm'))
 
