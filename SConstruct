@@ -52,7 +52,7 @@ scheme_tester = Builder(
 # Create the Environment for this project
 scheme = Environment(
         ENV      = os.environ,
-        CCFLAGS  = [ '-I', 'inc'],
+        CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
         LDFLAGS  = [],
         BUILDERS = {
             'Program': scheme_linker,
