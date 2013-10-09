@@ -1,4 +1,4 @@
-(declare (uses library))
+(declare (uses library server))
 
 (define slpkg-usage
 "Package manager for SCLPL (Simple Concurrent List Processing Language).
@@ -12,27 +12,39 @@ Commands:
   publish        Publish a package to a specified repository.
   remove         Remove one or more packages from this machine.
   search         Search the repositories for packages matching a pattern.
+  server         Start a package server to host packages.
   show           Show detailed information about a specific package or packages.
   source         Manage the sources from which packages will be retrieved.
   update         Update the package lists for all configured sources.
   upgrade        Upgrade a given package or packages.
-  upgrade-all    Upgrade all packages installed on this machine.\n")
+")
 
 ;------------------------------------------------------------------------------
 
 (define (help-cmd args)
   (print args))
 
+;------------------------------------------------------------------------------
 (define install-cmd help-cmd)
+;------------------------------------------------------------------------------
 (define publish-cmd help-cmd)
+;------------------------------------------------------------------------------
 (define remove-cmd help-cmd)
+;------------------------------------------------------------------------------
 (define search-cmd help-cmd)
-(define show-cmd help-cmd)
-(define source-cmd help-cmd)
-(define update-cmd help-cmd)
-(define upgrade-cmd help-cmd)
-(define upgrade-all help-cmd)
+;------------------------------------------------------------------------------
 
+(define (server-cmd args)
+  (start-pkg-server (cadr args) (caddr args)))
+
+;------------------------------------------------------------------------------
+(define show-cmd help-cmd)
+;------------------------------------------------------------------------------
+(define source-cmd help-cmd)
+;------------------------------------------------------------------------------
+(define update-cmd help-cmd)
+;------------------------------------------------------------------------------
+(define upgrade-cmd help-cmd)
 ;------------------------------------------------------------------------------
 
 (define slpkg-commands
@@ -41,11 +53,11 @@ Commands:
     ("publish" .     ,publish-cmd)
     ("remove" .      ,remove-cmd)
     ("search" .      ,search-cmd)
+    ("server" .      ,server-cmd)
     ("show" .        ,show-cmd)
     ("source" .      ,source-cmd)
     ("update" .      ,update-cmd)
-    ("upgrade" .     ,upgrade-cmd)
-    ("upgrade-all" . ,upgrade-all)))
+    ("upgrade" .     ,upgrade-cmd)))
 
 ;------------------------------------------------------------------------------
 

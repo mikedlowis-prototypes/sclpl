@@ -1,7 +1,6 @@
 #------------------------------------------------------------------------------
 # Environment Setup and Utilities
 #------------------------------------------------------------------------------
-
 import platform
 import fnmatch
 import os
@@ -55,7 +54,7 @@ scheme = Environment(
         CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
         LDFLAGS  = [],
         BUILDERS = {
-            'Program': scheme_linker,
+            'Program':    scheme_linker,
             'TestRunner': scheme_tester })
 
 #------------------------------------------------------------------------------
@@ -63,40 +62,28 @@ scheme = Environment(
 #------------------------------------------------------------------------------
 
 # SOF Shared Library
-c_cpp.SharedLibrary(
-        target = 'build/sof',
-        source = find_files('source/libsof/','*.c'))
+c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
 
 # SBC Shared Library
-c_cpp.SharedLibrary(
-        target = 'build/sbc',
-        source = find_files('source/libsbc/','*.c'))
+c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
 
 # readsof Command Line Utility
 readsof = c_cpp.Clone(
         CPPPATH = [ 'source/libsof/' ],
         LIBS = [ 'sof' ],
         LIBPATH = [ 'build' ])
-readsof.Program(
-        target = 'build/readsof',
-        source = find_files('source/readsof/','*.c'))
+readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
 readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
-src_files = find_files('source/compiler/','*.scm')
-scheme.Program(
-        target = 'build/slc',
-        source = src_files)
+scheme.Program('build/slc', find_files('source/compiler/','*.scm'))
 
 # SCLPL Package Manager
-src_files = find_files('source/slpkg/','*.scm')
-scheme.Program(
-        target = 'build/slpkg',
-        source = src_files)
+scheme.Program('build/slpkg', find_files('source/slpkg/','*.scm'))
 
-# Compiler Test Suite
-#scheme.TestRunner(
-#        target = 'build/tests/sclpl-cc-tests',
-#        source = [s for s in src_files if not s.endswith("main.scm")] +
-#                 find_files('tests/compiler/','*.scm'))
+# SCLPL Assembler
+c_cpp.Program('build/slas', find_files('source/slas/','*.c'))
+
+# SCLPL Virtual Machine
+c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))
 
