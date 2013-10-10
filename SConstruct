@@ -23,7 +23,7 @@ c_cpp = Environment(
         ENV      = os.environ,
         CCFLAGS  = [ '-Wall', '-Werror', '-std=c99' ],
         LDFLAGS  = [],
-        TOOLS = [ 'mingw' ])
+        TOOLS    = [ 'mingw' ])
 
 # Chicken Scheme Environment
 #---------------------------
