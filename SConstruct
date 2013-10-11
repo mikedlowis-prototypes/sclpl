@@ -53,6 +53,7 @@ scheme = Environment(
         ENV      = os.environ,
         CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
         LDFLAGS  = [],
+        TOOLS    = [ 'mingw' ],
         BUILDERS = {
             'Program':    scheme_linker,
             'TestRunner': scheme_tester })
@@ -82,7 +83,7 @@ scheme.Program('build/slc', find_files('source/compiler/','*.scm'))
 scheme.Program('build/slpkg', find_files('source/slpkg/','*.scm'))
 
 # SCLPL Assembler
-c_cpp.Program('build/slas', find_files('source/slas/','*.c'))
+scheme.Program('build/slas', find_files('source/slas/','*.scm'))
 
 # SCLPL Virtual Machine
 c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))
