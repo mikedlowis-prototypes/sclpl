@@ -16,13 +16,13 @@ def find_files(path,pattern):
 # Helper function to build scheme programs and test runners
 def SchemeBuildAndTest(target,sources,tests):
     # Figure out the target names
-    test_runner  = target + '_tests'
-    test_output  = target + '_results'
-    test_sources = [e for e in sources if not e.endswith('main.scm')] + tests
+    #test_runner  = target + '_tests'
+    #test_output  = target + '_results'
+    #test_sources = [e for e in sources if not e.endswith('main.scm')] + tests
     # Create the targets
     scheme.Program( target, sources )
-    scheme.Program( test_runner, test_sources )
-    RunTest( test_output, test_runner )
+    #scheme.Program( test_runner, test_sources )
+    #RunTest( test_output, test_runner )
 
 # Helper function to run a test suite and generate a log file
 def RunTest( output, runner ):
@@ -61,7 +61,7 @@ scheme_linker = Builder(
 # Create the Environment for this project
 scheme = Environment(
         ENV      = os.environ,
-        CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
+        CCFLAGS  = [ '-I', 'inc'],
         LDFLAGS  = [],
         TOOLS    = [ 'mingw' ],
         BUILDERS = { 'Program': scheme_linker })
@@ -87,8 +87,8 @@ readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
 SchemeBuildAndTest( 'build/slc',
-                    find_files('source/compiler/','*.scm'),
-                    find_files('tests/compiler/','*.scm') )
+                    find_files('source/slc/','*.scm'),
+                    find_files('tests/slc/','*.scm') )
 
 # SCLPL Package Manager
 SchemeBuildAndTest( 'build/slpkg',
