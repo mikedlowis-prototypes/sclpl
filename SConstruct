@@ -13,6 +13,23 @@ def find_files(path,pattern):
             matches.append(os.path.join(root, filename))
     return matches
 
+# Helper function to build scheme programs and test runners
+def SchemeBuildAndTest(target,sources,tests):
+    # Figure out the target names
+    test_runner  = target + '_tests'
+    test_output  = target + '_results'
+    test_sources = [e for e in sources if not e.endswith('main.scm')] + tests
+    # Create the targets
+    scheme.Program( target, sources )
+    scheme.Program( test_runner, test_sources )
+    RunTest( test_output, test_runner )
+
+# Helper function to run a test suite and generate a log file
+def RunTest( output, runner ):
+    runner_exe = runner + ('.exe' if (platform.system() == 'Windows') else '')
+    cmd = os.path.basename(runner_exe)
+    scheme.Command( output, runner_exe, cmd + ' > $TARGET')
+
 #------------------------------------------------------------------------------
 # Compiler Environments
 #------------------------------------------------------------------------------
@@ -41,22 +58,14 @@ scheme_linker = Builder(
         src_suffix  = '.o',
         src_builder = [ scheme_compiler ])
 
-# Scheme Test Linker
-scheme_tester = Builder(
-        action      = 'csc $LDFLAGS -o $TARGET $SOURCES && $TARGET',
-        suffix      = "$PROGSUFFIX",
-        src_suffix  = '.o',
-        src_builder = [ scheme_compiler ])
-
 # Create the Environment for this project
 scheme = Environment(
         ENV      = os.environ,
         CCFLAGS  = [ '-explicit-use', '-I', 'inc'],
         LDFLAGS  = [],
         TOOLS    = [ 'mingw' ],
-        BUILDERS = {
-            'Program':    scheme_linker,
-            'TestRunner': scheme_tester })
+        BUILDERS = { 'Program': scheme_linker })
+scheme.PrependENVPath('PATH', './build')
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
@@ -77,13 +86,19 @@ readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
 readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
-scheme.Program('build/slc', find_files('source/compiler/','*.scm'))
+SchemeBuildAndTest( 'build/slc',
+                    find_files('source/compiler/','*.scm'),
+                    find_files('tests/compiler/','*.scm') )
 
 # SCLPL Package Manager
-scheme.Program('build/slpkg', find_files('source/slpkg/','*.scm'))
+SchemeBuildAndTest( 'build/slpkg',
+                    find_files('source/slpkg/','*.scm'),
+                    find_files('tests/slpkg/','*.scm') )
 
 # SCLPL Assembler
-scheme.Program('build/slas', find_files('source/slas/','*.scm'))
+SchemeBuildAndTest( 'build/slas',
+                    find_files('source/slas/','*.scm'),
+                    find_files('tests/slas/','*.scm') )
 
 # SCLPL Virtual Machine
 c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))

@@ -1,4 +1,5 @@
-(declare (unit server) );(uses spiffy intarweb posix))
+(declare (unit server) (uses eval));(uses spiffy intarweb posix))
+(require-extension spiffy)
 
 (define index-template
 "<!DOCTYPE html PUBLIC
@@ -36,8 +37,8 @@
   (html-response (sprintf index-template path (generate-index path))))
 
 (define (start-pkg-server port root)
-  (server-port 8080)
-  (root-path "./")
+  (server-port port)
+  (root-path root)
   (handle-directory index-handler)
   (start-server))
 
