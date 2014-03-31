@@ -16,45 +16,18 @@ license can be found in the LICENSE.md file.
 
 Requirements For Building
 ----------------------------------------------
-The only external dependencies currently required to build this library are
-Premake 4 and a toolchain that is supported by Premake.
+The only external dependencies currently required to build this library are as
+follows:
+
+* Chciken Scheme
+* SConstruct
 
 Build Instructions
 ----------------------------------------------
-This project uses Premake 4 in order to generate cross-platform build scripts.
-The first step in building the library is to generate the build scripts for
-your system. Premake supports a variety of different build environments and you
-will need to select the one that you wish to use. To list the available targets
-simply run the following command:
+This project uses SConstruct to build all binaries and libraries. To build the
+software simply execute the following command at the root of the project:
 
-    premake4 --help
-
-You should then be presented with a list of options for premake with a section
-at the end that looks like this:
-
-    ACTIONS
-
-     clean             Remove all binaries and generated files
-     codeblocks        Generate Code::Blocks project files
-     codelite          Generate CodeLite project files
-     gmake             Generate GNU makefiles for POSIX, MinGW, and Cygwin
-     vs2002            Generate Microsoft Visual Studio 2002 project files
-     vs2003            Generate Microsoft Visual Studio 2003 project files
-     vs2005            Generate Microsoft Visual Studio 2005 project files
-     vs2008            Generate Microsoft Visual Studio 2008 project files
-     vs2010            Generate Visual Studio 2010 project files (experimental)
-     xcode3            Generate Apple Xcode 3 project files (experimental)
-
-This is the list of build script targets that are supported. To generate build
-scripts to use with GNU Make for instance, you could choose the gmake target
-by using the following command:
-
-    premake4 gmake
-
-Once the Make scripts are generated you can build the project and run all unit
-tests with the following command:
-
-    make
+    scons
 
 Project Files and Directories
 ----------------------------------------------
