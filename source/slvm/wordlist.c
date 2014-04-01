@@ -2,39 +2,45 @@
 
 extern long* ArgStackPtr;
 
-extern void exec_word_def(long* code);
+extern void exec_word_def(long const* code);
 
 /**
  * Define a built-in word that executes native code */
 #define defcode(name_str,c_name,flags,prev) \
-    extern void c_name##_code(long* code);  \
-    extern char c_name##_str[];             \
-    word_t c_name = {                       \
+    extern void c_name##_code(long const* code);  \
+    extern char const c_name##_str[];       \
+    word_t const c_name = {                 \
         prev,                               \
         flags,                              \
         c_name##_str,                       \
         &c_name##_code,                     \
         0                                   \
     };                                      \
-    char c_name##_str[] = name_str;         \
-    void c_name##_code(long* inst_ptr)      \
+    char const c_name##_str[] = name_str;   \
+    void c_name##_code(long const* inst_ptr)      \
 
 /**
  * Define a built-in word that is defined by references to other words. */
 #define defword(name_str,c_name,flags,prev) \
-    extern long c_name##_code[];       \
-    extern char c_name##_str[];        \
-    word_t c_name = {                  \
-        prev,                          \
-        flags,                         \
-        c_name##_str,                  \
-        &exec_word_def,                \
-        c_name##_code                  \
-    };                                 \
-    char c_name##_str[] = name_str;    \
-    long c_name##_code[] =
+    extern long const c_name##_code[];      \
+    extern char const c_name##_str[];       \
+    word_t const c_name = {                 \
+        prev,                               \
+        flags,                              \
+        c_name##_str,                       \
+        &exec_word_def,                     \
+        c_name##_code                       \
+    };                                      \
+    char const c_name##_str[] = name_str;   \
+    long const c_name##_code[] =
+
+#define defvar()
+
+#define defconst()
 
 #define w(name) (long)&name
+
+#define NEXT 0u
 
 /* Built-in Primitive Words
  *****************************************************************************/
@@ -72,98 +78,297 @@ defcode("-rot", nrot, 0, &rot){
     *(ArgStackPtr) = temp;
 }
 
-defcode("2drop", twodrop, 0, &nrot){}
+defcode("2drop", twodrop, 0, &nrot){
+    ArgStackPtr -= 2;
+}
 
-defcode("2dup", twodup, 0, &twodrop){}
+defcode("2dup", twodup, 0, &twodrop){
+    ArgStackPtr += 2;
+    *(ArgStackPtr-1) = *(ArgStackPtr-3);
+    *(ArgStackPtr) = *(ArgStackPtr-2);
+}
 
-defcode("2swap", twoswap, 0, &twodup){}
+defcode("2swap", twoswap, 0, &twodup){
+}
 
-defcode("?dup", qdup, 0, &twoswap){}
+defcode("?dup", qdup, 0, &twoswap){
+}
 
-defcode("1+", incr, 0, &qdup){}
+defcode("1+", incr, 0, &qdup){
+    *(ArgStackPtr) += 1;
+}
 
-defcode("1-", decr, 0, &incr){}
+defcode("1-", decr, 0, &incr){
+    *(ArgStackPtr) -= 1;
+}
 
-defcode("4+", incr4, 0, &decr){}
+defcode("4+", incr4, 0, &decr){
+    *(ArgStackPtr) += 1;
+}
 
-defcode("4-", decr4, 0, &incr4){}
+defcode("4-", decr4, 0, &incr4){
+    *(ArgStackPtr) -= 1;
+}
 
-defcode("+", add, 0, &decr4){}
+defcode("+", add, 0, &decr4){
+    *(ArgStackPtr-1) += *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("-", sub, 0, &add){}
+defcode("-", sub, 0, &add){
+    *(ArgStackPtr-1) -= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("*", mul, 0, &sub){}
+defcode("*", mul, 0, &sub){
+    *(ArgStackPtr-1) *= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("/", div, 0, &mul){}
+defcode("/", div, 0, &mul){
+    *(ArgStackPtr-1) /= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("/mod", divmod, 0, &div){}
+defcode("%", mod, 0, &div){
+    *(ArgStackPtr-1) %= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("=", equal, 0, &divmod){}
+defcode("/%", divmod, 0, &mod){
+}
 
-defcode("!=", notequal, 0, &equal){}
+defcode("=", equal, 0, &divmod){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) == *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("<", lessthan, 0, &notequal){}
+defcode("!=", notequal, 0, &equal){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) != *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode(">", greaterthan, 0, &lessthan){}
+defcode("<", lessthan, 0, &notequal){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) < *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("<=", lessthaneq, 0, &greaterthan){}
+defcode(">", greaterthan, 0, &lessthan){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) > *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode(">=", greaterthaneq, 0, &lessthaneq){}
+defcode("<=", lessthaneq, 0, &greaterthan){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) <= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("0=", zeroeq, 0, &greaterthaneq){}
+defcode(">=", greaterthaneq, 0, &lessthaneq){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) >= *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("0!=", zeroneq, 0, &zeroeq){}
+defcode("0=", zeroeq, 0, &greaterthaneq){
+    *(ArgStackPtr) = *(ArgStackPtr) == 0;
+}
 
-defcode("0<", zerolt, 0, &zeroneq){}
+defcode("0!=", zeroneq, 0, &zeroeq){
+    *(ArgStackPtr) = *(ArgStackPtr) != 0;
+}
 
-defcode("0>", zerogt, 0, &zerolt){}
+defcode("0<", zerolt, 0, &zeroneq){
+    *(ArgStackPtr) = *(ArgStackPtr) < 0;
+}
 
-defcode("0<=", zerolte, 0, &zerogt){}
+defcode("0>", zerogt, 0, &zerolt){
+    *(ArgStackPtr) = *(ArgStackPtr) > 0;
+}
 
-defcode("0>=", zerogte, 0, &zerolte){}
+defcode("0<=", zerolte, 0, &zerogt){
+    *(ArgStackPtr) = *(ArgStackPtr) <= 0;
+}
 
-defcode("and", and, 0, &zerogte){}
+defcode("0>=", zerogte, 0, &zerolte){
+    *(ArgStackPtr) = *(ArgStackPtr) >= 0;
+}
 
-defcode("or", or, 0, &and){}
+defcode("and", and, 0, &zerogte){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) && *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("not", not, 0, &or){}
+defcode("or", or, 0, &and){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) || *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("band", band, 0, &not){}
+defcode("not", not, 0, &or){
+    *(ArgStackPtr) = !(*(ArgStackPtr));
+}
 
-defcode("bor", bor, 0, &band){}
+defcode("band", band, 0, &not){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) & *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("bxor", bxor, 0, &bor){}
+defcode("bor", bor, 0, &band){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) | *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("bnot", bnot, 0, &bxor){}
+defcode("bxor", bxor, 0, &bor){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) ^ *(ArgStackPtr);
+    ArgStackPtr--;
+}
 
-defcode("lit", lit, 0, &bnot){}
+defcode("bnot", bnot, 0, &bxor){
+    *(ArgStackPtr) = ~(*(ArgStackPtr));
+}
 
-defcode("!", store, 0, &lit){}
+defcode("lit", lit, 0, &bnot){
+}
 
-defcode("@", fetch, 0, &store){}
+defcode("!", store, 0, &lit){
+}
 
-defcode("+!", addstore, 0, &fetch){}
+defcode("@", fetch, 0, &store){
+}
 
-defcode("-!", substore, 0, &addstore){}
+defcode("+!", addstore, 0, &fetch){
+}
 
-defcode("b!", bytestore, 0, &substore){}
+defcode("-!", substore, 0, &addstore){
+}
 
-defcode("b@", bytefetch, 0, &bytestore){}
+defcode("b!", bytestore, 0, &substore){
+}
 
-defcode("b@b!", bytecopy, 0, &bytefetch){}
+defcode("b@", bytefetch, 0, &bytestore){
+}
 
-defcode("bmove", bytemove, 0, &bytecopy){}
+defcode("b@b!", bytecopy, 0, &bytefetch){
+}
+
+defcode("bmove", bytemove, 0, &bytecopy){
+}
 
 /* Built-in Variables
  *****************************************************************************/
+//defvar("state", , 0, &){
+//}
+//
+//defvar("here", , 0, &){
+//}
+//
+//defvar("latest", , 0, &){
+//}
+//
+//defvar("tos", , 0, &){
+//}
+//
+//defvar("base", , 0, &){
+//}
 
 /* Built-in Constants
  *****************************************************************************/
+//defconst("version", , 0, &){
+//}
+//
+//defconst("docol", , 0, &){
+//}
+//
+//defconst("f_immed", , 0, &){
+//}
+//
+//defconst("f_hidden", , 0, &){
+//}
 
-/* Built-in Defined Words
+/* Input/Output Words
  *****************************************************************************/
+//defcode("getc", , 0, &){
+//}
+//
+//defcode("putc", , 0, &){
+//}
+//
+//defcode("getw", , 0, &){
+//}
+//
+//defcode("getn", , 0, &){
+//}
+
+/* Compiler Words
+ *****************************************************************************/
+//defcode("findw", , 0, &){
+//}
+//
+//defcode("wcwa", , 0, &){
+//}
+//
+//defcode("wcda", , 0, &){
+//}
+//
+//defcode("create", , 0, &){
+//}
+//
+//defcode(",", , 0, &){
+//}
+//
+//defcode("[", , 0, &){
+//}
+//
+//defcode("]", , 0, &){
+//}
+
+//defword(":", , 0, &){
+//}
+//
+//defword(";", , 0, &){
+//}
+
+//defcode("immediate", , 0, &){
+//}
+//
+//defcode("hidden", , 0, &){
+//}
+//
+//defcode("hide", , 0, &){
+//}
+//
+//defcode("'", , 0, &){
+//}
+
+/* Branching Words
+ *****************************************************************************/
+//defcode("branch", , 0, &){
+//}
+//
+//defcode("0branch", , 0, &){
+//}
+
+/* String Literal Words
+ *****************************************************************************/
+//defcode("litstring", , 0, &){
+//}
+//
+//defcode("puts", , 0, &){
+//}
+
+/* Interpreter Words
+ *****************************************************************************/
+//defcode("quit", , 0, &){
+//}
+//
+//defcode("interpret", , 0, &){
+//}
+//
+//defcode("char", , 0, &){
+//}
+//
+//defcode("execute", , 0, &){
+//}
 
 /* Latest Defined Word
  *****************************************************************************/
-word_t* LatestWord = &bytemove;
+word_t const* LatestWord = &bytemove;
 

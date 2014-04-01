@@ -7,16 +7,16 @@
 #ifndef WORDLIST_H
 #define WORDLIST_H
 
-typedef void (*codeword_t)(long*);
+typedef void (*codeword_t)(long const*);
 
 typedef struct word_t {
-    struct word_t* link;
-    long flags;
-    char* name;
-    codeword_t codeword;
-    long* code;
+    struct word_t const* link;
+    long const flags;
+    char const* name;
+    codeword_t const codeword;
+    long const* code;
 } word_t;
 
-extern word_t* LatestWord;
+extern word_t const* LatestWord;
 
 #endif /* WORDLIST_H */
