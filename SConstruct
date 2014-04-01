@@ -72,33 +72,33 @@ scheme.PrependENVPath('PATH', './build')
 #------------------------------------------------------------------------------
 
 # SOF Shared Library
-c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
+#c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
 
 # SBC Shared Library
-c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
+#c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
 
 # readsof Command Line Utility
-readsof = c_cpp.Clone(
-        CPPPATH = [ 'source/libsof/' ],
-        LIBS = [ 'sof' ],
-        LIBPATH = [ 'build' ])
-readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
-readsof.Depends('readsof', 'sof')
+#readsof = c_cpp.Clone(
+#        CPPPATH = [ 'source/libsof/' ],
+#        LIBS = [ 'sof' ],
+#        LIBPATH = [ 'build' ])
+#readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
+#readsof.Depends('readsof', 'sof')
 
-# SCLPL Compiler
-SchemeBuildAndTest( 'build/slc',
-                    find_files('source/slc/','*.scm'),
-                    find_files('tests/slc/','*.scm') )
-
-# SCLPL Package Manager
-SchemeBuildAndTest( 'build/slpkg',
-                    find_files('source/slpkg/','*.scm'),
-                    find_files('tests/slpkg/','*.scm') )
-
-# SCLPL Assembler
-SchemeBuildAndTest( 'build/slas',
-                    find_files('source/slas/','*.scm'),
-                    find_files('tests/slas/','*.scm') )
+## SCLPL Compiler
+#SchemeBuildAndTest( 'build/slc',
+#                    find_files('source/slc/','*.scm'),
+#                    find_files('tests/slc/','*.scm') )
+#
+## SCLPL Package Manager
+#SchemeBuildAndTest( 'build/slpkg',
+#                    find_files('source/slpkg/','*.scm'),
+#                    find_files('tests/slpkg/','*.scm') )
+#
+## SCLPL Assembler
+#SchemeBuildAndTest( 'build/slas',
+#                    find_files('source/slas/','*.scm'),
+#                    find_files('tests/slas/','*.scm') )
 
 # SCLPL Virtual Machine
 c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))

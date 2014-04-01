@@ -7,7 +7,7 @@
 #ifndef WORDLIST_H
 #define WORDLIST_H
 
-typedef void (*codeword_t)(void);
+typedef void (*codeword_t)(long*);
 
 typedef struct word_t {
     struct word_t* link;
