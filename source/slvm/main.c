@@ -14,20 +14,21 @@ int main(int argc, char** argv)
     long stack[] = {0,42,0,0};
     ArgStackPtr = &stack[1];
 
+
     //exec_word(find_word("dup"));
     fetch_and_exec();
 
-    printf("stack[3] = %d\n", (int)stack[3]);
-    printf("stack[2] = %d\n", (int)stack[2]);
-    printf("stack[1] = %d\n", (int)stack[1]);
-    printf("stack[0] = %d\n", (int)stack[0]);
+    //printf("stack[3] = %d\n", (int)stack[3]);
+    //printf("stack[2] = %d\n", (int)stack[2]);
+    //printf("stack[1] = %d\n", (int)stack[1]);
+    //printf("stack[0] = %d\n", (int)stack[0]);
     return 0;
 }
 
 static void fetch_and_exec(void)
 {
     char buffer[1024];
-    printf("> ");
+    //printf("> ");
     fgets(buffer, 1024, stdin);
     find_word(buffer);
     puts(buffer);

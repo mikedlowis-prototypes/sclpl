@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "wordlist.h"
 
 extern long* ArgStackPtr;
@@ -6,37 +9,50 @@ extern void exec_word_def(long const* code);
 
 /**
  * Define a built-in word that executes native code */
-#define defcode(name_str,c_name,flags,prev) \
-    extern void c_name##_code(long const* code);  \
-    extern char const c_name##_str[];       \
-    word_t const c_name = {                 \
-        prev,                               \
-        flags,                              \
-        c_name##_str,                       \
-        &c_name##_code,                     \
-        0                                   \
-    };                                      \
-    char const c_name##_str[] = name_str;   \
-    void c_name##_code(long const* inst_ptr)      \
+#define defcode(name_str,c_name,flags,prev)         \
+    static void c_name##_code(long const* code);    \
+    static char const c_name##_str[];               \
+    static word_t const c_name = {                  \
+        prev,                                       \
+        flags,                                      \
+        c_name##_str,                               \
+        &c_name##_code,                             \
+        0                                           \
+    };                                              \
+    static char const c_name##_str[] = name_str;    \
+    static void c_name##_code(long const* inst_ptr) \
 
 /**
  * Define a built-in word that is defined by references to other words. */
-#define defword(name_str,c_name,flags,prev) \
-    extern long const c_name##_code[];      \
-    extern char const c_name##_str[];       \
-    word_t const c_name = {                 \
-        prev,                               \
-        flags,                              \
-        c_name##_str,                       \
-        &exec_word_def,                     \
-        c_name##_code                       \
-    };                                      \
-    char const c_name##_str[] = name_str;   \
-    long const c_name##_code[] =
+#define defword(name_str,c_name,flags,prev)      \
+    static long const c_name##_code[];           \
+    static char const c_name##_str[];            \
+    static word_t const c_name = {               \
+        prev,                                    \
+        flags,                                   \
+        c_name##_str,                            \
+        &exec_word_def,                          \
+        c_name##_code                            \
+    };                                           \
+    static char const c_name##_str[] = name_str; \
+    static long const c_name##_code[] =
 
-#define defvar()
+/**
+ * Define a built-in word representing a variable with the provided initial value */
+#define defvar(name_str,c_name,flags,prev,initial) \
+    static long c_name##_val = initial;            \
+    defcode(name_str,c_name,flags,prev) {          \
+        ArgStackPtr++;                             \
+        *(ArgStackPtr) = (long)&(c_name##_val);    \
+    }
 
-#define defconst()
+/**
+ * Define a built-in word representing a constant with the provided value */
+#define defconst(name_str,c_name,flags,prev,value) \
+    defcode(name_str,c_name,flags,prev) {          \
+        ArgStackPtr++;                             \
+        *(ArgStackPtr) = (long)value;              \
+    }
 
 #define w(name) (long)&name
 
@@ -125,12 +141,12 @@ defcode("*", mul, 0, &sub){
     ArgStackPtr--;
 }
 
-defcode("/", div, 0, &mul){
+defcode("/", divide, 0, &mul){
     *(ArgStackPtr-1) /= *(ArgStackPtr);
     ArgStackPtr--;
 }
 
-defcode("%", mod, 0, &div){
+defcode("%", mod, 0, &divide){
     *(ArgStackPtr-1) %= *(ArgStackPtr);
     ArgStackPtr--;
 }
@@ -254,63 +270,107 @@ defcode("bmove", bytemove, 0, &bytecopy){
 
 /* Built-in Variables
  *****************************************************************************/
-//defvar("state", , 0, &){
-//}
-//
-//defvar("here", , 0, &){
-//}
-//
-//defvar("latest", , 0, &){
-//}
-//
-//defvar("tos", , 0, &){
-//}
-//
-//defvar("base", , 0, &){
-//}
+defvar("state", state, 0, &bytemove, 0);
+defvar("here", here, 0, &state, 0);
+defvar("latest", latest, 0, &here, 0);
+defvar("tos", tos, 0, &latest, 0);
+defvar("base", base, 0, &tos, 0);
 
 /* Built-in Constants
  *****************************************************************************/
-//defconst("version", , 0, &){
-//}
-//
-//defconst("docol", , 0, &){
-//}
-//
-//defconst("f_immed", , 0, &){
-//}
-//
-//defconst("f_hidden", , 0, &){
-//}
+defconst("VERSION", version, 0, &base, 1);
+defconst("EXECDEF", execdef, 0, &version, (long)&exec_word_def);
+defconst("F_IMMED", f_immed, 0, &execdef, 1);
+defconst("F_HIDDEN", f_hidden, 0, &f_immed, 2);
 
 /* Input/Output Words
  *****************************************************************************/
-//defcode("getc", , 0, &){
-//}
-//
-//defcode("putc", , 0, &){
-//}
-//
-//defcode("getw", , 0, &){
-//}
-//
-//defcode("getn", , 0, &){
-//}
+int is_whitespace(char ch)
+{
+    return ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
+}
+
+defcode("getc", get_io_c, 0, &f_hidden){
+    ArgStackPtr++;
+    *(ArgStackPtr) = getc(stdin);
+}
+
+defcode("putc", put_io_c, 0, &get_io_c){
+    putc((char)*(ArgStackPtr), stdout);
+    ArgStackPtr--;
+}
+
+defcode("getw", parse_word, 0, &put_io_c){
+    static char buffer[32];
+    int i = 0;
+    /* Skip any whitespace */
+    do {
+        buffer[i] = getc(stdin);
+    } while(is_whitespace(buffer[i++]));
+
+    /* Read the rest of the word */
+    while(!is_whitespace(buffer[i] = getc(stdin)) && (i < 31))
+    {
+        i++;
+    }
+
+    /* Terminate the string */
+    buffer[i] = '\0';
+
+    /* Return the word */
+    ArgStackPtr++;
+    *(ArgStackPtr) = (long)&buffer;
+}
+
+defcode("getn", getn, 0, &parse_word){
+    long number = 0;
+    *(ArgStackPtr) = number;
+}
 
 /* Compiler Words
  *****************************************************************************/
-//defcode("findw", , 0, &){
-//}
-//
-//defcode("wcwa", , 0, &){
-//}
-//
-//defcode("wcda", , 0, &){
-//}
-//
-//defcode("create", , 0, &){
-//}
-//
+defcode("findw", findw, 0, &getn){
+    word_t const* curr = LatestWord;
+    char* name = (char*)*(ArgStackPtr);
+    while(curr)
+    {
+        if (0 == strcmp(curr->name,name))
+        {
+            break;
+        }
+        curr = curr->link;
+    }
+    *(ArgStackPtr) = (long)curr;
+}
+
+defcode("wcwa", code_word_addr, 0, &findw){
+    word_t const* word = (word_t const*)*(ArgStackPtr);
+    *(ArgStackPtr) = (long)word->codeword;
+}
+
+defcode("wcda", code_data_addr, 0, &code_word_addr){
+    word_t const* word = (word_t const*)*(ArgStackPtr);
+    *(ArgStackPtr) = (long)word->code;
+}
+
+defcode("create", create, 0, &code_data_addr){
+    /* Copy the name string */
+    size_t namesz = strlen((char*)*(ArgStackPtr));
+    char* name = (char*)malloc( namesz );
+    strcpy(name, (char*)*(ArgStackPtr));
+    /* Create the word entry */
+    word_t* word   = (word_t*)malloc(sizeof(word_t));
+    word->link     = LatestWord;
+    word->flags    = 0;
+    word->name     = name;
+    word->codeword = exec_word_def;
+    word->code     = 0u;
+    /* Update Latest and Return the new word */
+    LatestWord = word;
+    here_val = (long)word;
+    *(ArgStackPtr) = (long)word;
+}
+
 //defcode(",", , 0, &){
 //}
 //
@@ -370,5 +430,5 @@ defcode("bmove", bytemove, 0, &bytecopy){
 
 /* Latest Defined Word
  *****************************************************************************/
-word_t const* LatestWord = &bytemove;
+word_t const* LatestWord = &create;
 

@@ -11,9 +11,9 @@ typedef void (*codeword_t)(long const*);
 
 typedef struct word_t {
     struct word_t const* link;
-    long const flags;
+    long flags;
     char const* name;
-    codeword_t const codeword;
+    codeword_t codeword;
     long const* code;
 } word_t;
 
