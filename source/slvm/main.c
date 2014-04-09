@@ -108,7 +108,7 @@ defcode("[", lbrack, 0, &base){
     state_val = 1;
 }
 
-defcode("]", rbrack, f_immed_val, &lbrack){
+defcode("]", rbrack, 0x01, &lbrack){
     state_val = 0;
 }
 
@@ -206,7 +206,7 @@ defcode("findw", find_word, 0, &get_word){
     char* name = (char*)*(ArgStackPtr);
     while(curr)
     {
-        if (0 == strcmp(curr->name,name))
+        if (!(curr->flags & 0x02) && (0 == strcmp(curr->name,name)))
         {
             break;
         }
@@ -233,6 +233,31 @@ defcode("interpret", interpret, 0, &parse_num){
     /* Find the word */
     EXEC(find_word);
     printf("Compile Mode: %lu\n", (long)(state_val == 1));
+    /*
+        if found
+            if immediate word
+                execute
+            else
+                if executing
+                    execute
+                else compiling
+                    append to word
+                    if appended word was a literal
+                        append number to word
+                    end
+                end
+
+            end
+        else
+            parse as number
+            if failed
+                parse error
+            end
+        end
+
+    */
+
+
     /* Execute the word */
     if (*ArgStackPtr)
     {
@@ -276,6 +301,20 @@ defcode("quit", quit, 0, &interpret){
     }
 }
 
+/* Main
+ *****************************************************************************/
+int main(int argc, char** argv)
+{
+    ArgStack[0] = 1111;
+    ArgStack[1] = 2222;
+    ArgStack[2] = 3333;
+    ArgStack[3] = 4444;
+    ArgStackPtr = ArgStack;
+    latest_val = (long)&quit;
+    EXEC(quit);
+
+    return 0;
+}
 
 
 //defcode(":", colon, 0, &rbrack){
@@ -590,29 +629,5 @@ defcode("quit", quit, 0, &interpret){
 //    state_val = 0;
 //}
 
-/* Main
- *****************************************************************************/
-int main(int argc, char** argv)
-{
-    ArgStack[0] = 1111;
-    ArgStack[1] = 2222;
-    ArgStack[2] = 3333;
-    ArgStack[3] = 4444;
-    ArgStackPtr = ArgStack;
-    latest_val = (long)&rbrack;
-    printf("StackBottom: %lu\n", (long)ArgStackPtr);
-    EXEC(quit);
-    //EXEC(get_word);
-    //EXEC(find_word);
-    //EXEC(exec_word);
-    printf("%d - %lu %s\n", 0, ArgStack[0], &ArgStack[0] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 1, ArgStack[1], &ArgStack[1] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 2, ArgStack[2], &ArgStack[2] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 3, ArgStack[3], &ArgStack[3] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 4, ArgStack[4], &ArgStack[4] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 5, ArgStack[5], &ArgStack[5] == ArgStackPtr ? "<-" : "");
-    printf("%d - %lu %s\n", 6, ArgStack[6], &ArgStack[6] == ArgStackPtr ? "<-" : "");
 
-    return 0;
-}
 
