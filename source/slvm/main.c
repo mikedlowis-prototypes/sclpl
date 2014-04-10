@@ -48,6 +48,8 @@ static long* CodePtr;
 /** The argument stack */
 static long ArgStack[32];
 
+static long Line_Read;
+
 /**
  * This is the "inner" interpreter. This function is responsible for running
  * the threaded code that make up colon defintions. */
@@ -119,6 +121,11 @@ defcode("ws?", is_ws, 0, &get_char){
     char ch = *(ArgStackPtr);
     *(ArgStackPtr) = ((ch == ' ')  || (ch == '\t') ||
                       (ch == '\r') || (ch == '\n'));
+
+    /* Note: total hack to get the prompt to reappear when the user hits
+     * enter */
+    if(ch == '\n')
+        Line_Read = 1;
 }
 
 defcode("getw", get_word, 0, &is_ws){
@@ -133,8 +140,6 @@ defcode("getw", get_word, 0, &is_ws){
         EXEC(is_ws);
         wschar = *(ArgStackPtr);
         ArgStackPtr--;
-        if(wschar == '\n')
-            printf((state_val) ? "=> " : ".. ");
     } while(wschar);
 
     /* Read the rest of the word */
@@ -172,18 +177,18 @@ defcode("findw", find_word, 0, &get_word){
 
 /* Branching and Literal Words
  *****************************************************************************/
-defcode("literal", literal, 0, &find_word){
+defcode("lit", literal, 0, &find_word){
     CodePtr++;
     ArgStackPtr++;
     *(ArgStackPtr) = *CodePtr;
 }
 
-defcode("branch", branch, 0, &literal){
+defcode("br", branch, 0, &literal){
   CodePtr++;
   CodePtr += *(CodePtr);
 }
 
-defcode("branch-if", branch_if, 0, &branch){
+defcode("brif", branch_if, 0, &branch){
     if (*ArgStackPtr)
     {
         CodePtr++;
@@ -314,18 +319,29 @@ defcode("interpret", interpret, 0, &parse_num){
 }
 
 defcode("quit", quit, 0, &interpret){
-    puts("System Reset");
+    int i;
+    printf("=> ");
+    Line_Read = 0;
     while(1)
     {
         EXEC(interpret);
 
-        printf("%d - %lu %s\n", 0, ArgStack[0], &ArgStack[0] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 1, ArgStack[1], &ArgStack[1] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 2, ArgStack[2], &ArgStack[2] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 3, ArgStack[3], &ArgStack[3] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 4, ArgStack[4], &ArgStack[4] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 5, ArgStack[5], &ArgStack[5] == ArgStackPtr ? "<-" : "");
-        printf("%d - %lu %s\n", 6, ArgStack[6], &ArgStack[6] == ArgStackPtr ? "<-" : "");
+        if(Line_Read)
+        {
+            long stacksz = ArgStackPtr - ArgStack + 1;
+            if (stacksz > 5)
+                printf("( ... ");
+            else
+                printf("( ");
+
+            for(i = (stacksz > 5) ? 4 : stacksz-1; i >= 0; i--)
+            {
+                printf("%lu ", *(ArgStackPtr-i));
+            }
+            printf(")\n%s ", (state_val == 0) ? "=>" : "..");
+            Line_Read = 0;
+        }
+
     }
 }
 
