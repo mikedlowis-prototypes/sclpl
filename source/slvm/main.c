@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 /**
     This type represents a pointer to a function handler for executing a word.
@@ -37,37 +39,46 @@ typedef struct word_t {
 /** Execute a built-in word directly */
 #define EXEC(word) (word).codeword((word).code)
 
+/** Pointer to current position on the stack */
+static long* ArgStackPtr;
+
+/** The argument stack */
+static long ArgStack[32];
+
 /**
  * This is the "inner" interpreter. This function is responsible for running
  * the threaded code that make up colon defintions. */
 static void docolon(long* code) {
     while(*code)
     {
-        EXEC( *((word_t*)(*code)) );
+        if(*code == LONG_MAX)
+        {
+            code++;
+            ArgStackPtr++;
+            *(ArgStackPtr) = *code;
+        }
+        else
+        {
+            EXEC( *((word_t*)(*code)) );
+        }
         code++;
     }
 }
 
-/** Pointer to current position on the stack */
-static long* ArgStackPtr;
-
-/** The argument stack */
-long ArgStack[32];
-
 /**
  * Define a built-in word that executes native code */
-#define defcode(name_str,c_name,flags,prev)         \
-    static void c_name##_code(long* code);    \
-    static char const c_name##_str[];               \
-    static word_t const c_name = {                  \
-        prev,                                       \
-        flags,                                      \
-        c_name##_str,                               \
-        &c_name##_code,                             \
-        0                                           \
-    };                                              \
-    static char const c_name##_str[] = name_str;    \
-    static void c_name##_code(long* inst_ptr) \
+#define defcode(name_str,c_name,flags,prev)      \
+    static void c_name##_code(long* code);       \
+    static char const c_name##_str[];            \
+    static word_t const c_name = {               \
+        prev,                                    \
+        flags,                                   \
+        c_name##_str,                            \
+        &c_name##_code,                          \
+        0                                        \
+    };                                           \
+    static char const c_name##_str[] = name_str; \
+    static void c_name##_code(long* inst_ptr)    \
 
 /**
  * Define a built-in word representing a variable with the provided initial value */
@@ -99,63 +110,10 @@ defconst("F_HIDDEN", f_hidden, 0, &f_immed, 0x02);
 defvar("state",  state,  0, &f_hidden, 0);
 defvar("here",   here,   0, &state,    0);
 defvar("latest", latest, 0, &here,     0);
-defvar("tos",    tos,    0, &latest,   0);
-defvar("base",   base,   0, &tos,      0);
 
-/* Compiler Words
+/* Input Words
  *****************************************************************************/
-defcode("[", lbrack, 0, &base){
-    state_val = 1;
-}
-
-defcode("]", rbrack, 0x01, &lbrack){
-    state_val = 0;
-}
-
-defcode("create", create, 0, &rbrack){
-    puts("Creating a new word");
-    /* Copy the name string */
-    char* name = 0u;
-    if (*(ArgStackPtr))
-    {
-        printf("not null!\n");
-        size_t namesz = strlen((char*)*(ArgStackPtr));
-        name = (char*)malloc( namesz );
-        strcpy(name, (char*)*(ArgStackPtr));
-    }
-    /* Create the word entry */
-    word_t* word   = (word_t*)malloc(sizeof(word_t));
-    word->link     = (word_t*)latest_val;
-    word->flags    = f_hidden_val;
-    word->name     = name;
-    word->codeword = &docolon;
-    word->code     = (long*)malloc(sizeof(long));
-    word->code[0]  = 0;
-    /* Update Latest and Return the new word */
-    latest_val     = (long)word;
-    here_val       = (long)word->code;
-    *(ArgStackPtr) = (long)word;
-    printf("new word: %d %lu\n", (int)*(ArgStackPtr), (long)*(ArgStackPtr));
-}
-
-defcode(",", comma, 0, &create){
-    /* Get the word we are currently compiling */
-    word_t* word  = (word_t*)latest_val;
-    /* Put the next instruction in place of the terminating NULL that "here"
-     * points too */
-    *((long*)here_val) = *(ArgStackPtr);
-    ArgStackPtr--;
-    /* Resize the code section and relocate if necessary */
-    long currsize = sizeof(long) + (here_val - (long)word->code);
-    word->code    = (long*)realloc(word->code, currsize + sizeof(long));
-    /* Update "here" and null terminate the code section */
-    here_val      = (long)&(word->code[ (currsize / sizeof(long)) ]);
-    *((long*)here_val) = 0;
-}
-
-/* Interpreter Words
- *****************************************************************************/
-defcode("getc", get_char, 0, &comma){
+defcode("getc", get_char, 0, &latest){
     ArgStackPtr++;
     *(ArgStackPtr) = getc(stdin);
 }
@@ -215,14 +173,83 @@ defcode("findw", find_word, 0, &get_word){
     *(ArgStackPtr) = (long)curr;
 }
 
-defcode("execw", exec_word, 0, &find_word){
+/* Compiler Words
+ *****************************************************************************/
+defcode("[", lbrack, 0, &find_word){
+    state_val = 1;
+}
+
+defcode("]", rbrack, 0x01, &lbrack){
+    state_val = 0;
+}
+
+defcode("create", create, 0, &rbrack){
+    /* Copy the name string */
+    char* name = 0u;
+    if (*(ArgStackPtr))
+    {
+        size_t namesz = strlen((char*)*(ArgStackPtr));
+        name = (char*)malloc( namesz );
+        strcpy(name, (char*)*(ArgStackPtr));
+    }
+    /* Create the word entry */
+    word_t* word   = (word_t*)malloc(sizeof(word_t));
+    word->link     = (word_t*)latest_val;
+    word->flags    = f_hidden_val;
+    word->name     = name;
+    word->codeword = &docolon;
+    word->code     = (long*)malloc(sizeof(long));
+    word->code[0]  = 0;
+    /* Update Latest and Return the new word */
+    latest_val     = (long)word;
+    here_val       = (long)word->code;
+    *(ArgStackPtr) = (long)word;
+}
+
+defcode(",", comma, 0, &create){
+    /* Get the word we are currently compiling */
+    word_t* word  = (word_t*)latest_val;
+    /* Put the next instruction in place of the terminating NULL that "here"
+     * points too */
+    *((long*)here_val) = *(ArgStackPtr);
+    ArgStackPtr--;
+    /* Resize the code section and relocate if necessary */
+    long currsize = sizeof(long) + (here_val - (long)word->code);
+    word->code    = (long*)realloc(word->code, currsize + sizeof(long));
+    /* Update "here" and null terminate the code section */
+    here_val      = (long)&(word->code[ (currsize / sizeof(long)) ]);
+    *((long*)here_val) = 0;
+}
+
+defcode("hide", hide, 0, &comma){
+    ((word_t*)*(ArgStackPtr))->flags |= 0x02;
+}
+
+defcode("unhide", unhide, 0, &hide){
+    ((word_t*)*(ArgStackPtr))->flags ^= 0x02;
+}
+
+defcode(":", colon, 0, &unhide){
+    EXEC(get_word);
+    EXEC(create);
+    EXEC(lbrack);
+}
+
+defcode(";", semicolon, 1, &colon){
+    EXEC(rbrack);
+    EXEC(unhide);
+}
+
+/* Interpreter Words
+ *****************************************************************************/
+defcode("execw", exec_word, 0, &semicolon){
     word_t* word = (word_t*)(*ArgStackPtr);
     ArgStackPtr--;
     EXEC( *(word) );
 }
 
 defcode("parsenum", parse_num, 0, &exec_word){
-    *(ArgStackPtr) = atoi((const char *)*(ArgStackPtr));
+    *(ArgStackPtr) = strtol((const char *)*(ArgStackPtr), NULL, 10);
 }
 
 defcode("interpret", interpret, 0, &parse_num){
@@ -232,57 +259,39 @@ defcode("interpret", interpret, 0, &parse_num){
     curr_word = (char*)*(ArgStackPtr);
     /* Find the word */
     EXEC(find_word);
-    printf("Compile Mode: %lu\n", (long)(state_val == 1));
-    /*
-        if found
-            if immediate word
-                execute
-            else
-                if executing
-                    execute
-                else compiling
-                    append to word
-                    if appended word was a literal
-                        append number to word
-                    end
-                end
 
-            end
-        else
-            parse as number
-            if failed
-                parse error
-            end
-        end
-
-    */
-
-
-    /* Execute the word */
+    /* if we found a word */
     if (*ArgStackPtr)
     {
-        puts("found word");
-        /* If were are in immediate mode or the word is flagged 'immediate' */
+        /* If we are in immediate mode or the found word is marked immediate */
         if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags & f_immed_val))
         {
-            puts("executing word");
+            /* Execute the word */
             EXEC(exec_word);
         }
-        /* Or compile mode */
+        /* else we are compiling */
         else
         {
-            puts("comma");
             EXEC(comma);
         }
     }
-    /* or parse it as a number */
+    /* else parse it as a number */
     else
     {
-        puts("Parsing number");
         *(ArgStackPtr) = (long)curr_word;
         EXEC(parse_num);
+        if (state_val == 1)
+        {
+            ArgStackPtr++;
+            *(ArgStackPtr) = LONG_MAX;
+            EXEC(comma);
+            EXEC(comma);
+        }
+        else if (errno == ERANGE)
+        {
+            ArgStackPtr--;
+        }
     }
-    printf("Compile Mode: %lu\n", (long)(state_val == 1));
 }
 
 defcode("quit", quit, 0, &interpret){
@@ -317,16 +326,7 @@ int main(int argc, char** argv)
 }
 
 
-//defcode(":", colon, 0, &rbrack){
-//    EXEC(get_word);
-//    EXEC(create);
-//    EXEC(rbrack);
-//}
-//
-//defcode(";", semicolon, 0, &colon){
-//    ((word_t*)latest_val)->flags ^= f_hidden_val;
-//    state_val = 0;
-//}
+
 //
 //defcode("wcwa", code_word_addr, 0, &put_io_c){
 //    word_t const* word = (word_t const*)*(ArgStackPtr);
