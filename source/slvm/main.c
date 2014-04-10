@@ -42,6 +42,9 @@ typedef struct word_t {
 /** Pointer to current position on the stack */
 static long* ArgStackPtr;
 
+/** Pointer to current position on the stack */
+static long* CodePtr;
+
 /** The argument stack */
 static long ArgStack[32];
 
@@ -49,20 +52,14 @@ static long ArgStack[32];
  * This is the "inner" interpreter. This function is responsible for running
  * the threaded code that make up colon defintions. */
 static void docolon(long* code) {
-    while(*code)
+    long* prev_code = CodePtr;
+    CodePtr = code;
+    while(*CodePtr)
     {
-        if(*code == LONG_MAX)
-        {
-            code++;
-            ArgStackPtr++;
-            *(ArgStackPtr) = *code;
-        }
-        else
-        {
-            EXEC( *((word_t*)(*code)) );
-        }
-        code++;
+        EXEC( *((word_t*)(*CodePtr)) );
+        CodePtr++;
     }
+    CodePtr = prev_code;
 }
 
 /**
@@ -173,9 +170,30 @@ defcode("findw", find_word, 0, &get_word){
     *(ArgStackPtr) = (long)curr;
 }
 
+/* Branching and Literal Words
+ *****************************************************************************/
+defcode("literal", literal, 0, &find_word){
+    CodePtr++;
+    ArgStackPtr++;
+    *(ArgStackPtr) = *CodePtr;
+}
+
+defcode("branch", branch, 0, &literal){
+  CodePtr++;
+  CodePtr += *(CodePtr);
+}
+
+defcode("branch-if", branch_if, 0, &branch){
+    if (*ArgStackPtr)
+    {
+        CodePtr++;
+        CodePtr += *(CodePtr);
+    }
+}
+
 /* Compiler Words
  *****************************************************************************/
-defcode("[", lbrack, 0, &find_word){
+defcode("[", lbrack, 0, &branch_if){
     state_val = 1;
 }
 
@@ -221,15 +239,15 @@ defcode(",", comma, 0, &create){
     *((long*)here_val) = 0;
 }
 
-defcode("hide", hide, 0, &comma){
-    ((word_t*)*(ArgStackPtr))->flags |= 0x02;
+defcode("hidden", hidden, 0, &comma){
+    ((word_t*)*(ArgStackPtr))->flags ^= f_hidden_val;
 }
 
-defcode("unhide", unhide, 0, &hide){
-    ((word_t*)*(ArgStackPtr))->flags ^= 0x02;
+defcode("immediate", immediate, 0, &hidden){
+    ((word_t*)*(ArgStackPtr))->flags ^= f_immed_val;
 }
 
-defcode(":", colon, 0, &unhide){
+defcode(":", colon, 0, &immediate){
     EXEC(get_word);
     EXEC(create);
     EXEC(lbrack);
@@ -237,7 +255,8 @@ defcode(":", colon, 0, &unhide){
 
 defcode(";", semicolon, 1, &colon){
     EXEC(rbrack);
-    EXEC(unhide);
+    EXEC(hidden);
+    ArgStackPtr--;
 }
 
 /* Interpreter Words
@@ -283,7 +302,7 @@ defcode("interpret", interpret, 0, &parse_num){
         if (state_val == 1)
         {
             ArgStackPtr++;
-            *(ArgStackPtr) = LONG_MAX;
+            *(ArgStackPtr) = (long)&literal;
             EXEC(comma);
             EXEC(comma);
         }
@@ -310,324 +329,185 @@ defcode("quit", quit, 0, &interpret){
     }
 }
 
+/* Stack Manipulation Words
+ *****************************************************************************/
+defcode("drop", drop, 0, &quit){
+    ArgStackPtr--;
+}
+
+defcode("swap", swap, 0, &drop){
+    long temp = *(ArgStackPtr);
+    *(ArgStackPtr) = *(ArgStackPtr-1);
+    *(ArgStackPtr-1) = temp;
+}
+
+defcode("dup", dup, 0, &swap){
+    ArgStackPtr++;
+    *(ArgStackPtr) = *(ArgStackPtr-1);
+}
+
+defcode("over", over, 0, &dup){
+    ArgStackPtr++;
+    *(ArgStackPtr) = *(ArgStackPtr-2);
+}
+
+defcode("rot", rot, 0, &over){
+    long temp = *(ArgStackPtr);
+    *(ArgStackPtr) = *(ArgStackPtr-1);
+    *(ArgStackPtr-1) = *(ArgStackPtr-2);
+    *(ArgStackPtr-2) = temp;
+}
+
+defcode("-rot", nrot, 0, &rot){
+    long temp = *(ArgStackPtr-2);
+    *(ArgStackPtr-2) = *(ArgStackPtr-1);
+    *(ArgStackPtr-1) = *(ArgStackPtr);
+    *(ArgStackPtr) = temp;
+}
+
+defcode("2drop", twodrop, 0, &nrot){
+    ArgStackPtr -= 2;
+}
+
+defcode("2dup", twodup, 0, &twodrop){
+    ArgStackPtr += 2;
+    *(ArgStackPtr-1) = *(ArgStackPtr-3);
+    *(ArgStackPtr) = *(ArgStackPtr-2);
+}
+
+defcode("2swap", twoswap, 0, &twodup){
+}
+
+defcode("?dup", dup_if, 0, &twoswap){
+}
+
+/* Arithmetic Words
+ *****************************************************************************/
+defcode("+", add, 0, &dup_if){
+    *(ArgStackPtr-1) += *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("-", sub, 0, &add){
+    *(ArgStackPtr-1) -= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("*", mul, 0, &sub){
+    *(ArgStackPtr-1) *= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("/", divide, 0, &mul){
+    *(ArgStackPtr-1) /= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("%", mod, 0, &divide){
+    *(ArgStackPtr-1) %= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+/* Boolean Conditional Words
+ *****************************************************************************/
+defcode("=", equal, 0, &mod){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) == *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("!=", notequal, 0, &equal){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) != *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("<", lessthan, 0, &notequal){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) < *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode(">", greaterthan, 0, &lessthan){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) > *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("<=", lessthaneq, 0, &greaterthan){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) <= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode(">=", greaterthaneq, 0, &lessthaneq){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) >= *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("and", and, 0, &greaterthaneq){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) && *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("or", or, 0, &and){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) || *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("not", not, 0, &or){
+    *(ArgStackPtr) = !(*(ArgStackPtr));
+}
+
+/* Bitwise Words
+ *****************************************************************************/
+defcode("band", band, 0, &not){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) & *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("bor", bor, 0, &band){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) | *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("bxor", bxor, 0, &bor){
+    *(ArgStackPtr-1) = *(ArgStackPtr-1) ^ *(ArgStackPtr);
+    ArgStackPtr--;
+}
+
+defcode("bnot", bnot, 0, &bxor){
+    *(ArgStackPtr) = ~(*(ArgStackPtr));
+}
+
+/* Memory Manipulation Words
+ *****************************************************************************/
+defcode("!", store, 0, &bnot){
+}
+
+defcode("@", fetch, 0, &store){
+}
+
+defcode("+!", addstore, 0, &fetch){
+}
+
+defcode("-!", substore, 0, &addstore){
+}
+
+defcode("b!", bytestore, 0, &substore){
+}
+
+defcode("b@", bytefetch, 0, &bytestore){
+}
+
+defcode("b@b!", bytecopy, 0, &bytefetch){
+}
+
+defcode("bmove", bytemove, 0, &bytecopy){
+}
+
 /* Main
  *****************************************************************************/
 int main(int argc, char** argv)
 {
-    ArgStack[0] = 1111;
-    ArgStack[1] = 2222;
-    ArgStack[2] = 3333;
-    ArgStack[3] = 4444;
-    ArgStackPtr = ArgStack;
-    latest_val = (long)&quit;
+    ArgStackPtr = ArgStack - 1;
+    latest_val = (long)&bytemove;
     EXEC(quit);
-
     return 0;
 }
-
-
-
-//
-//defcode("wcwa", code_word_addr, 0, &put_io_c){
-//    word_t const* word = (word_t const*)*(ArgStackPtr);
-//    *(ArgStackPtr) = (long)word->codeword;
-//}
-//
-//defcode("wcda", code_data_addr, 0, &code_word_addr){
-//    word_t const* word = (word_t const*)*(ArgStackPtr);
-//    *(ArgStackPtr) = (long)word->code;
-//}
-//
-//defcode("immediate", immediate, 0, &code_data_addr){
-//    ((word_t*)latest_val)->flags ^= f_immed_val;
-//}
-//
-//defcode("hidden", hidden, 0, &immediate){
-//    ((word_t*)latest_val)->flags ^= f_hidden_val;
-//}
-//
-
-/* Branching Words
- *****************************************************************************/
-//defcode("branch", branch, 0, &semicolon){
-//}
-//
-//defcode("0branch", branch_if_0, 0, &branch){
-//}
-
-/* Built-in Primitive Words
- *****************************************************************************/
-//defcode("drop", drop, 0, &create){
-//    ArgStackPtr--;
-//}
-//
-//defcode("swap", swap, 0, &drop){
-//    long temp = *(ArgStackPtr);
-//    *(ArgStackPtr) = *(ArgStackPtr-1);
-//    *(ArgStackPtr-1) = temp;
-//}
-//
-//defcode("dup", dup, 0, &swap){
-//    ArgStackPtr++;
-//    *(ArgStackPtr) = *(ArgStackPtr-1);
-//}
-//
-//defcode("over", over, 0, &dup){
-//    ArgStackPtr++;
-//    *(ArgStackPtr) = *(ArgStackPtr-2);
-//}
-//
-//defcode("rot", rot, 0, &over){
-//    long temp = *(ArgStackPtr);
-//    *(ArgStackPtr) = *(ArgStackPtr-1);
-//    *(ArgStackPtr-1) = *(ArgStackPtr-2);
-//    *(ArgStackPtr-2) = temp;
-//}
-//
-//defcode("-rot", nrot, 0, &rot){
-//    long temp = *(ArgStackPtr-2);
-//    *(ArgStackPtr-2) = *(ArgStackPtr-1);
-//    *(ArgStackPtr-1) = *(ArgStackPtr);
-//    *(ArgStackPtr) = temp;
-//}
-//
-//defcode("2drop", twodrop, 0, &nrot){
-//    ArgStackPtr -= 2;
-//}
-//
-//defcode("2dup", twodup, 0, &twodrop){
-//    ArgStackPtr += 2;
-//    *(ArgStackPtr-1) = *(ArgStackPtr-3);
-//    *(ArgStackPtr) = *(ArgStackPtr-2);
-//}
-//
-//defcode("2swap", twoswap, 0, &twodup){
-//}
-//
-//defcode("?dup", qdup, 0, &twoswap){
-//}
-//
-//defcode("1+", incr, 0, &qdup){
-//    *(ArgStackPtr) += 1;
-//}
-//
-//defcode("1-", decr, 0, &incr){
-//    *(ArgStackPtr) -= 1;
-//}
-//
-//defcode("4+", incr4, 0, &decr){
-//    *(ArgStackPtr) += 1;
-//}
-//
-//defcode("4-", decr4, 0, &incr4){
-//    *(ArgStackPtr) -= 1;
-//}
-//
-//defcode("+", add, 0, &create){
-//    *(ArgStackPtr-1) += *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("-", sub, 0, &add){
-//    *(ArgStackPtr-1) -= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("*", mul, 0, &sub){
-//    *(ArgStackPtr-1) *= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("/", divide, 0, &mul){
-//    *(ArgStackPtr-1) /= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("%", mod, 0, &divide){
-//    *(ArgStackPtr-1) %= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("/%", divmod, 0, &mod){
-//}
-//
-//defcode("=", equal, 0, &divmod){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) == *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("!=", notequal, 0, &equal){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) != *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("<", lessthan, 0, &notequal){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) < *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode(">", greaterthan, 0, &lessthan){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) > *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("<=", lessthaneq, 0, &greaterthan){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) <= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode(">=", greaterthaneq, 0, &lessthaneq){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) >= *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("0=", zeroeq, 0, &greaterthaneq){
-//    *(ArgStackPtr) = *(ArgStackPtr) == 0;
-//}
-//
-//defcode("0!=", zeroneq, 0, &zeroeq){
-//    *(ArgStackPtr) = *(ArgStackPtr) != 0;
-//}
-//
-//defcode("0<", zerolt, 0, &zeroneq){
-//    *(ArgStackPtr) = *(ArgStackPtr) < 0;
-//}
-//
-//defcode("0>", zerogt, 0, &zerolt){
-//    *(ArgStackPtr) = *(ArgStackPtr) > 0;
-//}
-//
-//defcode("0<=", zerolte, 0, &zerogt){
-//    *(ArgStackPtr) = *(ArgStackPtr) <= 0;
-//}
-//
-//defcode("0>=", zerogte, 0, &zerolte){
-//    *(ArgStackPtr) = *(ArgStackPtr) >= 0;
-//}
-//
-//defcode("and", and, 0, &zerogte){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) && *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("or", or, 0, &and){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) || *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("not", not, 0, &or){
-//    *(ArgStackPtr) = !(*(ArgStackPtr));
-//}
-//
-//defcode("band", band, 0, &not){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) & *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("bor", bor, 0, &band){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) | *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("bxor", bxor, 0, &bor){
-//    *(ArgStackPtr-1) = *(ArgStackPtr-1) ^ *(ArgStackPtr);
-//    ArgStackPtr--;
-//}
-//
-//defcode("bnot", bnot, 0, &bxor){
-//    *(ArgStackPtr) = ~(*(ArgStackPtr));
-//}
-//
-//defcode("lit", lit, 0, &bnot){
-//    ArgStackPtr++;
-//    *(ArgStackPtr) = *(inst_ptr);
-//}
-//
-//defcode("!", store, 0, &lit){
-//}
-//
-//defcode("@", fetch, 0, &store){
-//    puts("@ Executed");
-//}
-//
-//defcode("+!", addstore, 0, &fetch){
-//}
-//
-//defcode("-!", substore, 0, &addstore){
-//}
-//
-//defcode("b!", bytestore, 0, &substore){
-//}
-//
-//defcode("b@", bytefetch, 0, &bytestore){
-//}
-//
-//defcode("b@b!", bytecopy, 0, &bytefetch){
-//}
-//
-//defcode("bmove", bytemove, 0, &bytecopy){
-//}
-
-/* Input/Output Words
- *****************************************************************************/
-//defcode("putc", put_io_c, 0, &bytemove){
-//    putc((char)*(ArgStackPtr), stdout);
-//    ArgStackPtr--;
-//}
-
-/* Compiler Words
- *****************************************************************************/
-//defcode("wcwa", code_word_addr, 0, &put_io_c){
-//    word_t const* word = (word_t const*)*(ArgStackPtr);
-//    *(ArgStackPtr) = (long)word->codeword;
-//}
-//
-//defcode("wcda", code_data_addr, 0, &code_word_addr){
-//    word_t const* word = (word_t const*)*(ArgStackPtr);
-//    *(ArgStackPtr) = (long)word->code;
-//}
-//
-//defcode("immediate", immediate, 0, &code_data_addr){
-//    ((word_t*)latest_val)->flags ^= f_immed_val;
-//}
-//
-//defcode("hidden", hidden, 0, &immediate){
-//    ((word_t*)latest_val)->flags ^= f_hidden_val;
-//}
-//
-//defcode(",", comma, 0, &hidden){
-//    /* Get the word we are currently compiling */
-//    word_t* word  = (word_t*)latest_val;
-//    /* Put the next instruction in place of the terminating NULL that "here"
-//     * points too */
-//    *((long*)here_val) = *(ArgStackPtr);
-//    ArgStackPtr--;
-//    /* Resize the code section and relocate if necessary */
-//    long currsize = sizeof(long) + (here_val - (long)word->code);
-//    word->code    = (long*)realloc(word->code, currsize + sizeof(long));
-//    /* Update "here" and null terminate the code section */
-//    here_val      = (long)&(word->code[ (currsize / sizeof(long)) ]);
-//    *((long*)here_val) = 0;
-//}
-//
-//defcode("[", lbrack, 0, &comma){
-//    state_val = 1;
-//}
-//
-//defcode("]", rbrack, 0, &lbrack){
-//    state_val = 0;
-//}
-//
-//defcode(":", colon, 0, &rbrack){
-//    EXEC(get_word);
-//    EXEC(create);
-//    EXEC(rbrack);
-//}
-//
-//defcode(";", semicolon, 0, &colon){
-//    ((word_t*)latest_val)->flags ^= f_hidden_val;
-//    state_val = 0;
-//}
-
-
 
