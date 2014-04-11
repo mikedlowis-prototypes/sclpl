@@ -494,15 +494,22 @@ defcode("bnot", bnot, 0, &bxor){
 /* Memory Manipulation Words
  *****************************************************************************/
 defcode("!", store, 0, &bnot){
+    *((long*)*(ArgStackPtr)) = *(ArgStackPtr-1);
+    ArgStackPtr -= 2;
 }
 
 defcode("@", fetch, 0, &store){
+    *(ArgStackPtr) = *((long*)*(ArgStackPtr));
 }
 
 defcode("+!", addstore, 0, &fetch){
+    *((long*)*(ArgStackPtr)) += *(ArgStackPtr-1);
+    ArgStackPtr -= 2;
 }
 
 defcode("-!", substore, 0, &addstore){
+    *((long*)*(ArgStackPtr)) -= *(ArgStackPtr-1);
+    ArgStackPtr -= 2;
 }
 
 defcode("b!", bytestore, 0, &substore){
