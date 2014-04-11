@@ -273,7 +273,18 @@ defcode("execw", exec_word, 0, &semicolon){
 }
 
 defcode("parsenum", parse_num, 0, &exec_word){
-    *(ArgStackPtr) = strtol((const char *)*(ArgStackPtr), NULL, 10);
+    char* end;
+    long num = strtol((const char *)*(ArgStackPtr), &end, 10);
+    //*(ArgStackPtr) = strtol((const char *)*(ArgStackPtr), &end, 10);
+    if(end != (char *)*(ArgStackPtr))
+    {
+        *(ArgStackPtr) = num;
+    }
+    else
+    {
+        puts("Parse Error");
+        ArgStackPtr--;
+    }
 }
 
 defcode("interpret", interpret, 0, &parse_num){
@@ -395,6 +406,11 @@ defcode("2swap", twoswap, 0, &twodup){
 }
 
 defcode("?dup", dup_if, 0, &twoswap){
+    if (*ArgStackPtr)
+    {
+        ArgStackPtr++;
+        *(ArgStackPtr) = *(ArgStackPtr-1);
+    }
 }
 
 /* Arithmetic Words
@@ -513,9 +529,12 @@ defcode("-!", substore, 0, &addstore){
 }
 
 defcode("b!", bytestore, 0, &substore){
+    *((char*)*(ArgStackPtr)) = (char)*(ArgStackPtr-1);
+    ArgStackPtr -= 2;
 }
 
 defcode("b@", bytefetch, 0, &bytestore){
+    *(ArgStackPtr) = *((char*)*(ArgStackPtr));
 }
 
 defcode("b@b!", bytecopy, 0, &bytefetch){
