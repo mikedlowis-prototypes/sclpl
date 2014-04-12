@@ -48,6 +48,7 @@ static long* CodePtr;
 /** The argument stack */
 static long ArgStack[32];
 
+/** A state variable used to flag when the interpreter reads a line of input */
 static long Line_Read;
 
 /**
@@ -62,6 +63,21 @@ static void docolon(long* code) {
         CodePtr++;
     }
     CodePtr = prev_code;
+}
+
+static void check_stack(void)
+{
+    if(ArgStackPtr < (ArgStack-1))
+    {
+        puts("Stack Underflow!");
+        exit(1);
+    }
+
+    if(ArgStackPtr > (ArgStack+30))
+    {
+        puts("Stack Overflow!");
+        exit(1);
+    }
 }
 
 /**
@@ -275,7 +291,6 @@ defcode("execw", exec_word, 0, &semicolon){
 defcode("parsenum", parse_num, 0, &exec_word){
     char* end;
     long num = strtol((const char *)*(ArgStackPtr), &end, 10);
-    //*(ArgStackPtr) = strtol((const char *)*(ArgStackPtr), &end, 10);
     if(end != (char *)*(ArgStackPtr))
     {
         *(ArgStackPtr) = num;
@@ -336,9 +351,9 @@ defcode("quit", quit, 0, &interpret){
     while(1)
     {
         EXEC(interpret);
-
         if(Line_Read)
         {
+            check_stack();
             long stacksz = ArgStackPtr - ArgStack + 1;
             if (stacksz > 5)
                 printf("( ... ");
