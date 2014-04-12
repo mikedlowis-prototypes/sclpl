@@ -216,8 +216,8 @@ defcode("br", branch, 0, &literal){
   CodePtr += *(CodePtr);
 }
 
-defcode("brif", branch_if, 0, &branch){
-    if (*ArgStackPtr)
+defcode("0br", zbranch, 0, &branch){
+    if (!(*ArgStackPtr))
     {
         CodePtr++;
         CodePtr += *(CodePtr);
@@ -226,12 +226,12 @@ defcode("brif", branch_if, 0, &branch){
 
 /* Compiler Words
  *****************************************************************************/
-defcode("[", lbrack, 0, &branch_if){
-    state_val = 1;
+defcode("[", lbrack, 0, &zbranch){
+    state_val = 0;
 }
 
 defcode("]", rbrack, 0x01, &lbrack){
-    state_val = 0;
+    state_val = 1;
 }
 
 defcode("create", create, 0, &rbrack){
@@ -272,29 +272,34 @@ defcode(",", comma, 0, &create){
     *((long*)here_val) = 0;
 }
 
-defcode("hidden", hidden, 0, &comma){
+defcode("hidden", hidden, 1, &comma){
     ((word_t*)*(ArgStackPtr))->flags ^= f_hidden_val;
 }
 
-defcode("immediate", immediate, 0, &hidden){
+defcode("immediate", immediate, 1, &hidden){
     ((word_t*)*(ArgStackPtr))->flags ^= f_immed_val;
 }
 
 defcode(":", colon, 0, &immediate){
     EXEC(get_word);
     EXEC(create);
-    EXEC(lbrack);
+    EXEC(rbrack);
 }
 
 defcode(";", semicolon, 1, &colon){
-    EXEC(rbrack);
+    EXEC(lbrack);
     EXEC(hidden);
     ArgStackPtr--;
 }
 
+defcode("'", tick, 1, &semicolon){
+    ArgStackPtr++;
+    *(ArgStackPtr) = *(CodePtr+1);
+}
+
 /* Interpreter Words
  *****************************************************************************/
-defcode("execw", exec_word, 0, &semicolon){
+defcode("execw", exec_word, 0, &tick){
     word_t* word = (word_t*)(*ArgStackPtr);
     ArgStackPtr--;
     EXEC( *(word) );
