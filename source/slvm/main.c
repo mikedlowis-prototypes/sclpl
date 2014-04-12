@@ -42,7 +42,7 @@ typedef struct word_t {
 /** Pointer to current position on the stack */
 static long* ArgStackPtr;
 
-/** Pointer to current position on the stack */
+/** Pointer to current instruction being executed */
 static long* CodePtr;
 
 /** The argument stack */
@@ -53,18 +53,30 @@ static long Line_Read;
 
 /**
  * This is the "inner" interpreter. This function is responsible for running
- * the threaded code that make up colon defintions. */
+ * the threaded code that make up colon defintions.
+ *
+ * @param code This is a pointer to the next instruction to be executed.
+ * */
 static void docolon(long* code) {
+    /* We may have previously been executing a code so we should save off our
+     * previous position */
     long* prev_code = CodePtr;
+    /* Set the next instruction to execute */
     CodePtr = code;
+    /* And loop through until we get the bytecode instructionof 0 (NEXT) */
     while(*CodePtr)
     {
+        /* Execute the byte code instruction */
         EXEC( *((word_t*)(*CodePtr)) );
+        /* Increment the instruction pointer */
         CodePtr++;
     }
+    /* Execution finished lets put things back the way they were */
     CodePtr = prev_code;
 }
 
+/** A barebones stack integrity check. Check to see if we overflowed or
+ * underflowed the stack and bail if we did. */
 static void check_stack(void)
 {
     if(ArgStackPtr < (ArgStack-1))
