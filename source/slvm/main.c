@@ -66,18 +66,20 @@ static long Line_Read;
  * @param code This is a pointer to the next instruction to be executed.
  * */
 static void docolon(long* code) {
-    /* We may have previously been executing a code so we should save off our
+    word_t* word;
+    /* We may have previously been executing a word so we should save off our
      * previous position */
     long* prev_code = CodePtr;
     /* Set the next instruction to execute */
     CodePtr = code;
     /* And loop through until we get the bytecode instruction of 0 (NEXT) */
-    while(*CodePtr)
+    while(CodePtr)
     {
-        /* Execute the byte code instruction */
-        EXEC( *((word_t*)(*CodePtr)) );
+        word = (word_t*)*CodePtr;
         /* Increment the instruction pointer */
         CodePtr++;
+        /* Execute the byte code instruction */
+        word->codeword(CodePtr);
     }
     /* Execution finished lets put things back the way they were */
     CodePtr = prev_code;
@@ -211,7 +213,6 @@ defcode("findw", find_word, 0, 0, &get_word){
 /* Branching and Literal Words
  *****************************************************************************/
 defcode("lit", literal, 0, 0, &find_word){
-    CodePtr++;
     ArgStackPtr++;
     *(ArgStackPtr) = *CodePtr;
 }
@@ -231,7 +232,11 @@ defcode("0br", zbranch, 0, 0, &branch){
 
 /* Compiler Words
  *****************************************************************************/
-defcode("[", lbrack, 0, 0, &zbranch){
+defcode("ret", ret, 0, 0, &zbranch){
+    CodePtr = 0;
+}
+
+defcode("[", lbrack, 0, 0, &ret){
     state_val = 0;
 }
 
@@ -257,7 +262,7 @@ defcode("create", create, 0, 0, &rbrack){
     word->name     = name;
     word->codeword = &docolon;
     word->code     = (long*)malloc(sizeof(long));
-    word->code[0]  = 0;
+    word->code[0]  = (long)&ret;
     /* Update Latest and Return the new word */
     latest_val     = (long)word;
     here_val       = (long)word->code;
@@ -276,7 +281,7 @@ defcode(",", comma, 0, 0, &create){
     word->code    = (long*)realloc(word->code, currsize + sizeof(long));
     /* Update "here" and null terminate the code section */
     here_val      = (long)&(word->code[ (currsize / sizeof(long)) ]);
-    *((long*)here_val) = 0;
+    *((long*)here_val) = (long)&ret;
 }
 
 defcode("hidden", hidden, 0, 1, &comma){
