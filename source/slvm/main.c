@@ -260,7 +260,7 @@ defcode("create", create, 0, 0, &rbrack){
     /* Initialize the flags (hidden and non-immediate by default) */
     word->flags.f_immed  = 0;
     word->flags.f_hidden = 1;
-    word->flags.codesize = 0;
+    word->flags.codesize = 1;
     /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
@@ -280,8 +280,8 @@ defcode(",", comma, 0, 0, &create){
     *((long*)here_val) = *(ArgStackPtr);
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
-    long currsize = sizeof(long) + (here_val - (long)word->code);
-    word->code    = (long*)realloc(word->code, currsize + sizeof(long));
+    word->flags.codesize++;
+    word->code    = (long*)realloc(word->code, word->flags.codesize * sizeof(long));
     /* Update "here" and terminate the code section */
     here_val = (long)(((long*)here_val) + 1);
     *((long*)here_val) = (long)&ret;
