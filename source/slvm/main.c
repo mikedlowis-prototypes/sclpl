@@ -215,18 +215,19 @@ defcode("findw", find_word, 0, 0, &get_word){
 defcode("lit", literal, 0, 0, &find_word){
     ArgStackPtr++;
     *(ArgStackPtr) = *CodePtr;
+    CodePtr++;
 }
 
 defcode("br", branch, 0, 0, &literal){
-  CodePtr++;
   CodePtr += *(CodePtr);
+  CodePtr++;
 }
 
 defcode("0br", zbranch, 0, 0, &branch){
     if (!(*ArgStackPtr))
     {
-        CodePtr++;
         CodePtr += *(CodePtr);
+        CodePtr++;
     }
 }
 
@@ -256,9 +257,11 @@ defcode("create", create, 0, 0, &rbrack){
     /* Create the word entry */
     word_t* word   = (word_t*)malloc(sizeof(word_t));
     word->link     = (word_t*)latest_val;
+    /* Initialize the flags (hidden and non-immediate by default) */
     word->flags.f_immed  = 0;
     word->flags.f_hidden = 1;
     word->flags.codesize = 0;
+    /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
     word->code     = (long*)malloc(sizeof(long));
@@ -272,15 +275,15 @@ defcode("create", create, 0, 0, &rbrack){
 defcode(",", comma, 0, 0, &create){
     /* Get the word we are currently compiling */
     word_t* word  = (word_t*)latest_val;
-    /* Put the next instruction in place of the terminating NULL that "here"
+    /* Put the next instruction in place of the terminating 'ret' that "here"
      * points too */
     *((long*)here_val) = *(ArgStackPtr);
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
     long currsize = sizeof(long) + (here_val - (long)word->code);
     word->code    = (long*)realloc(word->code, currsize + sizeof(long));
-    /* Update "here" and null terminate the code section */
-    here_val      = (long)&(word->code[ (currsize / sizeof(long)) ]);
+    /* Update "here" and terminate the code section */
+    here_val = (long)(((long*)here_val) + 1);
     *((long*)here_val) = (long)&ret;
 }
 
@@ -609,12 +612,28 @@ defcode("printw", printw, 0, 0, &_else){
     {
         puts("CodeFn:   docolon");
         puts("Bytecode:");
-        while(*bytecode)
+        while(bytecode)
         {
-            printf("\t%s\n", ((word_t*) *bytecode)->name);
-            bytecode++;
+            if (*bytecode == (long)&literal)
+            {
+                bytecode++;
+                printf("\tlit %lu\n", *bytecode);
+            }
+            else
+            {
+                printf("\t%s\n", ((word_t*) *bytecode)->name);
+            }
+
+            if (*bytecode == (long)&ret)
+            {
+                bytecode = 0;
+                break;
+            }
+            else
+            {
+                bytecode++;
+            }
         }
-        printf("\tret\n");
     }
     else
     {
