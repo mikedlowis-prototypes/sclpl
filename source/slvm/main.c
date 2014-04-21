@@ -281,9 +281,9 @@ defcode(",", comma, 0, 0, &create){
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
     word->flags.codesize++;
-    word->code    = (long*)realloc(word->code, word->flags.codesize * sizeof(long));
+    word->code = (long*)realloc(word->code, word->flags.codesize * sizeof(long));
     /* Update "here" and terminate the code section */
-    here_val = (long)(((long*)here_val) + 1);
+    here_val = (long)(&word->code[word->flags.codesize-1]);
     *((long*)here_val) = (long)&ret;
 }
 
