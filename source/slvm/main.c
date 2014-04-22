@@ -394,7 +394,7 @@ defcode("quit", quit, 0, 0, &interpret){
 
             for(i = (stacksz > 5) ? 4 : stacksz-1; i >= 0; i--)
             {
-                printf("%lu ", *(ArgStackPtr-i));
+                printf("%ld ", *(ArgStackPtr-i));
             }
             printf(")\n%s ", (state_val == 0) ? "=>" : "..");
             Line_Read = 0;
@@ -571,23 +571,41 @@ defcode("bmove", bytemove, 0, 0, &bytecopy){
 
 /* Control Flow Words
  *****************************************************************************/
-defcode("if", _if, 1, 0, &bytemove){
+defcode("if", _if, 0, 1, &bytemove){
     // : IF IMMEDIATE
     //         ' 0BRANCH ,     \ compile 0BRANCH
+    ArgStackPtr++;
+    *(ArgStackPtr) = (long)&zbranch;
+    EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
+    ArgStackPtr++;
+    *(ArgStackPtr) = here_val;
     //         0 ,             \ compile a dummy offset
+    ArgStackPtr++;
+    *(ArgStackPtr) = 0;
+    EXEC(comma);
     // ;
 }
 
-defcode("then", _then, 1, 0, &_if){
+defcode("then", _then, 0, 1, &_if){
     // : THEN IMMEDIATE
     //         DUP
+    EXEC(dup);
     //         HERE @ SWAP -   \ calculate the offset from the address saved on the stack
+    ArgStackPtr++;
+    *(ArgStackPtr) = here_val;
+    EXEC(swap);
+    EXEC(sub);
     //         SWAP !          \ store the offset in the back-filled location
+    EXEC(swap);
+    //EXEC(store);
+    printf("STACK: %ld %ld\n", *(ArgStackPtr-1), *(ArgStackPtr));
+    //*((long*)*ArgStackPtr) = *(ArgStackPtr-1);
+    //ArgStackPtr -= 2;
     // ;
 }
 
-defcode("else", _else, 1, 0, &_then){
+defcode("else", _else, 0, 1, &_then){
     // : ELSE IMMEDIATE
     //         ' BRANCH ,      \ definite branch to just over the false-part
     //         HERE @          \ save location of the offset on the stack
@@ -617,7 +635,12 @@ defcode("printw", printw, 0, 0, &_else){
             if (*bytecode == (long)&literal)
             {
                 bytecode++;
-                printf("\tlit %lu\n", *bytecode);
+                printf("\tlit %ld\n", *bytecode);
+            }
+            else if (*bytecode == (long)&zbranch)
+            {
+                bytecode++;
+                printf("\t0br %ld\n", *bytecode);
             }
             else
             {
@@ -655,7 +678,7 @@ defcode("printdefw", printdefw, 0, 0, &printallw){
     const word_t* word = (word_t*)latest_val;
     while(word != &printdefw)
     {
-        printf("%s\t%lu %lu",
+        printf("%s\t%ld %ld",
                word->name,
                word->flags.f_immed,
                word->flags.f_hidden);
