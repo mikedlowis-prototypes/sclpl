@@ -1,9 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
@@ -219,16 +216,19 @@ defcode("lit", literal, 0, 0, &find_word){
 }
 
 defcode("br", branch, 0, 0, &literal){
-  CodePtr += *(CodePtr);
-  CodePtr++;
+    CodePtr = (long*)(((long)CodePtr) + *(CodePtr));
 }
 
 defcode("0br", zbranch, 0, 0, &branch){
-    if (!(*ArgStackPtr))
+    if (*ArgStackPtr == 0)
     {
-        CodePtr += *(CodePtr);
+        CodePtr = (long*)(((long)CodePtr) + *(CodePtr));
+    }
+    else
+    {
         CodePtr++;
     }
+    ArgStackPtr--;
 }
 
 /* Compiler Words
@@ -598,22 +598,37 @@ defcode("then", _then, 0, 1, &_if){
     EXEC(sub);
     //         SWAP !          \ store the offset in the back-filled location
     EXEC(swap);
-    //EXEC(store);
-    printf("STACK: %ld %ld\n", *(ArgStackPtr-1), *(ArgStackPtr));
-    //*((long*)*ArgStackPtr) = *(ArgStackPtr-1);
-    //ArgStackPtr -= 2;
+    *((long*)*ArgStackPtr) = *(ArgStackPtr-1);
+    ArgStackPtr -= 2;
     // ;
 }
 
 defcode("else", _else, 0, 1, &_then){
     // : ELSE IMMEDIATE
     //         ' BRANCH ,      \ definite branch to just over the false-part
+    ArgStackPtr++;
+    *(ArgStackPtr) = (long)&branch;
+    EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
+    ArgStackPtr++;
+    *(ArgStackPtr) = here_val;
     //         0 ,             \ compile a dummy offset
+    ArgStackPtr++;
+    *(ArgStackPtr) = 0;
+    EXEC(comma);
     //         SWAP            \ now back-fill the original (IF) offset
+    EXEC(swap);
     //         DUP             \ same as for THEN word above
+    EXEC(dup);
     //         HERE @ SWAP -
+    ArgStackPtr++;
+    *(ArgStackPtr) = here_val;
+    EXEC(swap);
+    EXEC(sub);
     //         SWAP !
+    EXEC(swap);
+    *((long*)*ArgStackPtr) = *(ArgStackPtr-1);
+    ArgStackPtr -= 2;
     // ;
 }
 
