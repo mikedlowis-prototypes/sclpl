@@ -7,12 +7,23 @@
 #ifndef SLVM_H
 #define SLVM_H
 
-//#if defined(_16BIT_)
-//#elif defined(_32BIT_)
-//#elif defined(_64BIT_)
-//#else
-//    #error "Invalid architecture"
-//#endif
+#include <stdint.h>
+
+/* Choose a width for val_t that matches the pointer size of the target
+ * architecture. Defaults to simply a long but can be overridden for specific
+ * cases */
+#if defined(_16BIT_)
+    typedef int16_t val_t;
+#elif defined(_32BIT_)
+    typedef int32_t val_t;
+#elif defined(_64BIT_)
+    typedef int64_t val_t;
+#else
+    /* hope for the best? */
+    typedef long val_t;
+#endif
+
+#define CODE_SZ_BITS ((sizeof(val_t) * 8) - 8u)
 
 /**
     This type represents a pointer to a function handler for executing a word.
@@ -22,7 +33,7 @@
     @param code This is a pointer to the next bytecode instruction to execute.
                 For built-in words this pointer is 0.
  */
-typedef void (*codeword_t)(long* code);
+typedef void (*codeword_t)(val_t* code);
 
 /**
     This structure contains all of the relevant attributes of a word definition
@@ -32,10 +43,10 @@ typedef struct word_t {
     struct word_t const* link;
     /** A collection of flags describing attributes of the word. */
     struct {
-        long f_hidden : 1;  /*< Flag if this word should be hidden from the interpreter */
-        long f_immed  : 1;  /*< flag if this word should be executed at compile time */
-        long padding  : 6;  /*< Pads the flags to 8-bits */
-        long codesize : 24; /*< The lenght of the bytecode section of the word */
+        val_t f_hidden : 1;  /*< Flag if this word should be hidden from the interpreter */
+        val_t f_immed  : 1;  /*< flag if this word should be executed at compile time */
+        val_t padding  : 6;  /*< Pads the flags to 8-bits */
+        val_t codesize : CODE_SZ_BITS; /*< The length of the bytecode section of the word */
     } flags;
     /** Pointer to the null terminated string that holds the name of the word. */
     char const* name;
@@ -47,7 +58,7 @@ typedef struct word_t {
     /**
      * A pointer to the list of instructions that make up this word. For words
      * defined in C this will be 0u (NULL). */
-    long* code;
+    val_t* code;
 } word_t;
 
 /** Execute a built-in word directly */
@@ -61,7 +72,7 @@ typedef struct word_t {
 /**
  * Define a built-in word that executes native code */
 #define defcode(name_str,c_name,immed,prev)   \
-    static void c_name##_code(long* code);    \
+    static void c_name##_code(val_t* code);    \
     static word_t const c_name = {            \
         prev,                                 \
         { 0, immed, 0, 0 },                   \
@@ -69,25 +80,34 @@ typedef struct word_t {
         &c_name##_code,                       \
         0                                     \
     };                                        \
-    static void c_name##_code(long* inst_ptr) \
+    static void c_name##_code(val_t* inst_ptr) \
 
 /**
  * Define a built-in word representing a variable with the provided initial value */
 #define defvar(name_str,c_name,immed,prev,initial) \
-    static long c_name##_val = initial;            \
+    static val_t c_name##_val = initial;            \
     defcode(name_str,c_name,immed,prev) {          \
         ArgStackPtr++;                             \
-        *(ArgStackPtr) = (long)&(c_name##_val);    \
+        *(ArgStackPtr) = (val_t)&(c_name##_val);    \
     }
 
 /**
  * Define a built-in word representing a constant with the provided value */
 #define defconst(name_str,c_name,immed,prev,value) \
-    static long const c_name##_val = value;        \
+    static val_t const c_name##_val = value;        \
     defcode(name_str,c_name,immed,prev) {          \
         ArgStackPtr++;                             \
         *(ArgStackPtr) = c_name##_val;             \
     }
+
+/**
+ * A little C macro hack that allows for some compile time assertions. When the
+ * expression evaluates to false (0) at compile time, the expanded switch
+ * statement will contain two case statements for the value 0 which is a compile
+ * error. Thus the build will break alerting the user that something went
+ * horribly wrong. */
+#define CT_ASSERT(expr) \
+    switch(1){ case(0):break; case(expr):break; default: break; }
 
 /**
  * This is the "inner" interpreter. This function is responsible for running
@@ -95,6 +115,6 @@ typedef struct word_t {
  *
  * @param code This is a pointer to the next instruction to be executed.
  * */
-void docolon(long* code);
+void docolon(val_t* code);
 
 #endif /* SLVM_H */

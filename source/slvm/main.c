@@ -10,24 +10,24 @@
 /* Built-in Constants
  *****************************************************************************/
 /** The argument stack */
-long ArgStack[ARG_STACK_SIZE];
+val_t ArgStack[ARG_STACK_SIZE];
 
 /** Pointer to current position on the stack */
-long* ArgStackPtr = ArgStack-1;
+val_t* ArgStackPtr = ArgStack-1;
 
 /** Pointer to current instruction being executed */
-long* CodePtr = 0;
+val_t* CodePtr = 0;
 
 /** A state variable used to flag when the interpreter reads a line of input */
-long Line_Read = 0;
+val_t Line_Read = 0;
 
 /* Built-in Constants
  *****************************************************************************/
-void docolon(long* code) {
+void docolon(val_t* code) {
     word_t* word;
     /* We may have previously been executing a word so we should save off our
      * previous position */
-    long* prev_code = CodePtr;
+    val_t* prev_code = CodePtr;
     /* Set the next instruction to execute */
     CodePtr = code;
     /* And loop through until we get the bytecode instruction of 0 (NEXT) */
@@ -46,8 +46,8 @@ void docolon(long* code) {
 /* Built-in Constants
  *****************************************************************************/
 defconst("VERSION", version, 0, 0,        1);
-defconst("EXECDEF", execdef, 0, &version, (long)&docolon);
-defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(long));
+defconst("EXECDEF", execdef, 0, &version, (val_t)&docolon);
+defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t));
 
 /* Built-in Variables
  *****************************************************************************/
@@ -103,7 +103,7 @@ defcode("getw", get_word, 0, &is_ws){
 
     /* Return the word */
     ArgStackPtr++;
-    *(ArgStackPtr) = (long)&buffer;
+    *(ArgStackPtr) = (val_t)&buffer;
 }
 
 defcode("findw", find_word, 0, &get_word){
@@ -117,7 +117,7 @@ defcode("findw", find_word, 0, &get_word){
         }
         curr = curr->link;
     }
-    *(ArgStackPtr) = (long)curr;
+    *(ArgStackPtr) = (val_t)curr;
 }
 
 /* Branching and Literal Words
@@ -129,13 +129,13 @@ defcode("lit", literal, 0, &find_word){
 }
 
 defcode("br", branch, 0, &literal){
-    CodePtr = (long*)(((long)CodePtr) + *(CodePtr));
+    CodePtr = (val_t*)(((val_t)CodePtr) + *(CodePtr));
 }
 
 defcode("0br", zbranch, 0, &branch){
     if (*ArgStackPtr == 0)
     {
-        CodePtr = (long*)(((long)CodePtr) + *(CodePtr));
+        CodePtr = (val_t*)(((val_t)CodePtr) + *(CodePtr));
     }
     else
     {
@@ -177,12 +177,12 @@ defcode("create", create, 0, &rbrack){
     /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
-    word->code     = (long*)malloc(sizeof(long));
-    word->code[0]  = (long)&ret;
+    word->code     = (val_t*)malloc(sizeof(val_t));
+    word->code[0]  = (val_t)&ret;
     /* Update Latest and Return the new word */
-    latest_val     = (long)word;
-    here_val       = (long)word->code;
-    *(ArgStackPtr) = (long)word;
+    latest_val     = (val_t)word;
+    here_val       = (val_t)word->code;
+    *(ArgStackPtr) = (val_t)word;
 }
 
 defcode(",", comma, 0, &create){
@@ -190,14 +190,14 @@ defcode(",", comma, 0, &create){
     word_t* word  = (word_t*)latest_val;
     /* Put the next instruction in place of the terminating 'ret' that "here"
      * points too */
-    *((long*)here_val) = *(ArgStackPtr);
+    *((val_t*)here_val) = *(ArgStackPtr);
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
     word->flags.codesize++;
-    word->code = (long*)realloc(word->code, word->flags.codesize * sizeof(long));
+    word->code = (val_t*)realloc(word->code, word->flags.codesize * sizeof(val_t));
     /* Update "here" and terminate the code section */
-    here_val = (long)(&word->code[word->flags.codesize-1]);
-    *((long*)here_val) = (long)&ret;
+    here_val = (val_t)(&word->code[word->flags.codesize-1]);
+    *((val_t*)here_val) = (val_t)&ret;
 }
 
 defcode("hidden", hidden, 1, &comma){
@@ -235,7 +235,7 @@ defcode("execw", exec_word, 0, &tick){
 
 defcode("parsenum", parse_num, 0, &exec_word){
     char* end;
-    long num = strtol((const char *)*(ArgStackPtr), &end, 10);
+    val_t num = strtol((const char *)*(ArgStackPtr), &end, 10);
     if(end != (char *)*(ArgStackPtr))
     {
         *(ArgStackPtr) = num;
@@ -273,12 +273,12 @@ defcode("interpret", interpret, 0, &parse_num){
     /* else parse it as a number */
     else
     {
-        *(ArgStackPtr) = (long)curr_word;
+        *(ArgStackPtr) = (val_t)curr_word;
         EXEC(parse_num);
         if (state_val == 1)
         {
             ArgStackPtr++;
-            *(ArgStackPtr) = (long)&literal;
+            *(ArgStackPtr) = (val_t)&literal;
             EXEC(comma);
             EXEC(comma);
         }
@@ -298,7 +298,7 @@ defcode("quit", quit, 0, &interpret){
         EXEC(interpret);
         if(Line_Read)
         {
-            long stacksz = ArgStackPtr - ArgStack + 1;
+            val_t stacksz = ArgStackPtr - ArgStack + 1;
             if (stacksz > 5)
                 printf("( ... ");
             else
@@ -322,7 +322,7 @@ defcode("drop", drop, 0, &quit){
 }
 
 defcode("swap", swap, 0, &drop){
-    long temp = *(ArgStackPtr);
+    val_t temp = *(ArgStackPtr);
     *(ArgStackPtr) = *(ArgStackPtr-1);
     *(ArgStackPtr-1) = temp;
 }
@@ -338,14 +338,14 @@ defcode("over", over, 0, &dup){
 }
 
 defcode("rot", rot, 0, &over){
-    long temp = *(ArgStackPtr);
+    val_t temp = *(ArgStackPtr);
     *(ArgStackPtr) = *(ArgStackPtr-1);
     *(ArgStackPtr-1) = *(ArgStackPtr-2);
     *(ArgStackPtr-2) = temp;
 }
 
 defcode("-rot", nrot, 0, &rot){
-    long temp = *(ArgStackPtr-2);
+    val_t temp = *(ArgStackPtr-2);
     *(ArgStackPtr-2) = *(ArgStackPtr-1);
     *(ArgStackPtr-1) = *(ArgStackPtr);
     *(ArgStackPtr) = temp;
@@ -448,21 +448,21 @@ defcode("bnot", bnot, 0, &bxor){
 /* Memory Manipulation Words
  *****************************************************************************/
 defcode("!", store, 0, &bnot){
-    *((long*)*(ArgStackPtr)) = *(ArgStackPtr-1);
+    *((val_t*)*(ArgStackPtr)) = *(ArgStackPtr-1);
     ArgStackPtr -= 2;
 }
 
 defcode("@", fetch, 0, &store){
-    *(ArgStackPtr) = *((long*)*(ArgStackPtr));
+    *(ArgStackPtr) = *((val_t*)*(ArgStackPtr));
 }
 
 defcode("+!", addstore, 0, &fetch){
-    *((long*)*(ArgStackPtr)) += *(ArgStackPtr-1);
+    *((val_t*)*(ArgStackPtr)) += *(ArgStackPtr-1);
     ArgStackPtr -= 2;
 }
 
 defcode("-!", substore, 0, &addstore){
-    *((long*)*(ArgStackPtr)) -= *(ArgStackPtr-1);
+    *((val_t*)*(ArgStackPtr)) -= *(ArgStackPtr-1);
     ArgStackPtr -= 2;
 }
 
@@ -487,7 +487,7 @@ defcode("if", _if, 1, &bytemove){
     // : IF IMMEDIATE
     //         ' 0BRANCH ,     \ compile 0BRANCH
     ArgStackPtr++;
-    *(ArgStackPtr) = (long)&zbranch;
+    *(ArgStackPtr) = (val_t)&zbranch;
     EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
     ArgStackPtr++;
@@ -510,7 +510,7 @@ defcode("then", _then, 1, &_if){
     EXEC(sub);
     //         SWAP !          \ store the offset in the back-filled location
     EXEC(swap);
-    *((long*)*ArgStackPtr) = *(ArgStackPtr-1);
+    *((val_t*)*ArgStackPtr) = *(ArgStackPtr-1);
     ArgStackPtr -= 2;
     // ;
 }
@@ -519,7 +519,7 @@ defcode("else", _else, 1, &_then){
     // : ELSE IMMEDIATE
     //         ' BRANCH ,      \ definite branch to just over the false-part
     ArgStackPtr++;
-    *(ArgStackPtr) = (long)&branch;
+    *(ArgStackPtr) = (val_t)&branch;
     EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
     ArgStackPtr++;
@@ -539,7 +539,7 @@ defcode("else", _else, 1, &_then){
     EXEC(sub);
     //         SWAP !
     EXEC(swap);
-    *((long*)*ArgStackPtr) = *(ArgStackPtr-1);
+    *((val_t*)*ArgStackPtr) = *(ArgStackPtr-1);
     ArgStackPtr -= 2;
     // ;
 }
@@ -548,7 +548,7 @@ defcode("else", _else, 1, &_then){
  *****************************************************************************/
 defcode("printw", printw, 0, &_else){
     word_t* word = (word_t*)*(ArgStackPtr);
-    long* bytecode = word->code;
+    val_t* bytecode = word->code;
     ArgStackPtr--;
 
     printf("Name:     %s\n", word->name);
@@ -559,12 +559,12 @@ defcode("printw", printw, 0, &_else){
         puts("Bytecode:");
         while(bytecode)
         {
-            if (*bytecode == (long)&literal)
+            if (*bytecode == (val_t)&literal)
             {
                 bytecode++;
                 printf("\tlit %ld\n", *bytecode);
             }
-            else if (*bytecode == (long)&zbranch)
+            else if (*bytecode == (val_t)&zbranch)
             {
                 bytecode++;
                 printf("\t0br %ld\n", *bytecode);
@@ -574,7 +574,7 @@ defcode("printw", printw, 0, &_else){
                 printf("\t%s\n", ((word_t*) *bytecode)->name);
             }
 
-            if (*bytecode == (long)&ret)
+            if (*bytecode == (val_t)&ret)
             {
                 bytecode = 0;
                 break;
@@ -587,7 +587,7 @@ defcode("printw", printw, 0, &_else){
     }
     else
     {
-        printf("CodeFn:   0x%lX\n",(long)word->codeword);
+        printf("CodeFn:   0x%lX\n",(val_t)word->codeword);
         printf("Bytecode: (native)\n");
     }
 }
@@ -617,7 +617,8 @@ defcode("printdefw", printdefw, 0, &printallw){
  *****************************************************************************/
 int main(int argc, char** argv)
 {
-    latest_val = (long)&printdefw;
+    CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
+    latest_val = (val_t)&printdefw;
     EXEC(quit);
     return 0;
 }
