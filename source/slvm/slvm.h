@@ -23,6 +23,10 @@
     typedef long val_t;
 #endif
 
+/**
+    The number of bits of the flags field dedicated to holding the size of the
+    bytecode vector.
+*/
 #define CODE_SZ_BITS ((sizeof(val_t) * 8) - 8u)
 
 /**

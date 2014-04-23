@@ -52,12 +52,42 @@ defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t));
 /* Built-in Variables
  *****************************************************************************/
 defvar("state",  state,  0, &wordsz, 0);
-defvar("here",   here,   0, &state,  0);
-defvar("latest", latest, 0, &here,   0);
+//defvar("here",   here,   0, &state,  0);
+defvar("latest", latest, 0, &state,   0);
+
+/* Word Words
+ *****************************************************************************/
+defcode("wlink", wlink, 0, &latest){
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->link);
+}
+
+defcode("wsize", wflags, 0, &wlink){
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->flags.codesize);
+}
+
+defcode("wname", wname, 0, &wflags){
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->name);
+}
+
+defcode("wfunc", wfunc, 0, &wname){
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->codeword);
+}
+
+defcode("wcode", wcode, 0, &wfunc){
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->code);
+}
+
+defcode("here", here, 0, &wcode){
+    ArgStackPtr++;
+    *(ArgStackPtr) = (val_t)((((word_t*)latest_val)->flags.codesize) - 1);
+}
+
+/* Input/Output Words
+ *****************************************************************************/
 
 /* Input Words
  *****************************************************************************/
-defcode("getc", get_char, 0, &latest){
+defcode("getc", get_char, 0, &here){
     ArgStackPtr++;
     *(ArgStackPtr) = getc(stdin);
 }
@@ -181,7 +211,6 @@ defcode("create", create, 0, &rbrack){
     word->code[0]  = (val_t)&ret;
     /* Update Latest and Return the new word */
     latest_val     = (val_t)word;
-    here_val       = (val_t)word->code;
     *(ArgStackPtr) = (val_t)word;
 }
 
@@ -190,14 +219,13 @@ defcode(",", comma, 0, &create){
     word_t* word  = (word_t*)latest_val;
     /* Put the next instruction in place of the terminating 'ret' that "here"
      * points too */
-    *((val_t*)here_val) = *(ArgStackPtr);
+    word->code[word->flags.codesize-1] = *(ArgStackPtr);
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
     word->flags.codesize++;
     word->code = (val_t*)realloc(word->code, word->flags.codesize * sizeof(val_t));
     /* Update "here" and terminate the code section */
-    here_val = (val_t)(&word->code[word->flags.codesize-1]);
-    *((val_t*)here_val) = (val_t)&ret;
+    word->code[word->flags.codesize-1] = (val_t)&ret;
 }
 
 defcode("hidden", hidden, 1, &comma){
@@ -490,12 +518,13 @@ defcode("if", _if, 1, &bytemove){
     *(ArgStackPtr) = (val_t)&zbranch;
     EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
-    ArgStackPtr++;
-    *(ArgStackPtr) = here_val;
+    //EXEC(here);
+    //ArgStackPtr++;
+    //*(ArgStackPtr) = here_val;
     //         0 ,             \ compile a dummy offset
-    ArgStackPtr++;
-    *(ArgStackPtr) = 0;
-    EXEC(comma);
+    //ArgStackPtr++;
+    //*(ArgStackPtr) = 0;
+    //EXEC(comma);
     // ;
 }
 
@@ -504,8 +533,9 @@ defcode("then", _then, 1, &_if){
     //         DUP
     EXEC(dup);
     //         HERE @ SWAP -   \ calculate the offset from the address saved on the stack
-    ArgStackPtr++;
-    *(ArgStackPtr) = here_val;
+    //ArgStackPtr++;
+    //*(ArgStackPtr) = here_val;
+    EXEC(here);
     EXEC(swap);
     EXEC(sub);
     //         SWAP !          \ store the offset in the back-filled location
@@ -522,8 +552,9 @@ defcode("else", _else, 1, &_then){
     *(ArgStackPtr) = (val_t)&branch;
     EXEC(comma);
     //         HERE @          \ save location of the offset on the stack
-    ArgStackPtr++;
-    *(ArgStackPtr) = here_val;
+    //ArgStackPtr++;
+    //*(ArgStackPtr) = here_val;
+    EXEC(here);
     //         0 ,             \ compile a dummy offset
     ArgStackPtr++;
     *(ArgStackPtr) = 0;
@@ -533,8 +564,8 @@ defcode("else", _else, 1, &_then){
     //         DUP             \ same as for THEN word above
     EXEC(dup);
     //         HERE @ SWAP -
-    ArgStackPtr++;
-    *(ArgStackPtr) = here_val;
+    //ArgStackPtr++;
+    //*(ArgStackPtr) = here_val;
     EXEC(swap);
     EXEC(sub);
     //         SWAP !
