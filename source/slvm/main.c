@@ -45,9 +45,9 @@ void docolon(long* code) {
 
 /* Built-in Constants
  *****************************************************************************/
-defconst("VERSION",  version, 0, 0,        1);
-defconst("EXECDEF",  execdef, 0, &version, (long)&docolon);
-defconst("WORDSZ",   wordsz,  0, &execdef, sizeof(long));
+defconst("VERSION", version, 0, 0,        1);
+defconst("EXECDEF", execdef, 0, &version, (long)&docolon);
+defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(long));
 
 /* Built-in Variables
  *****************************************************************************/
@@ -617,7 +617,6 @@ defcode("printdefw", printdefw, 0, &printallw){
  *****************************************************************************/
 int main(int argc, char** argv)
 {
-    ArgStackPtr = ArgStack - 1;
     latest_val = (long)&printdefw;
     EXEC(quit);
     return 0;

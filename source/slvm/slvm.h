@@ -7,6 +7,13 @@
 #ifndef SLVM_H
 #define SLVM_H
 
+//#if defined(_16BIT_)
+//#elif defined(_32BIT_)
+//#elif defined(_64BIT_)
+//#else
+//    #error "Invalid architecture"
+//#endif
+
 /**
     This type represents a pointer to a function handler for executing a word.
     For built-in words this typically points to the C function that implements
