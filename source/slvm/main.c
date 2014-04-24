@@ -45,14 +45,14 @@ void docolon(val_t* code) {
 
 /* Built-in Constants
  *****************************************************************************/
-defconst("VERSION", version, 0, 0,        1);
+defconst("VERSION", version, 0, NULL,     1);
 defconst("EXECDEF", execdef, 0, &version, (val_t)&docolon);
 defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t));
 
 /* Built-in Variables
  *****************************************************************************/
 defvar("state",  state,  0, &wordsz, 0);
-defvar("latest", latest, 0, &state,   0);
+defvar("latest", latest, 0, &state,  0);
 
 /* Word Words
  *****************************************************************************/
@@ -83,10 +83,50 @@ defcode("here", here, 0, &wcode){
 
 /* Input/Output Words
  *****************************************************************************/
+defvar("stdin",  _stdin,  0, &here,    0);
+defvar("stdout", _stdout, 0, &_stdin,  0);
+defvar("stderr", _stderr, 0, &_stdout, 0);
+
+defconst("F_R",  f_r,  0, &_stderr, (val_t)"r");
+defconst("F_W",  f_w,  0, &f_r,     (val_t)"w");
+defconst("F_A",  f_a,  0, &f_w,     (val_t)"a");
+defconst("F_R+", f_ru, 0, &f_a,     (val_t)"r+");
+defconst("F_W+", f_wu, 0, &f_ru,    (val_t)"w+");
+defconst("F_A+", f_au, 0, &f_wu,    (val_t)"a+");
+
+defcode("fopen",  _fopen,  0, &f_au){
+    *(ArgStackPtr-1) = (val_t)fopen( (const char*)*(ArgStackPtr-1), (const char*)*(ArgStackPtr) );
+    ArgStackPtr--;
+}
+
+defcode("fclose", _fclose, 0, &_fopen){
+    fclose((FILE*)*(ArgStackPtr));
+    ArgStackPtr--;
+}
+
+defcode("fflush", _fflush, 0, &_fclose){
+    fflush((FILE*)*(ArgStackPtr));
+}
+
+defcode("fgetc",  _fgetc,  0, &_fflush){
+    ArgStackPtr++;
+    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr-1));
+}
+
+defcode("fputc",  _fputc,  0, &_fgetc){
+    fputc((char)*(ArgStackPtr), (FILE*)*(ArgStackPtr-1));
+    ArgStackPtr--;
+}
+
+defcode("fpeekc", _fpeekc, 0, &_fputc){
+    ArgStackPtr++;
+    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr-1));
+    ungetc((char)*(ArgStackPtr), (FILE*)*(ArgStackPtr-1));
+}
 
 /* Input Words
  *****************************************************************************/
-defcode("getc", get_char, 0, &here){
+defcode("getc", get_char, 0, &_fpeekc){
     ArgStackPtr++;
     *(ArgStackPtr) = getc(stdin);
 }
@@ -568,9 +608,25 @@ defcode("else", _else, 1, &_then){
     EXEC(swap);
 }
 
+/* Memory Management Words
+ *****************************************************************************/
+defcode("malloc", mem_alloc, 1, &_else){
+    *(ArgStackPtr) = (val_t)malloc((size_t)*(ArgStackPtr));
+}
+
+defcode("mrealloc", mem_realloc, 1, &mem_alloc){
+    *(ArgStackPtr-1) = (val_t)realloc((void*)*(ArgStackPtr-1),*(ArgStackPtr));
+    ArgStackPtr--;
+}
+
+defcode("mfree", mem_free, 1, &mem_realloc){
+    free((void*)*(ArgStackPtr));
+    ArgStackPtr--;
+}
+
 /* Debugging Words
  *****************************************************************************/
-defcode("printw", printw, 0, &_else){
+defcode("printw", printw, 0, &mem_free){
     word_t* word = (word_t*)*(ArgStackPtr);
     val_t* bytecode = word->code;
     ArgStackPtr--;
@@ -647,6 +703,9 @@ defcode("printdefw", printdefw, 0, &printallw){
 int main(int argc, char** argv)
 {
     CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
+    _stdin_val  = (val_t)stdin;
+    _stdout_val = (val_t)stdout;
+    _stderr_val = (val_t)stderr;
     latest_val = (val_t)&printdefw;
     EXEC(quit);
     return 0;
