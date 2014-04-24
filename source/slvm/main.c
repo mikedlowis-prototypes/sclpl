@@ -52,7 +52,6 @@ defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t));
 /* Built-in Variables
  *****************************************************************************/
 defvar("state",  state,  0, &wordsz, 0);
-//defvar("here",   here,   0, &state,  0);
 defvar("latest", latest, 0, &state,   0);
 
 /* Word Words
@@ -159,13 +158,13 @@ defcode("lit", literal, 0, &find_word){
 }
 
 defcode("br", branch, 0, &literal){
-    CodePtr = (val_t*)(((val_t)CodePtr) + *(CodePtr));
+    CodePtr = (val_t*)(((val_t)CodePtr) + (*(CodePtr) * sizeof(val_t)));
 }
 
 defcode("0br", zbranch, 0, &branch){
     if (*ArgStackPtr == 0)
     {
-        CodePtr = (val_t*)(((val_t)CodePtr) + *(CodePtr));
+        CodePtr = (val_t*)(((val_t)CodePtr) + (*(CodePtr) * sizeof(val_t)));
     }
     else
     {
@@ -291,6 +290,7 @@ defcode("interpret", interpret, 0, &parse_num){
         {
             /* Execute the word */
             EXEC(exec_word);
+
         }
         /* else we are compiling */
         else
@@ -512,67 +512,60 @@ defcode("bmove", bytemove, 0, &bytecopy){
 /* Control Flow Words
  *****************************************************************************/
 defcode("if", _if, 1, &bytemove){
-    // : IF IMMEDIATE
-    //         ' 0BRANCH ,     \ compile 0BRANCH
+    /* Compile branch instruction */
     ArgStackPtr++;
     *(ArgStackPtr) = (val_t)&zbranch;
     EXEC(comma);
-    //         HERE @          \ save location of the offset on the stack
-    //EXEC(here);
-    //ArgStackPtr++;
-    //*(ArgStackPtr) = here_val;
-    //         0 ,             \ compile a dummy offset
-    //ArgStackPtr++;
-    //*(ArgStackPtr) = 0;
-    //EXEC(comma);
-    // ;
+
+    /* Save off the current offset */
+    EXEC(here);
+
+    /* Compile a dummy offset */
+    ArgStackPtr++;
+    *(ArgStackPtr) = (val_t)0;
+    EXEC(comma);
 }
 
 defcode("then", _then, 1, &_if){
-    // : THEN IMMEDIATE
-    //         DUP
+    /* calculate the address where the offset should be stored */
+    EXEC(swap);
     EXEC(dup);
-    //         HERE @ SWAP -   \ calculate the offset from the address saved on the stack
-    //ArgStackPtr++;
-    //*(ArgStackPtr) = here_val;
+    EXEC(wcode);
+    EXEC(nrot);
+
+    /* Calculate the branch offset */
+    EXEC(dup);
     EXEC(here);
     EXEC(swap);
     EXEC(sub);
-    //         SWAP !          \ store the offset in the back-filled location
+
+    /* Store the offset */
     EXEC(swap);
-    *((val_t*)*ArgStackPtr) = *(ArgStackPtr-1);
-    ArgStackPtr -= 2;
-    // ;
+    EXEC(wordsz);
+    EXEC(mul);
+    EXEC(nrot);
+    EXEC(add);
+    EXEC(store);
 }
 
 defcode("else", _else, 1, &_then){
-    // : ELSE IMMEDIATE
-    //         ' BRANCH ,      \ definite branch to just over the false-part
+    /* Compile the branch instruction */
     ArgStackPtr++;
     *(ArgStackPtr) = (val_t)&branch;
     EXEC(comma);
-    //         HERE @          \ save location of the offset on the stack
-    //ArgStackPtr++;
-    //*(ArgStackPtr) = here_val;
+
+    /* Save off the current offset */
     EXEC(here);
-    //         0 ,             \ compile a dummy offset
+    EXEC(rot);
+
+    /* Compile a dummy offset */
     ArgStackPtr++;
     *(ArgStackPtr) = 0;
     EXEC(comma);
-    //         SWAP            \ now back-fill the original (IF) offset
+
+    /* Set the branch offset for the first branch */
+    EXEC(_then);
     EXEC(swap);
-    //         DUP             \ same as for THEN word above
-    EXEC(dup);
-    //         HERE @ SWAP -
-    //ArgStackPtr++;
-    //*(ArgStackPtr) = here_val;
-    EXEC(swap);
-    EXEC(sub);
-    //         SWAP !
-    EXEC(swap);
-    *((val_t*)*ArgStackPtr) = *(ArgStackPtr-1);
-    ArgStackPtr -= 2;
-    // ;
 }
 
 /* Debugging Words
@@ -599,6 +592,11 @@ defcode("printw", printw, 0, &_else){
             {
                 bytecode++;
                 printf("\t0br %ld\n", *bytecode);
+            }
+            else if (*bytecode == (val_t)&branch)
+            {
+                bytecode++;
+                printf("\tbr %ld\n", *bytecode);
             }
             else
             {
