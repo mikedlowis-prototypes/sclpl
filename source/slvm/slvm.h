@@ -39,6 +39,23 @@
  */
 typedef void (*codeword_t)(val_t* code);
 
+/** A collection of flags describing attributes of the word. */
+typedef union {
+    /** The value of all flag bits combined */
+    val_t value;
+    /** Accessors for individual flag fields */
+    struct {
+        /** Flag if this word should be hidden from the interpreter */
+        val_t hidden   : 1;
+        /** flag if this word should be executed at compile time */
+        val_t immed    : 1;
+        /** Pads the flags to 8-bits */
+        val_t padding  : 6;
+        /** The length of the bytecode section of the word */
+        val_t codesize : CODE_SZ_BITS;
+    } attr;
+} flags_t;
+
 /**
     This structure contains all of the relevant attributes of a word definition
 */
@@ -46,12 +63,13 @@ typedef struct word_t {
     /** Pointer to the next most recently defined word in the dictionary. */
     struct word_t const* link;
     /** A collection of flags describing attributes of the word. */
-    struct {
-        val_t f_hidden : 1;  /*< Flag if this word should be hidden from the interpreter */
-        val_t f_immed  : 1;  /*< flag if this word should be executed at compile time */
-        val_t padding  : 6;  /*< Pads the flags to 8-bits */
-        val_t codesize : CODE_SZ_BITS; /*< The length of the bytecode section of the word */
-    } flags;
+    //struct {
+    //    val_t f_hidden : 1;  /*< Flag if this word should be hidden from the interpreter */
+    //    val_t f_immed  : 1;  /*< flag if this word should be executed at compile time */
+    //    val_t padding  : 6;  /*< Pads the flags to 8-bits */
+    //    val_t codesize : CODE_SZ_BITS; /*< The length of the bytecode section of the word */
+    //} flags;
+    flags_t flags;
     /** Pointer to the null terminated string that holds the name of the word. */
     char const* name;
     /**
@@ -75,15 +93,15 @@ typedef struct word_t {
 
 /**
  * Define a built-in word that executes native code */
-#define defcode(name_str,c_name,immed,prev)   \
+#define defcode(name_str,c_name,immed,prev)    \
     static void c_name##_code(val_t* code);    \
-    static word_t const c_name = {            \
-        prev,                                 \
-        { 0, immed, 0, 0 },                   \
-        name_str,                             \
-        &c_name##_code,                       \
-        0                                     \
-    };                                        \
+    static word_t const c_name = {             \
+        prev,                                  \
+        {.attr = { 0, immed, 0, 0 }},          \
+        name_str,                              \
+        &c_name##_code,                        \
+        0                                      \
+    };                                         \
     static void c_name##_code(val_t* inst_ptr) \
 
 /**

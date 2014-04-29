@@ -82,7 +82,7 @@ defcode("wlink", wlink, 0, &latest){
 }
 
 defcode("wsize", wflags, 0, &wlink){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->flags.codesize);
+    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->flags.attr.codesize);
 }
 
 defcode("wname", wname, 0, &wflags){
@@ -99,7 +99,7 @@ defcode("wcode", wcode, 0, &wfunc){
 
 defcode("here", here, 0, &wcode){
     ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)((((word_t*)latest_val)->flags.codesize) - 1);
+    *(ArgStackPtr) = (val_t)((((word_t*)latest_val)->flags.attr.codesize) - 1);
 }
 
 /* Input/Output Words
@@ -207,7 +207,7 @@ defcode("findw", find_word, 0, &get_word){
     char* name = (char*)*(ArgStackPtr);
     while(curr)
     {
-        if (!(curr->flags.f_hidden) && (0 == strcmp(curr->name,name)))
+        if (!(curr->flags.attr.hidden) && (0 == strcmp(curr->name,name)))
         {
             break;
         }
@@ -267,9 +267,9 @@ defcode("create", create, 0, &rbrack){
     word_t* word   = (word_t*)malloc(sizeof(word_t));
     word->link     = (word_t*)latest_val;
     /* Initialize the flags (hidden and non-immediate by default) */
-    word->flags.f_immed  = 0;
-    word->flags.f_hidden = 1;
-    word->flags.codesize = 1;
+    word->flags.attr.immed    = 0;
+    word->flags.attr.hidden   = 1;
+    word->flags.attr.codesize = 1;
     /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
@@ -285,21 +285,21 @@ defcode(",", comma, 0, &create){
     word_t* word  = (word_t*)latest_val;
     /* Put the next instruction in place of the terminating 'ret' that "here"
      * points too */
-    word->code[word->flags.codesize-1] = *(ArgStackPtr);
+    word->code[word->flags.attr.codesize-1] = *(ArgStackPtr);
     ArgStackPtr--;
     /* Resize the code section and relocate if necessary */
-    word->flags.codesize++;
-    word->code = (val_t*)realloc(word->code, word->flags.codesize * sizeof(val_t));
+    word->flags.attr.codesize++;
+    word->code = (val_t*)realloc(word->code, word->flags.attr.codesize * sizeof(val_t));
     /* Update "here" and terminate the code section */
-    word->code[word->flags.codesize-1] = (val_t)&ret;
+    word->code[word->flags.attr.codesize-1] = (val_t)&ret;
 }
 
 defcode("hidden", hidden, 1, &comma){
-    ((word_t*)*(ArgStackPtr))->flags.f_hidden ^= 1;
+    ((word_t*)*(ArgStackPtr))->flags.attr.hidden ^= 1;
 }
 
 defcode("immediate", immediate, 1, &hidden){
-    ((word_t*)*(ArgStackPtr))->flags.f_immed ^= 1;
+    ((word_t*)*(ArgStackPtr))->flags.attr.immed ^= 1;
 }
 
 defcode(":", colon, 0, &immediate){
@@ -353,7 +353,7 @@ defcode("interpret", interpret, 0, &parse_num){
     if (*ArgStackPtr)
     {
         /* If we are in immediate mode or the found word is marked immediate */
-        if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags.f_immed))
+        if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags.attr.immed))
         {
             /* Execute the word */
             EXEC(exec_word);
@@ -719,8 +719,8 @@ defcode("printdefw", printdefw, 0, &printallw){
     {
         printf("%s\t%ld %ld",
                word->name,
-               word->flags.f_immed,
-               word->flags.f_hidden);
+               word->flags.attr.immed,
+               word->flags.attr.hidden);
         word = word->link;
     }
 }
