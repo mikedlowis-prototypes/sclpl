@@ -730,6 +730,7 @@ defcode("printdefw", printdefw, 0, &printallw){
 int main(int argc, char** argv)
 {
     CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
+    CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
     _stdin_val  = (val_t)stdin;
     _stdout_val = (val_t)stdout;
     _stderr_val = (val_t)stderr;
