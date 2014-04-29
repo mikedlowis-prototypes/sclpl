@@ -77,6 +77,14 @@ typedef struct word_t {
     val_t* code;
 } word_t;
 
+/** This structure defines a dictionary of defined words. */
+typedef struct dict_t {
+    /** Pointer to the previously loaded dictionary */
+    struct dict_t* link;
+    /** Pointer to the most recently defined word in this dictionary */
+    word_t* words;
+} dict_t;
+
 /** Execute a built-in word directly */
 #define EXEC(word) (word).codeword((word).code)
 
