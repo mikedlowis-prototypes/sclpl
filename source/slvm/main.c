@@ -4,8 +4,29 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-
 #include "slvm.h"
+
+/*
+    Wish List:
+
+    * Rework Interpreter With Custom Syntax
+    * Add Dictionary Typedef
+    * Dynamic Loading and Unloading of Dictionaries (File, Object, or Dynamic Lib)
+    * Rework w* words to allow gettign and setting attributes of a word
+    * Add optional debugging words
+    * Add optional floating point / fixed point words
+    * Add optional runtime integrity checks
+    * Add optional static heap replacement for malloc, realloc, free
+    * Add optional support for embedded systems (No dependence on stdlib)
+    * Run through profiler and optimize execution speed where possible.
+    * Add optional support for temporaries
+    * Add optional code optimizer for compiled words
+    * Add ability to compile to simple object file
+    * Add ability to compile to shared library
+    * Add ability to compile to standalone executable
+    * Add support for multi-tasking
+    * Add support for multi-tasking with multiple cores/threads
+*/
 
 /* Built-in Constants
  *****************************************************************************/
@@ -21,7 +42,7 @@ val_t* CodePtr = 0;
 /** A state variable used to flag when the interpreter reads a line of input */
 val_t Line_Read = 0;
 
-/* Built-in Constants
+/* Inner Interpreter
  *****************************************************************************/
 void docolon(val_t* code) {
     word_t* word;
@@ -30,7 +51,7 @@ void docolon(val_t* code) {
     val_t* prev_code = CodePtr;
     /* Set the next instruction to execute */
     CodePtr = code;
-    /* And loop through until we get the bytecode instruction of 0 (NEXT) */
+    /* And loop through until we "ret" sets the code pointer to null */
     while(CodePtr)
     {
         word = (word_t*)*CodePtr;
@@ -123,6 +144,12 @@ defcode("fpeekc", _fpeekc, 0, &_fputc){
     *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr-1));
     ungetc((char)*(ArgStackPtr), (FILE*)*(ArgStackPtr-1));
 }
+
+/* Interpreter Words
+ *****************************************************************************/
+// defcode("fetch",  , 0, &){}
+// defcode("parse",  , 0, &){}
+// defcode("interp", , 0, &){}
 
 /* Input Words
  *****************************************************************************/
