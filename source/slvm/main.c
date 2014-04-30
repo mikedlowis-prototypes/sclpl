@@ -156,6 +156,7 @@ defcode("fetch", _fetch, 0, &_fpeekc){
 defcode("parse", _parse, 0, &_fetch){
     ArgStackPtr++;
     *(ArgStackPtr-1) = (val_t)parse( (char*)*(ArgStackPtr-1), ArgStackPtr );
+    //EXEC(swap);
 }
 // defcode("interp", , 0, &){}
 
