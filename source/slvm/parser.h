@@ -8,6 +8,7 @@
 #define PARSER_H
 
 #include "slvm.h"
+#include <stdio.h>
 
 typedef enum {
     WORD = 0,
@@ -18,8 +19,8 @@ typedef enum {
     ERROR
 } TokenType_T;
 
-char* fetch(FILE* input);
+char* fetch_token(FILE* input);
 
-ValueType_T parse(char* str, val_t* p_val);
+TokenType_T parse(char* str, val_t* p_val);
 
 #endif /* PARSER_H */

@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <limits.h>
 #include "slvm.h"
+#include "parser.h"
 
 /*
     Wish List:
@@ -147,13 +148,20 @@ defcode("fpeekc", _fpeekc, 0, &_fputc){
 
 /* Interpreter Words
  *****************************************************************************/
-// defcode("fetch",  , 0, &){}
-// defcode("parse",  , 0, &){}
+defcode("fetch", _fetch, 0, &_fpeekc){
+    ArgStackPtr++;
+    *(ArgStackPtr) = (val_t)fetch_token((FILE*)_stdin_val);
+}
+
+defcode("parse", _parse, 0, &_fetch){
+    ArgStackPtr++;
+    *(ArgStackPtr-1) = (val_t)parse( (char*)*(ArgStackPtr-1), ArgStackPtr );
+}
 // defcode("interp", , 0, &){}
 
 /* Input Words
  *****************************************************************************/
-defcode("getc", get_char, 0, &_fpeekc){
+defcode("getc", get_char, 0, &_parse){
     ArgStackPtr++;
     *(ArgStackPtr) = getc(stdin);
 }

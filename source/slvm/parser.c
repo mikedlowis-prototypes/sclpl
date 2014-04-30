@@ -5,25 +5,28 @@
   $HeadURL$
   */
 #include "parser.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 /* Fetching Tokens
  *****************************************************************************/
 static void skip_whitespace(FILE* input);
 static void skip_comment(FILE* input);
-static void parse_string(FILE* input);
-static void parse_token(FILE* input);
+static char* parse_string(FILE* input);
+static char* parse_token(FILE* input);
 static void grow_token(size_t* p_size, size_t* p_index, char** p_p_str, char ch);
 static bool is_whitespace(FILE* input);
 static char fpeekc(FILE* input);
 
-char* fetch(FILE* input)
+char* fetch_token(FILE* input)
 {
     char* result = NULL;
-    skip_whitespace();
+    skip_whitespace(input);
     switch(fpeekc(input))
     {
-        case '#':  skip_comment();
-                   result = fetch(input);
+        case '#':  skip_comment(input);
+                   result = fetch_token(input);
                    break;
         case '"':  result = parse_string(input);
                    break;
@@ -100,7 +103,7 @@ static void skip_comment(FILE* input)
 
 static bool is_whitespace(FILE* input)
 {
-    char ch = peekc(input);
+    char ch = fpeekc(input);
     return ((ch == ' ')  || (ch == '\t') ||
             (ch == '\r') || (ch == '\n'));
 }
@@ -119,9 +122,9 @@ static bool is_integer(val_t* p_val);
 static bool is_string(val_t* p_val);
 static bool is_char(val_t* p_val);
 
-ValueType_T parse(char* str, val_t* p_val)
+TokenType_T parse(char* str, val_t* p_val)
 {
-    ValueType_T type = ERROR;
+    TokenType_T type = ERROR;
     if(str != NULL)
     {
         if(!is_float(p_val) &&
