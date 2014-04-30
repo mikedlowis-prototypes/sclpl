@@ -24,9 +24,7 @@ static char fpeekc(FILE* input);
 char* fetch_token(FILE* input)
 {
     char* result = NULL;
-    puts("skipping whitespace");
     skip_whitespace(input);
-    puts("reading token");
     switch(fpeekc(input))
     {
         case '#':
@@ -42,12 +40,10 @@ char* fetch_token(FILE* input)
             break;
 
         default:
-            puts("reading word num or char");
             result = read_token(input);
             break;
 
     }
-    puts("returning token");
     return result;
 }
 
@@ -124,8 +120,7 @@ static void skip_comment(FILE* input)
 static bool is_whitespace(FILE* input)
 {
     char ch = fpeekc(input);
-    return ((ch == ' ')  || (ch == '\t') ||
-            (ch == '\r') || (ch == '\n'));
+    return ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
 }
 
 static char fpeekc(FILE* input)
@@ -137,61 +132,114 @@ static char fpeekc(FILE* input)
 
 /* Parsing Tokens
  *****************************************************************************/
-//static bool is_float(val_t* p_val);
-static bool is_integer(val_t* p_val);
-//static bool is_string(val_t* p_val);
-//static bool is_char(val_t* p_val);
+static bool is_integer(char* p_str, val_t* p_val);
+static bool is_float(char* p_str, val_t* p_val);
+static bool is_string(char* p_str, val_t* p_val);
+static bool is_char(char* p_str, val_t* p_val);
 
 TokenType_T parse(char* str, val_t* p_val)
 {
     TokenType_T type = ERROR;
     if(str != NULL)
     {
-        puts(str);
-        if(is_integer(p_val))
+        if(is_integer(str,p_val))
         {
             type = INTEGER;
+        }
+        else if(is_float(str,p_val))
+        {
+            type = FLOAT;
+        }
+        else if(is_string(str,p_val))
+        {
+            type = STRING;
+        }
+        else if(is_char(str,p_val))
+        {
+            type = CHAR;
         }
         else
         {
             type = WORD;
             *(p_val) = (val_t)str;
         }
-        //if(!is_float(p_val) &&
-        //   !is_integer(p_val) &&
-        //   !is_string(p_val) &&
-        //   !is_char(p_val))
-        //{
-        //    type = WORD;
-        //    *(p_val) = (val_t)str;
-        //}
     }
     return type;
 }
 
-
-//static bool is_float(val_t* p_val)
-//{
-//    return false;
-//}
-
-static bool is_integer(val_t* p_val)
+static bool is_integer(char* p_str, val_t* p_val)
 {
-    char* str = (char*)(*p_val);
     char* end;
-    *(p_val) = (val_t)strtol(str,&end,0);
-    printf("%#x == %#x\n", end, &(str[strlen(str)-1]));
-    return (end == &(str[strlen(str)-1]));
+    *(p_val) = (val_t)strtol(p_str,&end,0);
+    return (end == &(p_str[strlen(p_str)]));
 }
 
-//static bool is_string(val_t* p_val)
-//{
-//    return false;
-//}
+static bool is_float(char* p_str, val_t* p_val)
+{
+    return false;
+}
 
-//static bool is_char(val_t* p_val)
-//{
-//    return false;
-//}
+static bool is_string(char* p_str, val_t* p_val)
+{
+    bool res = false;
+    if((p_str[0] == '"') && (p_str[strlen(p_str)-1] == '"'))
+    {
+        /* Cut off the last double quote */
+        p_str[strlen(p_str)] = '\0';
+        /* And return the string after the first double quote */
+        *(p_val) = (val_t)(p_str+1);
+        res = true;
+    }
+    return res;
+}
+
+static bool is_char(char* p_str, val_t* p_val)
+{
+    static char const * const named_chars[] = {
+        "\a\0alarm",
+        "\b\0backspace",
+        "\f\0formfeed",
+        "\n\0newline",
+        "\r\0return",
+        "\t\0tab",
+        "\v\0vtab",
+        "\0\0null",
+        " \0space",
+        NULL
+    };
+
+    bool res = false;
+    /* If the string starts with a char indicator (backslash) */
+    if (p_str[0] == '\\')
+    {
+        size_t length = strlen(p_str);
+        /* and it only has one character following it */
+        if(length == 2)
+        {
+            /* Return the character and a status of true */
+            *(p_val) = p_str[1];
+            res = true;
+        }
+        /* else, if the length is greater than two, try to look it up */
+        else if(length > 2)
+        {
+            size_t index = 0;
+            /* Loop through all named chars till we find a match or reach the
+             * end */
+            while(named_chars[index])
+            {
+                /* If we found a match */
+                if( 0 == strcmp( (p_str + 1), (named_chars[index] + 2) ) )
+                {
+                    /* Return the character value and indicate success */
+                    *(p_val) = named_chars[index][0];
+                    res = true;
+                }
+                index++;
+            }
+        }
+    }
+    return res;
+}
 
 
