@@ -29,7 +29,7 @@
     * Add support for multi-tasking with multiple cores/threads
 */
 
-/* Built-in Constants
+/* System State
  *****************************************************************************/
 /** The argument stack */
 val_t ArgStack[ARG_STACK_SIZE];
@@ -39,9 +39,6 @@ val_t* ArgStackPtr = ArgStack-1;
 
 /** Pointer to current instruction being executed */
 val_t* CodePtr = 0;
-
-/** A state variable used to flag when the interpreter reads a line of input */
-val_t Line_Read = 0;
 
 /* Inner Interpreter
  *****************************************************************************/
@@ -352,7 +349,6 @@ defcode("interp", interp, 0, &_parse){
 defcode("quit", quit, 0, &interp){
     int i;
     printf("=> ");
-    Line_Read = 0;
     while(1)
     {
         EXEC(interp);
