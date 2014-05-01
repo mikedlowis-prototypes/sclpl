@@ -148,70 +148,13 @@ defcode("fpeekc", _fpeekc, 0, &_fputc){
 
 /* Interpreter Words
  *****************************************************************************/
-defcode("fetch", _fetch, 0, &_fpeekc){
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)fetch_token((FILE*)_stdin_val);
+defcode("exec", exec, 0, &_fpeekc){
+    word_t* word = (word_t*)(*ArgStackPtr);
+    ArgStackPtr--;
+    EXEC( *(word) );
 }
 
-defcode("parse", _parse, 0, &_fetch){
-    ArgStackPtr++;
-    *(ArgStackPtr-1) = (val_t)parse( (char*)*(ArgStackPtr-1), ArgStackPtr );
-    //EXEC(swap);
-}
-// defcode("interp", , 0, &){}
-
-/* Input Words
- *****************************************************************************/
-defcode("getc", get_char, 0, &_parse){
-    ArgStackPtr++;
-    *(ArgStackPtr) = getc(stdin);
-}
-
-defcode("ws?", is_ws, 0, &get_char){
-    char ch = *(ArgStackPtr);
-    *(ArgStackPtr) = ((ch == ' ')  || (ch == '\t') ||
-                      (ch == '\r') || (ch == '\n'));
-
-    /* TODO: total hack to get the prompt to reappear when the user hits
-     * enter */
-    if(ch == '\n')
-        Line_Read = 1;
-}
-
-defcode("getw", get_word, 0, &is_ws){
-    static char buffer[32];
-    int i = 0;
-    int wschar = 0;
-
-    /* Skip any whitespace */
-    do {
-        EXEC(get_char);
-        buffer[i] = (char)*(ArgStackPtr);
-        EXEC(is_ws);
-        wschar = *(ArgStackPtr);
-        ArgStackPtr--;
-    } while(wschar);
-
-    /* Read the rest of the word */
-    while(!wschar)
-    {
-        i++;
-        EXEC(get_char);
-        buffer[i] = (char)*(ArgStackPtr);
-        EXEC(is_ws);
-        wschar = *(ArgStackPtr);
-        ArgStackPtr--;
-    }
-
-    /* Terminate the string */
-    buffer[i] = '\0';
-
-    /* Return the word */
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)&buffer;
-}
-
-defcode("findw", find_word, 0, &get_word){
+defcode("find", find, 0, &exec){
     word_t const* curr = (word_t const*)latest_val;
     char* name = (char*)*(ArgStackPtr);
     while(curr)
@@ -225,9 +168,26 @@ defcode("findw", find_word, 0, &get_word){
     *(ArgStackPtr) = (val_t)curr;
 }
 
+defcode("fetch", _fetch, 0, &find){
+    ArgStackPtr++;
+    *(ArgStackPtr) = (val_t)fetch_token((FILE*)_stdin_val);
+}
+
+defcode("parse", _parse, 0, &_fetch){
+    char* p_str = (char*)*(ArgStackPtr);
+    ArgStackPtr++;
+    *(ArgStackPtr) = (val_t)parse( p_str, ArgStackPtr-1 );
+    /* If the parsed token no longer needs the original string */
+    if (*(ArgStackPtr) > STRING)
+    {
+        /* Free the mem */
+        free(p_str);
+    }
+}
+
 /* Branching and Literal Words
  *****************************************************************************/
-defcode("lit", literal, 0, &find_word){
+defcode("lit", literal, 0, &quit){
     ArgStackPtr++;
     *(ArgStackPtr) = *CodePtr;
     CodePtr++;
@@ -312,7 +272,10 @@ defcode("immediate", immediate, 1, &hidden){
 }
 
 defcode(":", colon, 0, &immediate){
-    EXEC(get_word);
+    //EXEC(get_word);
+    EXEC(_fetch);
+    EXEC(_parse);
+    ArgStackPtr--;
     EXEC(create);
     EXEC(rbrack);
 }
@@ -324,83 +287,44 @@ defcode(";", semicolon, 1, &colon){
 }
 
 defcode("'", tick, 1, &semicolon){
-    EXEC(get_word);
-    EXEC(find_word);
+    //EXEC(get_word);
+    //EXEC(find_word);
 }
 
-/* Interpreter Words
- *****************************************************************************/
-defcode("execw", exec_word, 0, &tick){
-    word_t* word = (word_t*)(*ArgStackPtr);
-    ArgStackPtr--;
-    EXEC( *(word) );
-}
-
-defcode("parsenum", parse_num, 0, &exec_word){
-    char* end;
-    val_t num = strtol((const char *)*(ArgStackPtr), &end, 10);
-    if(end != (char *)*(ArgStackPtr))
+defcode("interp", interp, 0, &_parse){
+    char* p_word = NULL;
+    EXEC(_fetch);
+    EXEC(_parse);
+    if(*ArgStackPtr == WORD)
     {
-        *(ArgStackPtr) = num;
-    }
-    else
-    {
-        printf("%s ? \n", ((char*)*(ArgStackPtr)));
         ArgStackPtr--;
-    }
-}
-
-defcode("interpret", interpret, 0, &parse_num){
-    char* curr_word;
-    /* Parse a word */
-    EXEC(get_word);
-    curr_word = (char*)*(ArgStackPtr);
-    /* Find the word */
-    EXEC(find_word);
-
-    /* if we found a word */
-    if (*ArgStackPtr)
-    {
-        /* If we are in immediate mode or the found word is marked immediate */
-        if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags.attr.immed))
+        p_word = (char*)*ArgStackPtr;
+        EXEC(find);
+        if(*ArgStackPtr)
         {
-            /* Execute the word */
-            EXEC(exec_word);
-
+            EXEC(exec);
         }
-        /* else we are compiling */
         else
         {
-            EXEC(comma);
-        }
-    }
-    /* else parse it as a number */
-    else
-    {
-        *(ArgStackPtr) = (val_t)curr_word;
-        EXEC(parse_num);
-        if (state_val == 1)
-        {
-            ArgStackPtr++;
-            *(ArgStackPtr) = (val_t)&literal;
-            EXEC(comma);
-            EXEC(comma);
-        }
-        else if (errno == ERANGE)
-        {
+            printf("%s ?\n", p_word);
             ArgStackPtr--;
         }
     }
+    else
+    {
+        ArgStackPtr--;
+    }
+    free(p_word);
 }
 
-defcode("quit", quit, 0, &interpret){
+defcode("quit", quit, 0, &interp){
     int i;
     printf("=> ");
     Line_Read = 0;
     while(1)
     {
-        EXEC(interpret);
-        if(Line_Read)
+        EXEC(interp);
+        if(line_read())
         {
             val_t stacksz = ArgStackPtr - ArgStack + 1;
             if (stacksz > 5)
@@ -413,7 +337,6 @@ defcode("quit", quit, 0, &interpret){
                 printf("%ld ", *(ArgStackPtr-i));
             }
             printf(")\n%s ", (state_val == 0) ? "=>" : "..");
-            Line_Read = 0;
         }
 
     }
@@ -421,7 +344,7 @@ defcode("quit", quit, 0, &interpret){
 
 /* Stack Manipulation Words
  *****************************************************************************/
-defcode("drop", drop, 0, &quit){
+defcode("drop", drop, 0, &tick){
     ArgStackPtr--;
 }
 

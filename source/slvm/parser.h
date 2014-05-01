@@ -9,18 +9,21 @@
 
 #include "slvm.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef enum {
-    WORD = 0,
+    ERROR = 0,
+    WORD,
     STRING,
     CHAR,
     INTEGER,
     FLOAT,
-    ERROR
 } TokenType_T;
 
 char* fetch_token(FILE* input);
 
 TokenType_T parse(char* str, val_t* p_val);
+
+bool line_read(void);
 
 #endif /* PARSER_H */

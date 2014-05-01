@@ -10,13 +10,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Track Lines Read
+ *****************************************************************************/
+static bool Line_Read = true;
+
+bool line_read(void)
+{
+    bool res = Line_Read;
+    Line_Read = false;
+    return res;
+}
+
 /* Fetching Tokens
  *****************************************************************************/
 static void skip_whitespace(FILE* input);
 static void skip_comment(FILE* input);
 static char* read_string(FILE* input);
 static char* read_token(FILE* input);
-//static void grow_token(size_t* p_size, size_t* p_index, char** p_p_str, char ch);
 static char* grow_token(size_t* p_size, size_t* p_index, char* p_str, char ch);
 static bool is_whitespace(FILE* input);
 static char fpeekc(FILE* input);
@@ -120,7 +130,10 @@ static void skip_comment(FILE* input)
 static bool is_whitespace(FILE* input)
 {
     char ch = fpeekc(input);
-    return ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
+    bool res = ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
+    if (ch == '\n')
+        Line_Read = true;
+    return res;
 }
 
 static char fpeekc(FILE* input)
@@ -241,5 +254,4 @@ static bool is_char(char* p_str, val_t* p_val)
     }
     return res;
 }
-
 
