@@ -128,22 +128,27 @@ defcode("fclose", _fclose, 0, &_fopen){
 
 defcode("fflush", _fflush, 0, &_fclose){
     fflush((FILE*)*(ArgStackPtr));
-}
-
-defcode("fgetc",  _fgetc,  0, &_fflush){
-    ArgStackPtr++;
-    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr-1));
-}
-
-defcode("fputc",  _fputc,  0, &_fgetc){
-    fputc((char)*(ArgStackPtr), (FILE*)*(ArgStackPtr-1));
     ArgStackPtr--;
 }
 
-defcode("fpeekc", _fpeekc, 0, &_fputc){
-    ArgStackPtr++;
-    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr-1));
-    ungetc((char)*(ArgStackPtr), (FILE*)*(ArgStackPtr-1));
+defcode("fgetc",  _fgetc,  0, &_fflush){
+    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr));
+}
+
+defcode("fputc",  _fputc,  0, &_fgetc){
+    fputc((char)*(ArgStackPtr-1), (FILE*)*(ArgStackPtr));
+    ArgStackPtr -= 2;
+}
+
+defcode("fputs",  _fputs,  0, &_fputc){
+    fputs((char*)*(ArgStackPtr-1), (FILE*)*(ArgStackPtr));
+    ArgStackPtr -= 2;
+}
+
+defcode("fpeekc", _fpeekc, 0, &_fputs){
+    FILE* p_file = (FILE*)*(ArgStackPtr);
+    *(ArgStackPtr) = fgetc(p_file);
+    ungetc((char)*(ArgStackPtr), p_file);
 }
 
 /* Interpreter Words
@@ -286,8 +291,10 @@ defcode(";", semicolon, 1, &colon){
 }
 
 defcode("'", tick, 1, &semicolon){
-    //EXEC(get_word);
-    //EXEC(find_word);
+    EXEC(_fetch);
+    EXEC(_parse);
+    ArgStackPtr--;
+    EXEC(find);
 }
 
 defcode("interp", interp, 0, &_parse){

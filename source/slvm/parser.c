@@ -198,7 +198,7 @@ static bool is_string(char* p_str, val_t* p_val)
     if((p_str[0] == '"') && (p_str[strlen(p_str)-1] == '"'))
     {
         /* Cut off the last double quote */
-        p_str[strlen(p_str)] = '\0';
+        p_str[strlen(p_str)-1] = '\0';
         /* And return the string after the first double quote */
         *(p_val) = (val_t)(p_str+1);
         res = true;
