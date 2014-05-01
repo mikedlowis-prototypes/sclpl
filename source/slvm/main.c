@@ -187,7 +187,7 @@ defcode("parse", _parse, 0, &_fetch){
 
 /* Branching and Literal Words
  *****************************************************************************/
-defcode("lit", literal, 0, &quit){
+defcode("lit", literal, 0, &_parse){
     ArgStackPtr++;
     *(ArgStackPtr) = *CodePtr;
     CodePtr++;
@@ -272,7 +272,6 @@ defcode("immediate", immediate, 1, &hidden){
 }
 
 defcode(":", colon, 0, &immediate){
-    //EXEC(get_word);
     EXEC(_fetch);
     EXEC(_parse);
     ArgStackPtr--;
@@ -292,29 +291,55 @@ defcode("'", tick, 1, &semicolon){
 }
 
 defcode("interp", interp, 0, &_parse){
-    char* p_word = NULL;
+    char* p_str = NULL;
     EXEC(_fetch);
     EXEC(_parse);
+    /* If what we parsed was a word */
     if(*ArgStackPtr == WORD)
     {
+        /* Consume the type token and save off the string pointer */
         ArgStackPtr--;
-        p_word = (char*)*ArgStackPtr;
+        p_str = (char*)*ArgStackPtr;
+        /* Search for the word in the dictionary */
         EXEC(find);
+        /* If we found a definition */
         if(*ArgStackPtr)
         {
-            EXEC(exec);
+            /* And the definition is marked immediate or we're in immediate mode */
+            if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags.attr.immed))
+            {
+                /* Execute it */
+                EXEC(exec);
+            }
+            /* Otherwise, compile it! */
+            else
+            {
+                EXEC(comma);
+            }
         }
+        /* We didn't find a definition */
         else
         {
-            printf("%s ?\n", p_word);
+            /* Ask the user what gives */
+            printf("%s ?\n", p_str);
+            /* Consume the token */
             ArgStackPtr--;
         }
+    }
+    /* What we parsed is a literal and we're in compile mode */
+    else if (state_val == 1)
+    {
+        *(ArgStackPtr) = (val_t)&literal;
+        EXEC(comma);
+        EXEC(comma);
     }
     else
     {
         ArgStackPtr--;
     }
-    free(p_word);
+
+    /* If we saved off a pointer, we're done with it so free the memory */
+    if(p_str) free(p_str);
 }
 
 defcode("quit", quit, 0, &interp){
