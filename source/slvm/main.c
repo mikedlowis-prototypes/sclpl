@@ -1,9 +1,3 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
 #include "slvm.h"
 #include "parser.h"
 #include "pal.h"
@@ -175,7 +169,7 @@ defcode("parse", _parse, 0, &_fetch){
     if (*(ArgStack) > STRING)
     {
         /* Free the mem */
-        free(p_str);
+        pal_free(p_str);
     }
 }
 
@@ -223,11 +217,11 @@ defcode("create", create, 0, &rbrack){
     if (*(ArgStack))
     {
         size_t namesz = strlen((char*)*(ArgStack));
-        name = (char*)malloc( namesz );
+        name = (char*)pal_allocate( namesz );
         strcpy(name, (char*)*(ArgStack));
     }
     /* Create the word entry */
-    word_t* word   = (word_t*)malloc(sizeof(word_t));
+    word_t* word   = (word_t*)pal_allocate(sizeof(word_t));
     word->link     = (word_t*)latest_val;
     /* Initialize the flags (hidden and non-immediate by default) */
     word->flags.attr.immed    = 0;
@@ -236,7 +230,7 @@ defcode("create", create, 0, &rbrack){
     /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
-    word->code     = (val_t*)malloc(sizeof(val_t));
+    word->code     = (val_t*)pal_allocate(sizeof(val_t));
     word->code[0]  = (val_t)&ret;
     /* Update Latest and Return the new word */
     latest_val     = (val_t)word;
@@ -252,7 +246,7 @@ defcode(",", comma, 0, &create){
     ArgStack--;
     /* Resize the code section and relocate if necessary */
     word->flags.attr.codesize++;
-    word->code = (val_t*)realloc(word->code, word->flags.attr.codesize * sizeof(val_t));
+    word->code = (val_t*)pal_reallocate(word->code, word->flags.attr.codesize * sizeof(val_t));
     /* Update "here" and terminate the code section */
     word->code[word->flags.attr.codesize-1] = (val_t)&ret;
 }
@@ -317,7 +311,7 @@ defcode("interp", interp, 0, &_parse){
         else
         {
             /* Ask the user what gives */
-            printf("%s ?\n", p_str);
+            pal_unknown_word(p_str);
             /* Consume the token */
             ArgStack--;
         }
@@ -335,7 +329,7 @@ defcode("interp", interp, 0, &_parse){
     }
 
     /* If we saved off a pointer, we're done with it so free the memory */
-    if(p_str) free(p_str);
+    if(p_str) pal_free(p_str);
 }
 
 defcode("quit", quit, 0, &interp){

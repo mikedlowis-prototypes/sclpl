@@ -16,6 +16,7 @@ extern val_t* CodePtr;
 
 dict_t* pal_init(dict_t* p_prev_dict);
 void    pal_prompt(void);
+void    pal_unknown_word(char* p_str);
 void*   pal_allocate(size_t size);
 void*   pal_reallocate(void* p_mem, size_t size);
 void    pal_free(void* p_mem);

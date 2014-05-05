@@ -38,6 +38,11 @@ void pal_prompt(void)
     }
 }
 
+void pal_unknown_word(char* p_str)
+{
+    printf("%s ?\n", p_str);
+}
+
 void* pal_allocate(size_t size)
 {
     return malloc(size);
