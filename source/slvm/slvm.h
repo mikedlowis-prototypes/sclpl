@@ -81,6 +81,8 @@ typedef struct word_t {
 typedef struct dict_t {
     /** Pointer to the previously loaded dictionary */
     struct dict_t* link;
+    /** The name of the dictionary */
+    char* name;
     /** Pointer to the most recently defined word in this dictionary */
     word_t* words;
 } dict_t;
