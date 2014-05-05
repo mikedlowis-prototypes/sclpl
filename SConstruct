@@ -4,6 +4,7 @@
 import platform
 import fnmatch
 import os
+import glob
 
 # Helper function for recursively finding files
 def find_files(path,pattern):
@@ -101,5 +102,7 @@ scheme.PrependENVPath('PATH', './build')
 #                    find_files('tests/slas/','*.scm') )
 
 # SCLPL Virtual Machine
-c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))
+c_cpp.Program('build/slvm',
+              glob.glob('source/slvm/*.c') +
+              glob.glob('source/slvm/platform/C99/*.c'))
 

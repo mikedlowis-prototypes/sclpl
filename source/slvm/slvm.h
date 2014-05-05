@@ -27,7 +27,7 @@
     The number of bits of the flags field dedicated to holding the size of the
     bytecode vector.
 */
-#define CODE_SZ_BITS ((sizeof(val_t) * 8) - 8u)
+#define CODE_SZ_BITS ((sizeof(val_t) * 8u) - 8u)
 
 /**
     This type represents a pointer to a function handler for executing a word.
@@ -109,19 +109,19 @@ typedef struct dict_t {
 /**
  * Define a built-in word representing a variable with the provided initial value */
 #define defvar(name_str,c_name,immed,prev,initial) \
-    static val_t c_name##_val = initial;            \
+    static val_t c_name##_val = initial;           \
     defcode(name_str,c_name,immed,prev) {          \
-        ArgStackPtr++;                             \
-        *(ArgStackPtr) = (val_t)&(c_name##_val);    \
+        ArgStack++;                                \
+        *(ArgStack) = (val_t)&(c_name##_val);      \
     }
 
 /**
  * Define a built-in word representing a constant with the provided value */
 #define defconst(name_str,c_name,immed,prev,value) \
-    static val_t const c_name##_val = value;        \
+    static val_t const c_name##_val = value;       \
     defcode(name_str,c_name,immed,prev) {          \
-        ArgStackPtr++;                             \
-        *(ArgStackPtr) = c_name##_val;             \
+        ArgStack++;                                \
+        *(ArgStack) = c_name##_val;                \
     }
 
 /**
