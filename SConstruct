@@ -4,6 +4,7 @@
 import platform
 import fnmatch
 import os
+import glob
 
 # Helper function for recursively finding files
 def find_files(path,pattern):
@@ -34,13 +35,20 @@ def RunTest( output, runner ):
 # Compiler Environments
 #------------------------------------------------------------------------------
 
+# Base Environment
+#-----------------
+base = Environment(
+    ENV     = os.environ,
+    CCFLAGS = [],
+    LDFLAGS = [])
+
+# On windows use mingw because VS is not C99 compliant
+if platform.system() == 'Windows':
+    base.Append(TOOLS=['mingw'])
+
 # Default C/C++ Environment
 #---------------------------
-c_cpp = Environment(
-        ENV      = os.environ,
-        CCFLAGS  = [ '-Wall', '-Werror', '-std=c99' ],
-        LDFLAGS  = [],
-        TOOLS    = [ 'mingw' ])
+c_cpp = base.Clone(CCFLAGS = [ '-Wall', '-Werror', '-std=c99' ])
 
 # Chicken Scheme Environment
 #---------------------------
@@ -59,47 +67,43 @@ scheme_linker = Builder(
         src_builder = [ scheme_compiler ])
 
 # Create the Environment for this project
-scheme = Environment(
-        ENV      = os.environ,
-        CCFLAGS  = [ '-I', 'inc'],
-        LDFLAGS  = [],
-        TOOLS    = [ 'mingw' ],
-        BUILDERS = { 'Program': scheme_linker })
-scheme.PrependENVPath('PATH', './build')
+scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
+                    BUILDERS = { 'Program': scheme_linker })
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
 #------------------------------------------------------------------------------
 
 # SOF Shared Library
-#c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
+c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
 
 # SBC Shared Library
-#c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
+c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
 
 # readsof Command Line Utility
-#readsof = c_cpp.Clone(
-#        CPPPATH = [ 'source/libsof/' ],
-#        LIBS = [ 'sof' ],
-#        LIBPATH = [ 'build' ])
-#readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
-#readsof.Depends('readsof', 'sof')
+readsof = c_cpp.Clone(CPPPATH = [ 'source/libsof/' ],
+                      LIBS    = [ 'sof' ],
+                      LIBPATH = [ 'build' ])
+readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
+readsof.Depends('readsof', 'sof')
 
-## SCLPL Compiler
-#SchemeBuildAndTest( 'build/slc',
-#                    find_files('source/slc/','*.scm'),
-#                    find_files('tests/slc/','*.scm') )
-#
-## SCLPL Package Manager
-#SchemeBuildAndTest( 'build/slpkg',
-#                    find_files('source/slpkg/','*.scm'),
-#                    find_files('tests/slpkg/','*.scm') )
-#
-## SCLPL Assembler
-#SchemeBuildAndTest( 'build/slas',
-#                    find_files('source/slas/','*.scm'),
-#                    find_files('tests/slas/','*.scm') )
+# SCLPL Compiler
+SchemeBuildAndTest( 'build/slc',
+                    find_files('source/slc/','*.scm'),
+                    find_files('tests/slc/','*.scm') )
+
+# SCLPL Package Manager
+SchemeBuildAndTest( 'build/slpkg',
+                    find_files('source/slpkg/','*.scm'),
+                    find_files('tests/slpkg/','*.scm') )
+
+# SCLPL Assembler
+SchemeBuildAndTest( 'build/slas',
+                    find_files('source/slas/','*.scm'),
+                    find_files('tests/slas/','*.scm') )
 
 # SCLPL Virtual Machine
-c_cpp.Program('build/slvm', find_files('source/slvm/','*.c'))
+c_cpp.Program('build/slvm',
+              glob.glob('source/slvm/*.c') +
+              glob.glob('source/slvm/platform/C99/*.c'))
 

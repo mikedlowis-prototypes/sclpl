@@ -20,7 +20,7 @@ typedef enum {
     FLOAT,
 } TokenType_T;
 
-char* fetch_token(FILE* input);
+char* fetch_token(void);
 
 TokenType_T parse(char* str, val_t* p_val);
 

@@ -5,10 +5,10 @@
   $HeadURL$
   */
 #include "parser.h"
-#include <stdio.h>
+#include "pal.h"
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 /* Track Lines Read
  *****************************************************************************/
@@ -23,73 +23,72 @@ bool line_read(void)
 
 /* Fetching Tokens
  *****************************************************************************/
-static void skip_whitespace(FILE* input);
-static void skip_comment(FILE* input);
-static char* read_string(FILE* input);
-static char* read_token(FILE* input);
+static void skip_whitespace(void);
+static void skip_comment(void);
+static char* read_string(void);
+static char* read_token(void);
 static char* grow_token(size_t* p_size, size_t* p_index, char* p_str, char ch);
-static bool is_whitespace(FILE* input);
-static char fpeekc(FILE* input);
+static bool is_whitespace(void);
 
-char* fetch_token(FILE* input)
+char* fetch_token(void)
 {
     char* result = NULL;
-    skip_whitespace(input);
-    switch(fpeekc(input))
+    skip_whitespace();
+    switch(pal_peek_char())
     {
         case '#':
-            skip_comment(input);
-            result = fetch_token(input);
+            skip_comment();
+            result = fetch_token();
             break;
 
         case '"':
-            result = read_string(input);
+            result = read_string();
             break;
 
         case EOF:
             break;
 
         default:
-            result = read_token(input);
+            result = read_token();
             break;
 
     }
     return result;
 }
 
-static char* read_string(FILE* input)
+static char* read_string(void)
 {
     size_t strsize  = 8;
     size_t strindex = 0;
-    char*  string   = (char*)malloc(strsize);
+    char*  string   = (char*)pal_allocate(strsize);
 
-    string = grow_token(&strsize, &strindex, string, fgetc(input));
-    while('"' != fpeekc(input))
+    string = grow_token(&strsize, &strindex, string, pal_read_char());
+    while('"' != pal_peek_char())
     {
-        if(feof(input)) {
-            free(string);
+        if(pal_is_eof()) {
+            pal_free(string);
             return NULL;
         }
-        string = grow_token(&strsize, &strindex, string, fgetc(input));
+        string = grow_token(&strsize, &strindex, string, pal_read_char());
     }
-    string = grow_token(&strsize, &strindex, string, fgetc(input));
+    string = grow_token(&strsize, &strindex, string, pal_read_char());
 
     return string;
 }
 
-static char* read_token(FILE* input)
+static char* read_token(void)
 {
     size_t strsize  = 8;
     size_t strindex = 0;
-    char*  string   = (char*)malloc(strsize);
+    char*  string   = (char*)pal_allocate(strsize);
 
-    while(!is_whitespace(input))
+    while(!is_whitespace())
     {
-        if(feof(input)) {
-            free(string);
+        if(pal_is_eof()) {
+            pal_free(string);
             return NULL;
         }
-        string = grow_token(&strsize, &strindex, string, fgetc(input));
+        string = grow_token(&strsize, &strindex, string, pal_read_char());
     }
 
     return string;
@@ -102,7 +101,7 @@ static char* grow_token(size_t* p_size, size_t* p_index, char* p_str, char ch)
     {
         /* Double the string size */
         *(p_size) *= 2;
-        p_str = (char*)realloc( p_str, *(p_size) );
+        p_str = (char*)pal_reallocate( p_str, *(p_size) );
     }
     /* Set the current char to the provided value and null terminate the str */
     p_str[ *(p_index) ]  = ch;
@@ -112,35 +111,28 @@ static char* grow_token(size_t* p_size, size_t* p_index, char* p_str, char ch)
     return p_str;
 }
 
-static void skip_whitespace(FILE* input)
+static void skip_whitespace(void)
 {
-    while(!feof(input) && is_whitespace(input))
+    while(!pal_is_eof() && is_whitespace())
     {
-        (void)fgetc(input);
+        (void)pal_read_char();
     }
 }
 
-static void skip_comment(FILE* input)
+static void skip_comment(void)
 {
-    while(!feof(input) && ('\n' != fgetc(input)))
+    while(!pal_is_eof() && ('\n' != pal_read_char()))
     {
     }
 }
 
-static bool is_whitespace(FILE* input)
+static bool is_whitespace(void)
 {
-    char ch = fpeekc(input);
+    char ch = pal_peek_char();
     bool res = ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
     if (ch == '\n')
         Line_Read = true;
     return res;
-}
-
-static char fpeekc(FILE* input)
-{
-    char ch = fgetc(input);
-    ungetc(ch,input);
-    return ch;
 }
 
 /* Parsing Tokens

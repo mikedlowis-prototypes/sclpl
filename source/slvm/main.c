@@ -1,11 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
 #include "slvm.h"
 #include "parser.h"
+#include "pal.h"
 
 /*
     Wish List:
@@ -28,17 +23,6 @@
     * Add support for multi-tasking
     * Add support for multi-tasking with multiple cores/threads
 */
-
-/* System State
- *****************************************************************************/
-/** The argument stack */
-val_t ArgStack[ARG_STACK_SIZE];
-
-/** Pointer to current position on the stack */
-val_t* ArgStackPtr = ArgStack-1;
-
-/** Pointer to current instruction being executed */
-val_t* CodePtr = 0;
 
 /* Inner Interpreter
  *****************************************************************************/
@@ -76,32 +60,33 @@ defvar("latest", latest, 0, &state,  0);
 /* Word Words
  *****************************************************************************/
 defcode("wlink", wlink, 0, &latest){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->link);
+    *(ArgStack) = (val_t)(((word_t*)*(ArgStack))->link);
 }
 
 defcode("wsize", wflags, 0, &wlink){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->flags.attr.codesize);
+    *(ArgStack) = (val_t)(((word_t*)*(ArgStack))->flags.attr.codesize);
 }
 
 defcode("wname", wname, 0, &wflags){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->name);
+    *(ArgStack) = (val_t)(((word_t*)*(ArgStack))->name);
 }
 
 defcode("wfunc", wfunc, 0, &wname){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->codeword);
+    *(ArgStack) = (val_t)(((word_t*)*(ArgStack))->codeword);
 }
 
 defcode("wcode", wcode, 0, &wfunc){
-    *(ArgStackPtr) = (val_t)(((word_t*)*(ArgStackPtr))->code);
+    *(ArgStack) = (val_t)(((word_t*)*(ArgStack))->code);
 }
 
 defcode("here", here, 0, &wcode){
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)((((word_t*)latest_val)->flags.attr.codesize) - 1);
+    ArgStack++;
+    *(ArgStack) = (val_t)((((word_t*)latest_val)->flags.attr.codesize) - 1);
 }
 
 /* Input/Output Words
  *****************************************************************************/
+#if 0
 defvar("stdin",  _stdin,  0, &here,    0);
 defvar("stdout", _stdout, 0, &_stdin,  0);
 defvar("stderr", _stderr, 0, &_stdout, 0);
@@ -114,51 +99,52 @@ defconst("F_W+", f_wu, 0, &f_ru,    (val_t)"w+");
 defconst("F_A+", f_au, 0, &f_wu,    (val_t)"a+");
 
 defcode("fopen",  _fopen,  0, &f_au){
-    *(ArgStackPtr-1) = (val_t)fopen( (const char*)*(ArgStackPtr-1), (const char*)*(ArgStackPtr) );
-    ArgStackPtr--;
+    *(ArgStack-1) = (val_t)fopen( (const char*)*(ArgStack-1), (const char*)*(ArgStack) );
+    ArgStack--;
 }
 
 defcode("fclose", _fclose, 0, &_fopen){
-    fclose((FILE*)*(ArgStackPtr));
-    ArgStackPtr--;
+    fclose((FILE*)*(ArgStack));
+    ArgStack--;
 }
 
 defcode("fflush", _fflush, 0, &_fclose){
-    fflush((FILE*)*(ArgStackPtr));
-    ArgStackPtr--;
+    fflush((FILE*)*(ArgStack));
+    ArgStack--;
 }
 
 defcode("fgetc",  _fgetc,  0, &_fflush){
-    *(ArgStackPtr) = fgetc((FILE*)*(ArgStackPtr));
+    *(ArgStack) = fgetc((FILE*)*(ArgStack));
 }
 
 defcode("fputc",  _fputc,  0, &_fgetc){
-    fputc((char)*(ArgStackPtr-1), (FILE*)*(ArgStackPtr));
-    ArgStackPtr -= 2;
+    fputc((char)*(ArgStack-1), (FILE*)*(ArgStack));
+    ArgStack -= 2;
 }
 
 defcode("fputs",  _fputs,  0, &_fputc){
-    fputs((char*)*(ArgStackPtr-1), (FILE*)*(ArgStackPtr));
-    ArgStackPtr -= 2;
+    fputs((char*)*(ArgStack-1), (FILE*)*(ArgStack));
+    ArgStack -= 2;
 }
 
 defcode("fpeekc", _fpeekc, 0, &_fputs){
-    FILE* p_file = (FILE*)*(ArgStackPtr);
-    *(ArgStackPtr) = fgetc(p_file);
-    ungetc((char)*(ArgStackPtr), p_file);
+    FILE* p_file = (FILE*)*(ArgStack);
+    *(ArgStack) = fgetc(p_file);
+    ungetc((char)*(ArgStack), p_file);
 }
+#endif
 
 /* Interpreter Words
  *****************************************************************************/
-defcode("exec", exec, 0, &_fpeekc){
-    word_t* word = (word_t*)(*ArgStackPtr);
-    ArgStackPtr--;
+defcode("exec", exec, 0, &here){
+    word_t* word = (word_t*)(*ArgStack);
+    ArgStack--;
     EXEC( *(word) );
 }
 
 defcode("find", find, 0, &exec){
     word_t const* curr = (word_t const*)latest_val;
-    char* name = (char*)*(ArgStackPtr);
+    char* name = (char*)*(ArgStack);
     while(curr)
     {
         if (!(curr->flags.attr.hidden) && (0 == strcmp(curr->name,name)))
@@ -167,31 +153,31 @@ defcode("find", find, 0, &exec){
         }
         curr = curr->link;
     }
-    *(ArgStackPtr) = (val_t)curr;
+    *(ArgStack) = (val_t)curr;
 }
 
 defcode("fetch", _fetch, 0, &find){
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)fetch_token((FILE*)_stdin_val);
+    ArgStack++;
+    *(ArgStack) = (val_t)fetch_token();
 }
 
 defcode("parse", _parse, 0, &_fetch){
-    char* p_str = (char*)*(ArgStackPtr);
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)parse( p_str, ArgStackPtr-1 );
+    char* p_str = (char*)*(ArgStack);
+    ArgStack++;
+    *(ArgStack) = (val_t)parse( p_str, ArgStack-1 );
     /* If the parsed token no longer needs the original string */
-    if (*(ArgStackPtr) > STRING)
+    if (*(ArgStack) > STRING)
     {
         /* Free the mem */
-        free(p_str);
+        pal_free(p_str);
     }
 }
 
 /* Branching and Literal Words
  *****************************************************************************/
 defcode("lit", literal, 0, &_parse){
-    ArgStackPtr++;
-    *(ArgStackPtr) = *CodePtr;
+    ArgStack++;
+    *(ArgStack) = *CodePtr;
     CodePtr++;
 }
 
@@ -200,7 +186,7 @@ defcode("br", branch, 0, &literal){
 }
 
 defcode("0br", zbranch, 0, &branch){
-    if (*ArgStackPtr == 0)
+    if (*ArgStack == 0)
     {
         CodePtr = (val_t*)(((val_t)CodePtr) + (*(CodePtr) * sizeof(val_t)));
     }
@@ -208,7 +194,7 @@ defcode("0br", zbranch, 0, &branch){
     {
         CodePtr++;
     }
-    ArgStackPtr--;
+    ArgStack--;
 }
 
 /* Compiler Words
@@ -228,14 +214,14 @@ defcode("]", rbrack, 1, &lbrack){
 defcode("create", create, 0, &rbrack){
     /* Copy the name string */
     char* name = 0u;
-    if (*(ArgStackPtr))
+    if (*(ArgStack))
     {
-        size_t namesz = strlen((char*)*(ArgStackPtr));
-        name = (char*)malloc( namesz );
-        strcpy(name, (char*)*(ArgStackPtr));
+        size_t namesz = strlen((char*)*(ArgStack));
+        name = (char*)pal_allocate( namesz );
+        strcpy(name, (char*)*(ArgStack));
     }
     /* Create the word entry */
-    word_t* word   = (word_t*)malloc(sizeof(word_t));
+    word_t* word   = (word_t*)pal_allocate(sizeof(word_t));
     word->link     = (word_t*)latest_val;
     /* Initialize the flags (hidden and non-immediate by default) */
     word->flags.attr.immed    = 0;
@@ -244,11 +230,11 @@ defcode("create", create, 0, &rbrack){
     /* Initialize the name, codeword, and bytecode */
     word->name     = name;
     word->codeword = &docolon;
-    word->code     = (val_t*)malloc(sizeof(val_t));
+    word->code     = (val_t*)pal_allocate(sizeof(val_t));
     word->code[0]  = (val_t)&ret;
     /* Update Latest and Return the new word */
     latest_val     = (val_t)word;
-    *(ArgStackPtr) = (val_t)word;
+    *(ArgStack) = (val_t)word;
 }
 
 defcode(",", comma, 0, &create){
@@ -256,27 +242,27 @@ defcode(",", comma, 0, &create){
     word_t* word  = (word_t*)latest_val;
     /* Put the next instruction in place of the terminating 'ret' that "here"
      * points too */
-    word->code[word->flags.attr.codesize-1] = *(ArgStackPtr);
-    ArgStackPtr--;
+    word->code[word->flags.attr.codesize-1] = *(ArgStack);
+    ArgStack--;
     /* Resize the code section and relocate if necessary */
     word->flags.attr.codesize++;
-    word->code = (val_t*)realloc(word->code, word->flags.attr.codesize * sizeof(val_t));
+    word->code = (val_t*)pal_reallocate(word->code, word->flags.attr.codesize * sizeof(val_t));
     /* Update "here" and terminate the code section */
     word->code[word->flags.attr.codesize-1] = (val_t)&ret;
 }
 
 defcode("hidden", hidden, 1, &comma){
-    ((word_t*)*(ArgStackPtr))->flags.attr.hidden ^= 1;
+    ((word_t*)*(ArgStack))->flags.attr.hidden ^= 1;
 }
 
 defcode("immediate", immediate, 1, &hidden){
-    ((word_t*)*(ArgStackPtr))->flags.attr.immed ^= 1;
+    ((word_t*)*(ArgStack))->flags.attr.immed ^= 1;
 }
 
 defcode(":", colon, 0, &immediate){
     EXEC(_fetch);
     EXEC(_parse);
-    ArgStackPtr--;
+    ArgStack--;
     EXEC(create);
     EXEC(rbrack);
 }
@@ -284,13 +270,13 @@ defcode(":", colon, 0, &immediate){
 defcode(";", semicolon, 1, &colon){
     EXEC(lbrack);
     EXEC(hidden);
-    ArgStackPtr--;
+    ArgStack--;
 }
 
 defcode("'", tick, 1, &semicolon){
     EXEC(_fetch);
     EXEC(_parse);
-    ArgStackPtr--;
+    ArgStack--;
     EXEC(find);
 }
 
@@ -299,18 +285,18 @@ defcode("interp", interp, 0, &_parse){
     EXEC(_fetch);
     EXEC(_parse);
     /* If what we parsed was a word */
-    if(*ArgStackPtr == WORD)
+    if(*ArgStack == WORD)
     {
         /* Consume the type token and save off the string pointer */
-        ArgStackPtr--;
-        p_str = (char*)*ArgStackPtr;
+        ArgStack--;
+        p_str = (char*)*ArgStack;
         /* Search for the word in the dictionary */
         EXEC(find);
         /* If we found a definition */
-        if(*ArgStackPtr)
+        if(*ArgStack)
         {
             /* And the definition is marked immediate or we're in immediate mode */
-            if((state_val == 0) || (((word_t*)*ArgStackPtr)->flags.attr.immed))
+            if((state_val == 0) || (((word_t*)*ArgStack)->flags.attr.immed))
             {
                 /* Execute it */
                 EXEC(exec);
@@ -325,209 +311,193 @@ defcode("interp", interp, 0, &_parse){
         else
         {
             /* Ask the user what gives */
-            printf("%s ?\n", p_str);
+            pal_unknown_word(p_str);
             /* Consume the token */
-            ArgStackPtr--;
+            ArgStack--;
         }
     }
     /* What we parsed is a literal and we're in compile mode */
     else if (state_val == 1)
     {
-        *(ArgStackPtr) = (val_t)&literal;
+        *(ArgStack) = (val_t)&literal;
         EXEC(comma);
         EXEC(comma);
     }
     else
     {
-        ArgStackPtr--;
+        ArgStack--;
     }
 
     /* If we saved off a pointer, we're done with it so free the memory */
-    if(p_str) free(p_str);
+    if(p_str) pal_free(p_str);
 }
 
 defcode("quit", quit, 0, &interp){
-    int i;
-    printf("=> ");
     while(1)
     {
+        pal_prompt();
         EXEC(interp);
-        if(line_read())
-        {
-            val_t stacksz = ArgStackPtr - ArgStack + 1;
-            if (stacksz > 5)
-                printf("( ... ");
-            else
-                printf("( ");
-
-            for(i = (stacksz > 5) ? 4 : stacksz-1; i >= 0; i--)
-            {
-                printf("%ld ", *(ArgStackPtr-i));
-            }
-            printf(")\n%s ", (state_val == 0) ? "=>" : "..");
-        }
-
     }
 }
 
 /* Stack Manipulation Words
  *****************************************************************************/
 defcode("drop", drop, 0, &tick){
-    ArgStackPtr--;
+    ArgStack--;
 }
 
 defcode("swap", swap, 0, &drop){
-    val_t temp = *(ArgStackPtr);
-    *(ArgStackPtr) = *(ArgStackPtr-1);
-    *(ArgStackPtr-1) = temp;
+    val_t temp = *(ArgStack);
+    *(ArgStack) = *(ArgStack-1);
+    *(ArgStack-1) = temp;
 }
 
 defcode("dup", dup, 0, &swap){
-    ArgStackPtr++;
-    *(ArgStackPtr) = *(ArgStackPtr-1);
+    ArgStack++;
+    *(ArgStack) = *(ArgStack-1);
 }
 
 defcode("over", over, 0, &dup){
-    ArgStackPtr++;
-    *(ArgStackPtr) = *(ArgStackPtr-2);
+    ArgStack++;
+    *(ArgStack) = *(ArgStack-2);
 }
 
 defcode("rot", rot, 0, &over){
-    val_t temp = *(ArgStackPtr);
-    *(ArgStackPtr) = *(ArgStackPtr-1);
-    *(ArgStackPtr-1) = *(ArgStackPtr-2);
-    *(ArgStackPtr-2) = temp;
+    val_t temp = *(ArgStack);
+    *(ArgStack) = *(ArgStack-1);
+    *(ArgStack-1) = *(ArgStack-2);
+    *(ArgStack-2) = temp;
 }
 
 defcode("-rot", nrot, 0, &rot){
-    val_t temp = *(ArgStackPtr-2);
-    *(ArgStackPtr-2) = *(ArgStackPtr-1);
-    *(ArgStackPtr-1) = *(ArgStackPtr);
-    *(ArgStackPtr) = temp;
+    val_t temp = *(ArgStack-2);
+    *(ArgStack-2) = *(ArgStack-1);
+    *(ArgStack-1) = *(ArgStack);
+    *(ArgStack) = temp;
 }
 
 /* Arithmetic Words
  *****************************************************************************/
 defcode("+", add, 0, &nrot){
-    *(ArgStackPtr-1) += *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) += *(ArgStack);
+    ArgStack--;
 }
 
 defcode("-", sub, 0, &add){
-    *(ArgStackPtr-1) -= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) -= *(ArgStack);
+    ArgStack--;
 }
 
 defcode("*", mul, 0, &sub){
-    *(ArgStackPtr-1) *= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) *= *(ArgStack);
+    ArgStack--;
 }
 
 defcode("/", divide, 0, &mul){
-    *(ArgStackPtr-1) /= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) /= *(ArgStack);
+    ArgStack--;
 }
 
 defcode("%", mod, 0, &divide){
-    *(ArgStackPtr-1) %= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) %= *(ArgStack);
+    ArgStack--;
 }
 
 /* Boolean Conditional Words
  *****************************************************************************/
 defcode("=", equal, 0, &mod){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) == *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) == *(ArgStack);
+    ArgStack--;
 }
 
 defcode("!=", notequal, 0, &equal){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) != *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) != *(ArgStack);
+    ArgStack--;
 }
 
 defcode("<", lessthan, 0, &notequal){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) < *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) < *(ArgStack);
+    ArgStack--;
 }
 
 defcode(">", greaterthan, 0, &lessthan){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) > *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) > *(ArgStack);
+    ArgStack--;
 }
 
 defcode("<=", lessthaneq, 0, &greaterthan){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) <= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) <= *(ArgStack);
+    ArgStack--;
 }
 
 defcode(">=", greaterthaneq, 0, &lessthaneq){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) >= *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) >= *(ArgStack);
+    ArgStack--;
 }
 
 defcode("and", and, 0, &greaterthaneq){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) && *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) && *(ArgStack);
+    ArgStack--;
 }
 
 defcode("or", or, 0, &and){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) || *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) || *(ArgStack);
+    ArgStack--;
 }
 
 defcode("not", not, 0, &or){
-    *(ArgStackPtr) = !(*(ArgStackPtr));
+    *(ArgStack) = !(*(ArgStack));
 }
 
 /* Bitwise Words
  *****************************************************************************/
 defcode("band", band, 0, &not){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) & *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) & *(ArgStack);
+    ArgStack--;
 }
 
 defcode("bor", bor, 0, &band){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) | *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) | *(ArgStack);
+    ArgStack--;
 }
 
 defcode("bxor", bxor, 0, &bor){
-    *(ArgStackPtr-1) = *(ArgStackPtr-1) ^ *(ArgStackPtr);
-    ArgStackPtr--;
+    *(ArgStack-1) = *(ArgStack-1) ^ *(ArgStack);
+    ArgStack--;
 }
 
 defcode("bnot", bnot, 0, &bxor){
-    *(ArgStackPtr) = ~(*(ArgStackPtr));
+    *(ArgStack) = ~(*(ArgStack));
 }
 
 /* Memory Manipulation Words
  *****************************************************************************/
 defcode("!", store, 0, &bnot){
-    *((val_t*)*(ArgStackPtr)) = *(ArgStackPtr-1);
-    ArgStackPtr -= 2;
+    *((val_t*)*(ArgStack)) = *(ArgStack-1);
+    ArgStack -= 2;
 }
 
 defcode("@", fetch, 0, &store){
-    *(ArgStackPtr) = *((val_t*)*(ArgStackPtr));
+    *(ArgStack) = *((val_t*)*(ArgStack));
 }
 
 defcode("+!", addstore, 0, &fetch){
-    *((val_t*)*(ArgStackPtr)) += *(ArgStackPtr-1);
-    ArgStackPtr -= 2;
+    *((val_t*)*(ArgStack)) += *(ArgStack-1);
+    ArgStack -= 2;
 }
 
 defcode("-!", substore, 0, &addstore){
-    *((val_t*)*(ArgStackPtr)) -= *(ArgStackPtr-1);
-    ArgStackPtr -= 2;
+    *((val_t*)*(ArgStack)) -= *(ArgStack-1);
+    ArgStack -= 2;
 }
 
 defcode("b!", bytestore, 0, &substore){
-    *((char*)*(ArgStackPtr)) = (char)*(ArgStackPtr-1);
-    ArgStackPtr -= 2;
+    *((char*)*(ArgStack)) = (char)*(ArgStack-1);
+    ArgStack -= 2;
 }
 
 defcode("b@", bytefetch, 0, &bytestore){
-    *(ArgStackPtr) = *((char*)*(ArgStackPtr));
+    *(ArgStack) = *((char*)*(ArgStack));
 }
 
 defcode("b@b!", bytecopy, 0, &bytefetch){
@@ -538,18 +508,19 @@ defcode("bmove", bytemove, 0, &bytecopy){
 
 /* Control Flow Words
  *****************************************************************************/
+#if 0
 defcode("if", _if, 1, &bytemove){
     /* Compile branch instruction */
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)&zbranch;
+    ArgStack++;
+    *(ArgStack) = (val_t)&zbranch;
     EXEC(comma);
 
     /* Save off the current offset */
     EXEC(here);
 
     /* Compile a dummy offset */
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)0;
+    ArgStack++;
+    *(ArgStack) = (val_t)0;
     EXEC(comma);
 }
 
@@ -577,8 +548,8 @@ defcode("then", _then, 1, &_if){
 
 defcode("else", _else, 1, &_then){
     /* Compile the branch instruction */
-    ArgStackPtr++;
-    *(ArgStackPtr) = (val_t)&branch;
+    ArgStack++;
+    *(ArgStack) = (val_t)&branch;
     EXEC(comma);
 
     /* Save off the current offset */
@@ -586,37 +557,41 @@ defcode("else", _else, 1, &_then){
     EXEC(rot);
 
     /* Compile a dummy offset */
-    ArgStackPtr++;
-    *(ArgStackPtr) = 0;
+    ArgStack++;
+    *(ArgStack) = 0;
     EXEC(comma);
 
     /* Set the branch offset for the first branch */
     EXEC(_then);
     EXEC(swap);
 }
+#endif
 
 /* Memory Management Words
  *****************************************************************************/
+#if 0
 defcode("malloc", mem_alloc, 1, &_else){
-    *(ArgStackPtr) = (val_t)malloc((size_t)*(ArgStackPtr));
+    *(ArgStack) = (val_t)malloc((size_t)*(ArgStack));
 }
 
 defcode("mrealloc", mem_realloc, 1, &mem_alloc){
-    *(ArgStackPtr-1) = (val_t)realloc((void*)*(ArgStackPtr-1),*(ArgStackPtr));
-    ArgStackPtr--;
+    *(ArgStack-1) = (val_t)realloc((void*)*(ArgStack-1),*(ArgStack));
+    ArgStack--;
 }
 
 defcode("mfree", mem_free, 1, &mem_realloc){
-    free((void*)*(ArgStackPtr));
-    ArgStackPtr--;
+    free((void*)*(ArgStack));
+    ArgStack--;
 }
+#endif
 
 /* Debugging Words
  *****************************************************************************/
+#if 0
 defcode("printw", printw, 0, &mem_free){
-    word_t* word = (word_t*)*(ArgStackPtr);
+    word_t* word = (word_t*)*(ArgStack);
     val_t* bytecode = word->code;
-    ArgStackPtr--;
+    ArgStack--;
 
     printf("Name:     %s\n", word->name);
     //printf("Flags:    0x%lX\n", word->flags);
@@ -684,17 +659,25 @@ defcode("printdefw", printdefw, 0, &printallw){
         word = word->link;
     }
 }
+#endif
 
 /* Main
  *****************************************************************************/
 int main(int argc, char** argv)
 {
+    /* Default Kernel dictionary */
+    //static dict_t kernel_dict = { NULL, (word_t*)&bytemove };
+    /* Compile-time Assertions */
     CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
     CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
-    _stdin_val  = (val_t)stdin;
-    _stdout_val = (val_t)stdout;
-    _stderr_val = (val_t)stderr;
-    latest_val = (val_t)&printdefw;
+
+    /* Platform specific initialization */
+    //_stdin_val  = (val_t)stdin;
+    //_stdout_val = (val_t)stdout;
+    //_stderr_val = (val_t)stderr;
+    latest_val = (val_t)&bytemove;
+
+    /* Start the interpreter */
     EXEC(quit);
     return 0;
 }
