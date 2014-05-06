@@ -143,4 +143,6 @@ typedef struct dict_t {
  * */
 void docolon(val_t* code);
 
+void slvm_init(void);
+
 #endif /* SLVM_H */

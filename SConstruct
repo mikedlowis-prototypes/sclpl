@@ -40,7 +40,8 @@ def RunTest( output, runner ):
 base = Environment(
     ENV     = os.environ,
     CCFLAGS = [],
-    LDFLAGS = [])
+    LDFLAGS = [],
+    LIBPATH = ['build/lib'])
 
 # On windows use mingw because VS is not C99 compliant
 if platform.system() == 'Windows':
@@ -49,6 +50,11 @@ if platform.system() == 'Windows':
 # Default C/C++ Environment
 #---------------------------
 c_cpp = base.Clone(CCFLAGS = [ '-Wall', '-Werror', '-std=c99' ])
+
+# C/C++ Environment Minus Standard Lib
+#-------------------------------------
+nostdlib = c_cpp.Clone(LINKFLAGS = [ '-nostdlib' ],
+                       LIBS      = ['gcc'])
 
 # Chicken Scheme Environment
 #---------------------------
@@ -88,22 +94,38 @@ scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
 #readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
-SchemeBuildAndTest( 'build/slc',
+SchemeBuildAndTest( 'build/bin/slc',
                     find_files('source/slc/','*.scm'),
                     find_files('tests/slc/','*.scm') )
 
 # SCLPL Package Manager
-SchemeBuildAndTest( 'build/slpkg',
+SchemeBuildAndTest( 'build/bin/slpkg',
                     find_files('source/slpkg/','*.scm'),
                     find_files('tests/slpkg/','*.scm') )
 
 # SCLPL Assembler
-SchemeBuildAndTest( 'build/slas',
+SchemeBuildAndTest( 'build/bin/slas',
                     find_files('source/slas/','*.scm'),
                     find_files('tests/slas/','*.scm') )
 
 # SCLPL Virtual Machine
-c_cpp.Program('build/slvm',
-              glob.glob('source/slvm/*.c') +
-              glob.glob('source/slvm/platform/C99/*.c'))
+#----------------------
+# Virtual Machine Kernel
+nostdlib.StaticLibrary('build/lib/vmkernel', glob.glob('source/slvm/kernel/*.c'))
+
+# Standard Platform Library (C99)
+c_cpp.StaticLibrary('build/lib/stdpf',
+                    glob.glob('source/slvm/platforms/C99/*.c'),
+                    CPPPATH = ['source/slvm/kernel'])
+
+# VM Executable Using Standard Platform
+c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
+
+#nostdlib.Program('build/bin/slvm',
+#                 glob.glob('source/slvm/*.c'),
+#                 LIBPATH  = ['build/lib'],
+#                 LIBS     = ['gcc', 'stdpf'])
+
+# VM Extensions
+#c_cpp.SharedLibrary('build/lib/ioext', glob.glob('source/slvm/ext/io/*.c'))
 

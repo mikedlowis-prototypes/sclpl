@@ -4,7 +4,7 @@
   $Revision$
   $HeadURL$
 */
-#include "../../pal.h"
+#include "pal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -79,4 +79,18 @@ bool pal_is_eof(void)
     return feof(stdin);
 }
 
+int pal_strcmp(const char* p_str1, const char* p_str2)
+{
+    return strcmp(p_str1, p_str2);
+}
+
+size_t pal_strlen(char* p_str)
+{
+    return strlen( p_str );
+}
+
+char* pal_strcpy(char* p_dest, const char* p_src)
+{
+    return strcpy(p_dest, p_src);
+}
 

@@ -46,14 +46,14 @@ void docolon(val_t* code) {
 
 /* Built-in Constants
  *****************************************************************************/
-defconst("VERSION", version, 0, NULL,     1);
-defconst("EXECDEF", execdef, 0, &version, (val_t)&docolon);
-defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t));
+defconst("VERSION", version, 0, NULL,     1)
+defconst("EXECDEF", execdef, 0, &version, (val_t)&docolon)
+defconst("WORDSZ",  wordsz,  0, &execdef, sizeof(val_t))
 
 /* Built-in Variables
  *****************************************************************************/
-defvar("state",  state,  0, &wordsz, 0);
-defvar("latest", latest, 0, &state,  0);
+defvar("state",  state,  0, &wordsz, 0)
+defvar("latest", latest, 0, &state,  0)
 
 /* Word Words
  *****************************************************************************/
@@ -95,7 +95,7 @@ defcode("find", find, 0, &exec){
     char* name = (char*)*(ArgStack);
     while(curr)
     {
-        if (!(curr->flags.attr.hidden) && (0 == strcmp(curr->name,name)))
+        if (!(curr->flags.attr.hidden) && (0 == pal_strcmp(curr->name,name)))
         {
             break;
         }
@@ -164,9 +164,9 @@ defcode("create", create, 0, &rbrack){
     char* name = 0u;
     if (*(ArgStack))
     {
-        size_t namesz = strlen((char*)*(ArgStack));
+        size_t namesz = pal_strlen((char*)*(ArgStack));
         name = (char*)pal_allocate( namesz );
-        strcpy(name, (char*)*(ArgStack));
+        pal_strcpy(name, (char*)*(ArgStack));
     }
     /* Create the word entry */
     word_t* word   = (word_t*)pal_allocate(sizeof(word_t));
@@ -454,26 +454,37 @@ defcode("b@b!", bytecopy, 0, &bytefetch){
 defcode("bmove", bytemove, 0, &bytecopy){
 }
 
-/* Main
- *****************************************************************************/
 int main(int argc, char** argv)
 {
-    /* Default Kernel dictionary */
-    //static dict_t kernel_dict = { NULL, (word_t*)&bytemove };
+    (void)argc;
+    (void)argv;
     /* Compile-time Assertions */
     CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
     CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
 
     /* Platform specific initialization */
-    //_stdin_val  = (val_t)stdin;
-    //_stdout_val = (val_t)stdout;
-    //_stderr_val = (val_t)stderr;
     latest_val = (val_t)&bytemove;
 
     /* Start the interpreter */
     EXEC(quit);
     return 0;
 }
+
+/* Main
+ *****************************************************************************/
+//int main(int argc, char** argv)
+//{
+//    /* Compile-time Assertions */
+//    CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
+//    CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
+//
+//    /* Platform specific initialization */
+//    latest_val = (val_t)&bytemove;
+//
+//    /* Start the interpreter */
+//    EXEC(quit);
+//    return 0;
+//}
 
 /* Input/Output Words
  *****************************************************************************/
@@ -679,5 +690,4 @@ defcode("printdefw", printdefw, 0, &printallw){
     }
 }
 #endif
-
 

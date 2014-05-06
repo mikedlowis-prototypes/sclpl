@@ -160,9 +160,10 @@ TokenType_T parse(char* str, val_t* p_val)
 
 static bool is_integer(char* p_str, val_t* p_val)
 {
-    char* end;
-    *(p_val) = (val_t)strtol(p_str,&end,0);
-    return (end == &(p_str[strlen(p_str)]));
+    //char* end;
+    //*(p_val) = (val_t)strtol(p_str,&end,0);
+    //return (end == &(p_str[pal_strlen(p_str)]));
+    return false;
 }
 
 static bool is_float(char* p_str, val_t* p_val)
@@ -173,10 +174,10 @@ static bool is_float(char* p_str, val_t* p_val)
 static bool is_string(char* p_str, val_t* p_val)
 {
     bool res = false;
-    if((p_str[0] == '"') && (p_str[strlen(p_str)-1] == '"'))
+    if((p_str[0] == '"') && (p_str[pal_strlen(p_str)-1] == '"'))
     {
         /* Cut off the last double quote */
-        p_str[strlen(p_str)-1] = '\0';
+        p_str[pal_strlen(p_str)-1] = '\0';
         /* And return the string after the first double quote */
         *(p_val) = (val_t)(p_str+1);
         res = true;
@@ -203,7 +204,7 @@ static bool is_char(char* p_str, val_t* p_val)
     /* If the string starts with a char indicator (backslash) */
     if (p_str[0] == '\\')
     {
-        size_t length = strlen(p_str);
+        size_t length = pal_strlen(p_str);
         /* and it only has one character following it */
         if(length == 2)
         {
@@ -220,7 +221,7 @@ static bool is_char(char* p_str, val_t* p_val)
             while(named_chars[index])
             {
                 /* If we found a match */
-                if( 0 == strcmp( (p_str + 1), (named_chars[index] + 2) ) )
+                if( 0 == pal_strcmp( (p_str + 1), (named_chars[index] + 2) ) )
                 {
                     /* Return the character value and indicate success */
                     *(p_val) = named_chars[index][0];
