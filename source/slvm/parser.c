@@ -10,17 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Track Lines Read
- *****************************************************************************/
-static bool Line_Read = true;
-
-bool line_read(void)
-{
-    bool res = Line_Read;
-    Line_Read = false;
-    return res;
-}
-
 /* Fetching Tokens
  *****************************************************************************/
 static void skip_whitespace(void);
@@ -129,10 +118,7 @@ static void skip_comment(void)
 static bool is_whitespace(void)
 {
     char ch = pal_peek_char();
-    bool res = ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
-    if (ch == '\n')
-        Line_Read = true;
-    return res;
+    return ((ch == ' ')  || (ch == '\t') || (ch == '\r') || (ch == '\n'));
 }
 
 /* Parsing Tokens

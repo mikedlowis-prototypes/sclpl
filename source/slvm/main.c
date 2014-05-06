@@ -5,8 +5,6 @@
 /*
     Wish List:
 
-    * Rework Interpreter With Custom Syntax
-    * Add Dictionary Typedef
     * Dynamic Loading and Unloading of Dictionaries (File, Object, or Dynamic Lib)
     * Rework w* words to allow gettign and setting attributes of a word
     * Add optional debugging words
@@ -33,7 +31,7 @@ void docolon(val_t* code) {
     val_t* prev_code = CodePtr;
     /* Set the next instruction to execute */
     CodePtr = code;
-    /* And loop through until we "ret" sets the code pointer to null */
+    /* Loop through until "ret" sets the code pointer to null */
     while(CodePtr)
     {
         word = (word_t*)*CodePtr;
@@ -83,56 +81,6 @@ defcode("here", here, 0, &wcode){
     ArgStack++;
     *(ArgStack) = (val_t)((((word_t*)latest_val)->flags.attr.codesize) - 1);
 }
-
-/* Input/Output Words
- *****************************************************************************/
-#if 0
-defvar("stdin",  _stdin,  0, &here,    0);
-defvar("stdout", _stdout, 0, &_stdin,  0);
-defvar("stderr", _stderr, 0, &_stdout, 0);
-
-defconst("F_R",  f_r,  0, &_stderr, (val_t)"r");
-defconst("F_W",  f_w,  0, &f_r,     (val_t)"w");
-defconst("F_A",  f_a,  0, &f_w,     (val_t)"a");
-defconst("F_R+", f_ru, 0, &f_a,     (val_t)"r+");
-defconst("F_W+", f_wu, 0, &f_ru,    (val_t)"w+");
-defconst("F_A+", f_au, 0, &f_wu,    (val_t)"a+");
-
-defcode("fopen",  _fopen,  0, &f_au){
-    *(ArgStack-1) = (val_t)fopen( (const char*)*(ArgStack-1), (const char*)*(ArgStack) );
-    ArgStack--;
-}
-
-defcode("fclose", _fclose, 0, &_fopen){
-    fclose((FILE*)*(ArgStack));
-    ArgStack--;
-}
-
-defcode("fflush", _fflush, 0, &_fclose){
-    fflush((FILE*)*(ArgStack));
-    ArgStack--;
-}
-
-defcode("fgetc",  _fgetc,  0, &_fflush){
-    *(ArgStack) = fgetc((FILE*)*(ArgStack));
-}
-
-defcode("fputc",  _fputc,  0, &_fgetc){
-    fputc((char)*(ArgStack-1), (FILE*)*(ArgStack));
-    ArgStack -= 2;
-}
-
-defcode("fputs",  _fputs,  0, &_fputc){
-    fputs((char*)*(ArgStack-1), (FILE*)*(ArgStack));
-    ArgStack -= 2;
-}
-
-defcode("fpeekc", _fpeekc, 0, &_fputs){
-    FILE* p_file = (FILE*)*(ArgStack);
-    *(ArgStack) = fgetc(p_file);
-    ungetc((char)*(ArgStack), p_file);
-}
-#endif
 
 /* Interpreter Words
  *****************************************************************************/
@@ -506,6 +454,77 @@ defcode("b@b!", bytecopy, 0, &bytefetch){
 defcode("bmove", bytemove, 0, &bytecopy){
 }
 
+/* Main
+ *****************************************************************************/
+int main(int argc, char** argv)
+{
+    /* Default Kernel dictionary */
+    //static dict_t kernel_dict = { NULL, (word_t*)&bytemove };
+    /* Compile-time Assertions */
+    CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
+    CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
+
+    /* Platform specific initialization */
+    //_stdin_val  = (val_t)stdin;
+    //_stdout_val = (val_t)stdout;
+    //_stderr_val = (val_t)stderr;
+    latest_val = (val_t)&bytemove;
+
+    /* Start the interpreter */
+    EXEC(quit);
+    return 0;
+}
+
+/* Input/Output Words
+ *****************************************************************************/
+#if 0
+defvar("stdin",  _stdin,  0, &here,    0);
+defvar("stdout", _stdout, 0, &_stdin,  0);
+defvar("stderr", _stderr, 0, &_stdout, 0);
+
+defconst("F_R",  f_r,  0, &_stderr, (val_t)"r");
+defconst("F_W",  f_w,  0, &f_r,     (val_t)"w");
+defconst("F_A",  f_a,  0, &f_w,     (val_t)"a");
+defconst("F_R+", f_ru, 0, &f_a,     (val_t)"r+");
+defconst("F_W+", f_wu, 0, &f_ru,    (val_t)"w+");
+defconst("F_A+", f_au, 0, &f_wu,    (val_t)"a+");
+
+defcode("fopen",  _fopen,  0, &f_au){
+    *(ArgStack-1) = (val_t)fopen( (const char*)*(ArgStack-1), (const char*)*(ArgStack) );
+    ArgStack--;
+}
+
+defcode("fclose", _fclose, 0, &_fopen){
+    fclose((FILE*)*(ArgStack));
+    ArgStack--;
+}
+
+defcode("fflush", _fflush, 0, &_fclose){
+    fflush((FILE*)*(ArgStack));
+    ArgStack--;
+}
+
+defcode("fgetc",  _fgetc,  0, &_fflush){
+    *(ArgStack) = fgetc((FILE*)*(ArgStack));
+}
+
+defcode("fputc",  _fputc,  0, &_fgetc){
+    fputc((char)*(ArgStack-1), (FILE*)*(ArgStack));
+    ArgStack -= 2;
+}
+
+defcode("fputs",  _fputs,  0, &_fputc){
+    fputs((char*)*(ArgStack-1), (FILE*)*(ArgStack));
+    ArgStack -= 2;
+}
+
+defcode("fpeekc", _fpeekc, 0, &_fputs){
+    FILE* p_file = (FILE*)*(ArgStack);
+    *(ArgStack) = fgetc(p_file);
+    ungetc((char)*(ArgStack), p_file);
+}
+#endif
+
 /* Control Flow Words
  *****************************************************************************/
 #if 0
@@ -661,24 +680,4 @@ defcode("printdefw", printdefw, 0, &printallw){
 }
 #endif
 
-/* Main
- *****************************************************************************/
-int main(int argc, char** argv)
-{
-    /* Default Kernel dictionary */
-    //static dict_t kernel_dict = { NULL, (word_t*)&bytemove };
-    /* Compile-time Assertions */
-    CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
-    CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
-
-    /* Platform specific initialization */
-    //_stdin_val  = (val_t)stdin;
-    //_stdout_val = (val_t)stdout;
-    //_stderr_val = (val_t)stderr;
-    latest_val = (val_t)&bytemove;
-
-    /* Start the interpreter */
-    EXEC(quit);
-    return 0;
-}
 

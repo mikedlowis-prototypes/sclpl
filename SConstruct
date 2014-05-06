@@ -75,17 +75,17 @@ scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
 #------------------------------------------------------------------------------
 
 # SOF Shared Library
-c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
+#c_cpp.SharedLibrary('build/sof', find_files('source/libsof/','*.c'))
 
 # SBC Shared Library
-c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
+#c_cpp.SharedLibrary('build/sbc', find_files('source/libsbc/','*.c'))
 
 # readsof Command Line Utility
-readsof = c_cpp.Clone(CPPPATH = [ 'source/libsof/' ],
-                      LIBS    = [ 'sof' ],
-                      LIBPATH = [ 'build' ])
-readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
-readsof.Depends('readsof', 'sof')
+#readsof = c_cpp.Clone(CPPPATH = [ 'source/libsof/' ],
+#                      LIBS    = [ 'sof' ],
+#                      LIBPATH = [ 'build' ])
+#readsof.Program('build/readsof', find_files('source/readsof/','*.c'))
+#readsof.Depends('readsof', 'sof')
 
 # SCLPL Compiler
 SchemeBuildAndTest( 'build/slc',
