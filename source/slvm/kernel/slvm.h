@@ -80,11 +80,11 @@ typedef struct word_t {
 /** This structure defines a dictionary of defined words. */
 typedef struct dict_t {
     /** Pointer to the previously loaded dictionary */
-    struct dict_t* link;
+    struct dict_t* p_prev;
     /** The name of the dictionary */
     char* name;
     /** Pointer to the most recently defined word in this dictionary */
-    word_t* words;
+    word_t* p_words;
 } dict_t;
 
 /** Execute a built-in word directly */
