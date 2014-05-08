@@ -8,7 +8,9 @@
 #include "pal.h"
 #include <stdbool.h>
 #include <string.h>
-#include <stdlib.h>
+//#include <stdlib.h>
+
+long strtol(char* p_str, char** p_end);
 
 /* Fetching Tokens
  *****************************************************************************/
@@ -160,10 +162,10 @@ TokenType_T parse_token(char* str, val_t* p_val)
 
 static bool is_integer(char* p_str, val_t* p_val)
 {
-    //char* end;
-    //*(p_val) = (val_t)strtol(p_str,&end,0);
-    //return (end == &(p_str[pal_strlen(p_str)]));
-    return false;
+    char* end;
+    *(p_val) = (val_t)strtol(p_str,&end);
+    return (end == &(p_str[pal_strlen(p_str)]));
+    //return false;
 }
 
 static bool is_float(char* p_str, val_t* p_val)
@@ -234,3 +236,72 @@ static bool is_char(char* p_str, val_t* p_val)
     return res;
 }
 
+/* Parsing Numbers
+ *****************************************************************************/
+static bool is_ws(char c)
+{
+    return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+}
+
+long strtol(char* p_str, char** p_p_end)
+{
+    int ch;
+    int sign = 1;
+    int base = 10;
+    long value = 0;
+
+    /* Skip any leading whitespace */
+    do {
+        ch = *(p_str);
+        p_str++;
+    } while (is_ws(ch));
+
+    /* Detect leading sign */
+    if (ch == '-')
+    {
+        sign = -1;
+        ch = *p_str;
+        p_str++;
+    }
+    else if (ch == '+')
+    {
+        ch = *p_str;
+        p_str++;
+    }
+
+    /* Detect the base of the number being parsed */
+    if((ch == '0') && (*p_str == 'x' || *p_str == 'X'))
+    {
+        base = 16;
+        ch = p_str[1];
+        p_str += 2;
+    }
+    else if((ch == '0') && (*p_str == 'b' || *p_str == 'B'))
+    {
+        base = 2;
+        ch = p_str[1];
+        p_str += 2;
+    }
+
+    /* Accumulate the digits in the appropriate base */
+    for (value = 0;; ch = *p_str++)
+    {
+        /* Determine the value of the current digit */
+        if (ch >= '0' && ch <= '9')
+            ch -= '0';
+        else if ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))
+            ch -= (ch >= 'A' && ch <= 'F') ? 'A'-10 : 'a'-10;
+        else
+            break;
+
+        /* if the base digit is invalid for the selected base then quit */
+        if (ch >= base) break;
+
+        /* Shift the value be the base and add in the digit */
+        value *= base;
+        value += ch;
+    }
+
+    *p_p_end = p_str-1;
+    return sign * value;
+}
