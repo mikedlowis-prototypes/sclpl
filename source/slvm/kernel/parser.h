@@ -22,8 +22,6 @@ typedef enum {
 
 char* fetch_token(void);
 
-TokenType_T parse(char* str, val_t* p_val);
-
-bool line_read(void);
+TokenType_T parse_token(char* str, val_t* p_val);
 
 #endif /* PARSER_H */

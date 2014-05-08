@@ -97,21 +97,21 @@ typedef struct dict_t {
 
 /**
  * Define a built-in word that executes native code */
-#define defcode(name_str,c_name,immed,prev)    \
-    static void c_name##_code(val_t* code);    \
-    static word_t const c_name = {             \
-        prev,                                  \
-        {.attr = { 0, immed, 0, 0 }},          \
-        name_str,                              \
-        &c_name##_code,                        \
-        0                                      \
-    };                                         \
-    static void c_name##_code(val_t* inst_ptr) \
+#define defcode(name_str,c_name,immed,prev) \
+    void c_name##_code(val_t* code);        \
+    word_t const c_name = {                 \
+        prev,                               \
+        {.attr = { 0, immed, 0, 0 }},       \
+        name_str,                           \
+        &c_name##_code,                     \
+        0                                   \
+    };                                      \
+    void c_name##_code(val_t* inst_ptr)     \
 
 /**
  * Define a built-in word representing a variable with the provided initial value */
 #define defvar(name_str,c_name,immed,prev,initial) \
-    static val_t c_name##_val = initial;           \
+    val_t c_name##_val = initial;                  \
     defcode(name_str,c_name,immed,prev) {          \
         ArgStack++;                                \
         *(ArgStack) = (val_t)&(c_name##_val);      \
@@ -120,7 +120,7 @@ typedef struct dict_t {
 /**
  * Define a built-in word representing a constant with the provided value */
 #define defconst(name_str,c_name,immed,prev,value) \
-    static val_t const c_name##_val = value;       \
+    val_t const c_name##_val = value;              \
     defcode(name_str,c_name,immed,prev) {          \
         ArgStack++;                                \
         *(ArgStack) = c_name##_val;                \

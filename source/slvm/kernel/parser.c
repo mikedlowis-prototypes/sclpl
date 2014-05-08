@@ -128,7 +128,7 @@ static bool is_float(char* p_str, val_t* p_val);
 static bool is_string(char* p_str, val_t* p_val);
 static bool is_char(char* p_str, val_t* p_val);
 
-TokenType_T parse(char* str, val_t* p_val)
+TokenType_T parse_token(char* str, val_t* p_val)
 {
     TokenType_T type = ERROR;
     if(str != NULL)

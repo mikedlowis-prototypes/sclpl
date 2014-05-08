@@ -20,6 +20,7 @@
     * Add ability to compile to standalone executable
     * Add support for multi-tasking
     * Add support for multi-tasking with multiple cores/threads
+
 */
 
 /* Inner Interpreter
@@ -104,15 +105,15 @@ defcode("find", find, 0, &exec){
     *(ArgStack) = (val_t)curr;
 }
 
-defcode("fetch", _fetch, 0, &find){
+defcode("fetchtok", fetchtok, 0, &find){
     ArgStack++;
     *(ArgStack) = (val_t)fetch_token();
 }
 
-defcode("parse", _parse, 0, &_fetch){
+defcode("parsetok", parsetok, 0, &fetchtok){
     char* p_str = (char*)*(ArgStack);
     ArgStack++;
-    *(ArgStack) = (val_t)parse( p_str, ArgStack-1 );
+    *(ArgStack) = (val_t)parse_token( p_str, ArgStack-1 );
     /* If the parsed token no longer needs the original string */
     if (*(ArgStack) > STRING)
     {
@@ -123,17 +124,17 @@ defcode("parse", _parse, 0, &_fetch){
 
 /* Branching and Literal Words
  *****************************************************************************/
-defcode("lit", literal, 0, &_parse){
+defcode("lit", lit, 0, &parsetok){
     ArgStack++;
     *(ArgStack) = *CodePtr;
     CodePtr++;
 }
 
-defcode("br", branch, 0, &literal){
+defcode("br", br, 0, &lit){
     CodePtr = (val_t*)(((val_t)CodePtr) + (*(CodePtr) * sizeof(val_t)));
 }
 
-defcode("0br", zbranch, 0, &branch){
+defcode("0br", zbr, 0, &br){
     if (*ArgStack == 0)
     {
         CodePtr = (val_t*)(((val_t)CodePtr) + (*(CodePtr) * sizeof(val_t)));
@@ -147,7 +148,7 @@ defcode("0br", zbranch, 0, &branch){
 
 /* Compiler Words
  *****************************************************************************/
-defcode("ret", ret, 0, &zbranch){
+defcode("ret", ret, 0, &zbr){
     CodePtr = 0;
 }
 
@@ -208,8 +209,8 @@ defcode("immediate", immediate, 1, &hidden){
 }
 
 defcode(":", colon, 0, &immediate){
-    EXEC(_fetch);
-    EXEC(_parse);
+    EXEC(fetchtok);
+    EXEC(parsetok);
     ArgStack--;
     EXEC(create);
     EXEC(rbrack);
@@ -222,16 +223,16 @@ defcode(";", semicolon, 1, &colon){
 }
 
 defcode("'", tick, 1, &semicolon){
-    EXEC(_fetch);
-    EXEC(_parse);
+    EXEC(fetchtok);
+    EXEC(parsetok);
     ArgStack--;
     EXEC(find);
 }
 
-defcode("interp", interp, 0, &_parse){
+defcode("interp", interp, 0, &parsetok){
     char* p_str = NULL;
-    EXEC(_fetch);
-    EXEC(_parse);
+    EXEC(fetchtok);
+    EXEC(parsetok);
     /* If what we parsed was a word */
     if(*ArgStack == WORD)
     {
@@ -267,7 +268,7 @@ defcode("interp", interp, 0, &_parse){
     /* What we parsed is a literal and we're in compile mode */
     else if (state_val == 1)
     {
-        *(ArgStack) = (val_t)&literal;
+        *(ArgStack) = (val_t)&lit;
         EXEC(comma);
         EXEC(comma);
     }
@@ -341,12 +342,12 @@ defcode("*", mul, 0, &sub){
     ArgStack--;
 }
 
-defcode("/", divide, 0, &mul){
+defcode("/", div, 0, &mul){
     *(ArgStack-1) /= *(ArgStack);
     ArgStack--;
 }
 
-defcode("%", mod, 0, &divide){
+defcode("%", mod, 0, &div){
     *(ArgStack-1) %= *(ArgStack);
     ArgStack--;
 }
@@ -469,43 +470,6 @@ int main(int argc, char** argv)
     EXEC(quit);
     return 0;
 }
-
-/* Main
- *****************************************************************************/
-//int main(int argc, char** argv)
-//{
-//    /* Compile-time Assertions */
-//    CT_ASSERT(sizeof(val_t) == sizeof(val_t*));
-//    CT_ASSERT(sizeof(val_t) == sizeof(flags_t));
-//
-//    /* Platform specific initialization */
-//    latest_val = (val_t)&bytemove;
-//
-//    /* Start the interpreter */
-//    EXEC(quit);
-//    return 0;
-//}
-
-/* Control Flow Words
- *****************************************************************************/
-
-/* Memory Management Words
- *****************************************************************************/
-#if 0
-defcode("malloc", mem_alloc, 1, &_else){
-    *(ArgStack) = (val_t)malloc((size_t)*(ArgStack));
-}
-
-defcode("mrealloc", mem_realloc, 1, &mem_alloc){
-    *(ArgStack-1) = (val_t)realloc((void*)*(ArgStack-1),*(ArgStack));
-    ArgStack--;
-}
-
-defcode("mfree", mem_free, 1, &mem_realloc){
-    free((void*)*(ArgStack));
-    ArgStack--;
-}
-#endif
 
 /* Debugging Words
  *****************************************************************************/

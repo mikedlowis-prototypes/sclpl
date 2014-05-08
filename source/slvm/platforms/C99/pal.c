@@ -13,13 +13,32 @@ static bool Line_Read = true;
 val_t* ArgStack = Stack - 1;
 val_t* CodePtr = 0;
 
-dict_t* pal_init(dict_t* p_prev_dict)
+defcode("allocate", mem_alloc, 1, NULL){
+    *(ArgStack) = (val_t)pal_allocate((size_t)*(ArgStack));
+}
+
+defcode("reallocate", mem_realloc, 1, &mem_alloc){
+    *(ArgStack-1) = (val_t)pal_reallocate((void*)*(ArgStack-1),*(ArgStack));
+    ArgStack--;
+}
+
+defcode("free", mem_free, 1, &mem_realloc){
+    pal_free((void*)*(ArgStack));
+    ArgStack--;
+}
+
+dict_t* pal_init(dict_t* p_prev)
 {
-    return p_prev_dict;
+    dict_t* p_dict = (dict_t*)pal_allocate(sizeof(dict_t));
+    p_dict->name    = "pal";
+    p_dict->p_prev  = p_prev;
+    p_dict->p_words = (word_t*)&mem_realloc;
+    return p_dict;
 }
 
 void pal_prompt(void)
 {
+    extern val_t state_val;
     int i;
     if(Line_Read)
     {
@@ -33,7 +52,7 @@ void pal_prompt(void)
         {
             printf("%ld ", *(ArgStack-i));
         }
-        printf(")\n%s ", "=>"); //(state_val == 0) ? "=>" : "..");
+        printf(")\n%s ", (state_val == 0) ? "=>" : "..");
         Line_Read = false;
     }
 }
