@@ -249,24 +249,20 @@ long strtol(char* p_str, char** p_p_end)
     int sign = 1;
     int base = 10;
     long value = 0;
+    bool consumed = false;
 
     /* Skip any leading whitespace */
-    do {
-        ch = *(p_str);
-        p_str++;
-    } while (is_ws(ch));
+    do { ch = *p_str++; } while (is_ws(ch));
 
     /* Detect leading sign */
     if (ch == '-')
     {
         sign = -1;
-        ch = *p_str;
-        p_str++;
+        ch = *p_str++;
     }
     else if (ch == '+')
     {
-        ch = *p_str;
-        p_str++;
+        ch = *p_str++;
     }
 
     /* Detect the base of the number being parsed */
@@ -300,8 +296,9 @@ long strtol(char* p_str, char** p_p_end)
         /* Shift the value be the base and add in the digit */
         value *= base;
         value += ch;
+        consumed = true;
     }
 
-    *p_p_end = p_str-1;
+    *p_p_end = (consumed) ? p_str-1 : p_str;
     return sign * value;
 }
