@@ -121,11 +121,11 @@ c_cpp.StaticLibrary('build/lib/stdpf',
 # VM Executable Using Standard Platform
 c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
 
-#nostdlib.Program('build/bin/slvm',
-#                 glob.glob('source/slvm/*.c'),
-#                 LIBPATH  = ['build/lib'],
-#                 LIBS     = ['gcc', 'stdpf'])
-
-# VM Extensions
-#c_cpp.SharedLibrary('build/lib/ioext', glob.glob('source/slvm/ext/io/*.c'))
+# Build all VM Extensions
+for ext in glob.glob('source/slvm/extensions/*/'):
+    name = os.path.basename(ext.strip('\\/'))
+    c_cpp.StaticLibrary('build/lib/'+name+'ext',
+                        glob.glob(ext + '/*.c'),
+                        CPPPATH = ['source/slvm/kernel'],
+                        LIBS = ['stdpf'])
 

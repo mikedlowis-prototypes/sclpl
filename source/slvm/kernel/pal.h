@@ -12,6 +12,7 @@
 #include <string.h>
 
 extern val_t* ArgStack;
+extern val_t* RetStack;
 extern val_t* CodePtr;
 
 dict_t* pal_init(dict_t* p_prev_dict);

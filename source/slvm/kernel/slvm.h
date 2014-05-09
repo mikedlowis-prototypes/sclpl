@@ -91,8 +91,8 @@ typedef struct dict_t {
 #define EXEC(word) (word).codeword((word).code)
 
 /** The maximum number of entries that can be on the argument stack */
-#ifndef ARG_STACK_SIZE
-#define ARG_STACK_SIZE 32
+#ifndef STACK_SIZE
+#define STACK_SIZE 32
 #endif
 
 /**

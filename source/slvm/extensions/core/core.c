@@ -2,8 +2,10 @@
 #include "pal.h"
 #include <stdlib.h>
 
-#if 0
-defcode("if", _if, 1, &bytemove){
+extern word_t zbranch, comma, here, swap, dup, wcode, nrot, rot, sub, wordsz,
+              mul, add, store, branch;
+
+defcode("if", _if, 1, NULL){
     /* Compile branch instruction */
     ArgStack++;
     *(ArgStack) = (val_t)&zbranch;
@@ -59,14 +61,12 @@ defcode("else", _else, 1, &_then){
     EXEC(_then);
     EXEC(swap);
 }
-#endif
 
 dict_t* core_init(dict_t* p_prev)
 {
     dict_t* p_dict = (dict_t*)pal_allocate(sizeof(dict_t));
     p_dict->name    = "core";
     p_dict->p_prev  = p_prev;
-    p_dict->p_words = (word_t*)NULL;
-    //p_dict->p_words = (word_t*)&_fpeekc;
+    p_dict->p_words = (word_t*)&_else;
     return p_dict;
 }

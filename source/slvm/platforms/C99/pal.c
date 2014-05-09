@@ -8,9 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static val_t Stack[ARG_STACK_SIZE];
+static val_t AStack[STACK_SIZE];
+static val_t RStack[STACK_SIZE];
 static bool Line_Read = true;
-val_t* ArgStack = Stack - 1;
+
+val_t* ArgStack = AStack - 1;
+val_t* RetStack = RStack - 1;
 val_t* CodePtr = 0;
 
 defcode("allocate", mem_alloc, 1, NULL){
