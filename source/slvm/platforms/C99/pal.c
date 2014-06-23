@@ -45,7 +45,7 @@ void pal_prompt(void)
     int i;
     if(Line_Read)
     {
-        val_t stacksz = ArgStack - Stack + 1;
+        val_t stacksz = ArgStack - AStack + 1;
         if (stacksz > 5)
             printf("( ... ");
         else
