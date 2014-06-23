@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 /* Choose a width for val_t that matches the pointer size of the target
- * architecture. Defaults to simply a long but can be overridden for specific
- * cases */
+ * architecture. Defaults to simply a intptr_t but can be overridden
+ * for specific cases */
 #if defined(_16BIT_)
     typedef int16_t val_t;
 #elif defined(_32BIT_)
@@ -19,8 +19,7 @@
 #elif defined(_64BIT_)
     typedef int64_t val_t;
 #else
-    /* hope for the best? */
-    typedef long val_t;
+    typedef intptr_t val_t;
 #endif
 
 /**
@@ -91,8 +90,8 @@ typedef struct dict_t {
 #define EXEC(word) (word).codeword((word).code)
 
 /** The maximum number of entries that can be on the argument stack */
-#ifndef STACK_SIZE
-#define STACK_SIZE 32
+#ifndef ARG_STACK_SIZE
+#define ARG_STACK_SIZE (1024/sizeof(val_t))
 #endif
 
 /**

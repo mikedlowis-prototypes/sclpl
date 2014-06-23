@@ -165,7 +165,6 @@ static bool is_integer(char* p_str, val_t* p_val)
     char* end;
     *(p_val) = (val_t)strtol(p_str,&end);
     return (end == &(p_str[pal_strlen(p_str)]));
-    //return false;
 }
 
 static bool is_float(char* p_str, val_t* p_val)
