@@ -81,10 +81,10 @@ scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
 #------------------------------------------------------------------------------
 import os
 
-llvm = base.Clone()
+llvm = base.Clone(CMAKE_GENERATOR="Unix Makefiles")
 llvm.Command('build/llvm/Makefile',
-             'source/vendor/llvm-3.4.2/configure',
-             'cd ${TARGET.dir} && ../../${SOURCE}')
+             'source/vendor/llvm-3.4.2/',
+             'cd ${TARGET.dir} && cmake -G"${CMAKE_GENERATOR}" ../../${SOURCE}')
 llvm.Command('build/llvm/Release+Assert/bin/llc',
              'build/llvm/Makefile',
              'make -C build/llvm/')
