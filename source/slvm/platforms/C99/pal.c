@@ -4,12 +4,13 @@
   $Revision$
   $HeadURL$
 */
+#include "slvm.h"
 #include "pal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-static val_t AStack[STACK_SIZE];
-static val_t RStack[STACK_SIZE];
+static val_t AStack[ARG_STACK_SIZE];
+static val_t RStack[ARG_STACK_SIZE];
 static bool Line_Read = true;
 
 val_t* ArgStack = AStack - 1;

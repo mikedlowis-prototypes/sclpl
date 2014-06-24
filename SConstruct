@@ -44,12 +44,13 @@ base = Environment(
     LIBPATH = ['build/lib'])
 
 # On windows use mingw because VS is not C99 compliant
+base_cpp = base.Clone()
 if platform.system() == 'Windows':
-    base.Append(TOOLS=['mingw'])
+    base_cpp.Append(TOOLS=['mingw'])
 
 # Default C/C++ Environment
 #---------------------------
-c_cpp = base.Clone(CCFLAGS = [ '-Wall', '-Werror', '-std=c99' ])
+c_cpp = base_cpp.Clone(CCFLAGS = [ '-Wall', '-Werror', '-std=c99' ])
 
 # C/C++ Environment Minus Standard Lib
 #-------------------------------------
@@ -81,13 +82,20 @@ scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
 #------------------------------------------------------------------------------
 import os
 
-llvm = base.Clone(CMAKE_GENERATOR="Unix Makefiles")
+llvm = base.Clone()
+if platform.system() == 'Windows':
+    llvm.Append(CMAKE_GENERATOR='NMake Makefiles',
+                MAKECMD='cd build/llvm/ && nmake')
+else:
+    llvm.Append(CMAKE_GENERATOR='Unix Makefiles',
+                MAKECMD='make -C build/llvm/')
+
 llvm.Command('build/llvm/Makefile',
              'source/vendor/llvm-3.4.2/',
              'cd ${TARGET.dir} && cmake -G"${CMAKE_GENERATOR}" ../../${SOURCE}')
 llvm.Command('build/llvm/Release+Assert/bin/llc',
              'build/llvm/Makefile',
-             'make -C build/llvm/')
+             '${MAKECMD}')
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
@@ -123,22 +131,22 @@ SchemeBuildAndTest( 'build/bin/slas',
 
 # SCLPL Virtual Machine
 #----------------------
-## Virtual Machine Kernel
-#nostdlib.StaticLibrary('build/lib/vmkernel', glob.glob('source/slvm/kernel/*.c'))
-#
-## Standard Platform Library (C99)
-#c_cpp.StaticLibrary('build/lib/stdpf',
-#                    glob.glob('source/slvm/platforms/C99/*.c'),
-#                    CPPPATH = ['source/slvm/kernel'])
-#
-## VM Executable Using Standard Platform
-#c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
-#
-## Build all VM Extensions
-#for ext in glob.glob('source/slvm/extensions/*/'):
-#    name = os.path.basename(ext.strip('\\/'))
-#    c_cpp.StaticLibrary('build/lib/'+name+'ext',
-#                        glob.glob(ext + '/*.c'),
-#                        CPPPATH = ['source/slvm/kernel'],
-#                        LIBS = ['stdpf'])
+# Virtual Machine Kernel
+nostdlib.StaticLibrary('build/lib/vmkernel', glob.glob('source/slvm/kernel/*.c'))
+
+# Standard Platform Library (C99)
+c_cpp.StaticLibrary('build/lib/stdpf',
+                    glob.glob('source/slvm/platforms/C99/*.c'),
+                    CPPPATH = ['source/slvm/kernel'])
+
+# VM Executable Using Standard Platform
+c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
+
+# Build all VM Extensions
+for ext in glob.glob('source/slvm/extensions/*/'):
+    name = os.path.basename(ext.strip('\\/'))
+    c_cpp.StaticLibrary('build/lib/'+name+'ext',
+                        glob.glob(ext + '/*.c'),
+                        CPPPATH = ['source/slvm/kernel'],
+                        LIBS = ['stdpf'])
 
