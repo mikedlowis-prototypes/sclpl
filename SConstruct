@@ -68,13 +68,26 @@ scheme_compiler = Builder(
 # Scheme Binary Linker
 scheme_linker = Builder(
         action      = 'csc $LDFLAGS -o $TARGET $SOURCES',
-        suffix      = "$PROGSUFFIX",
+        suffix      = '$PROGSUFFIX',
         src_suffix  = '.o',
         src_builder = [ scheme_compiler ])
 
 # Create the Environment for this project
 scheme = base.Clone(CCFLAGS  = [ '-I', 'inc'],
                     BUILDERS = { 'Program': scheme_linker })
+
+#------------------------------------------------------------------------------
+# Vendor Targets
+#------------------------------------------------------------------------------
+import os
+
+llvm = base.Clone()
+llvm.Command('build/llvm/Makefile',
+             'source/vendor/llvm-3.4.2/configure',
+             'cd ${TARGET.dir} && ../../${SOURCE}')
+llvm.Command('build/llvm/Release+Assert/bin/llc',
+             'build/llvm/Makefile',
+             'make -C build/llvm/')
 
 #------------------------------------------------------------------------------
 # SCLPL Targets
@@ -110,22 +123,22 @@ SchemeBuildAndTest( 'build/bin/slas',
 
 # SCLPL Virtual Machine
 #----------------------
-# Virtual Machine Kernel
-nostdlib.StaticLibrary('build/lib/vmkernel', glob.glob('source/slvm/kernel/*.c'))
-
-# Standard Platform Library (C99)
-c_cpp.StaticLibrary('build/lib/stdpf',
-                    glob.glob('source/slvm/platforms/C99/*.c'),
-                    CPPPATH = ['source/slvm/kernel'])
-
-# VM Executable Using Standard Platform
-c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
-
-# Build all VM Extensions
-for ext in glob.glob('source/slvm/extensions/*/'):
-    name = os.path.basename(ext.strip('\\/'))
-    c_cpp.StaticLibrary('build/lib/'+name+'ext',
-                        glob.glob(ext + '/*.c'),
-                        CPPPATH = ['source/slvm/kernel'],
-                        LIBS = ['stdpf'])
+## Virtual Machine Kernel
+#nostdlib.StaticLibrary('build/lib/vmkernel', glob.glob('source/slvm/kernel/*.c'))
+#
+## Standard Platform Library (C99)
+#c_cpp.StaticLibrary('build/lib/stdpf',
+#                    glob.glob('source/slvm/platforms/C99/*.c'),
+#                    CPPPATH = ['source/slvm/kernel'])
+#
+## VM Executable Using Standard Platform
+#c_cpp.Program('build/bin/slvm', [], LIBS = ['vmkernel', 'stdpf'])
+#
+## Build all VM Extensions
+#for ext in glob.glob('source/slvm/extensions/*/'):
+#    name = os.path.basename(ext.strip('\\/'))
+#    c_cpp.StaticLibrary('build/lib/'+name+'ext',
+#                        glob.glob(ext + '/*.c'),
+#                        CPPPATH = ['source/slvm/kernel'],
+#                        LIBS = ['stdpf'])
 
