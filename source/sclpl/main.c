@@ -47,6 +47,8 @@ ast_t* format_expr_ast(mpc_ast_t* expr) {
 int main(int argc, char **argv) {
     mpc_parser_t* ReplExpr = mpc_new("replexpr");
     mpc_parser_t* Expr = mpc_new("expr");
+    mpc_parser_t* SExpr = mpc_new("sexpr");
+    mpc_parser_t* QExpr = mpc_new("qexpr");
     mpc_parser_t* Atom = mpc_new("atom");
     mpc_parser_t* Num = mpc_new("num");
     mpc_parser_t* Char = mpc_new("ch");
@@ -55,7 +57,7 @@ int main(int argc, char **argv) {
     mpc_parser_t* Var = mpc_new("var");
     mpc_parser_t* WS = mpc_new("ws");
     mpca_lang(MPCA_LANG_WHITESPACE_SENSITIVE, Grammar,
-        ReplExpr, Expr, Atom, Num, Char, String, Bool, Var, WS, NULL);
+        ReplExpr, Expr, SExpr, QExpr, Atom, Num, Char, String, Bool, Var, WS, NULL);
     while(!feof(stdin)) {
         mpc_result_t r;
         printf(":> ");
@@ -70,6 +72,6 @@ int main(int argc, char **argv) {
             while('\n' != fgetc(stdin)){}
         }
     }
-    mpc_cleanup(9, ReplExpr, Expr, Atom, Num, Char, String, Bool, Var, WS);
+    mpc_cleanup(11, ReplExpr, Expr, SExpr, QExpr, Atom, Num, Char, String, Bool, Var, WS);
     return 0;
 }
