@@ -11,3 +11,4 @@ cscope.out
 Makefile
 .sconsign.dblite
 .DS_Store
+.rsconscache

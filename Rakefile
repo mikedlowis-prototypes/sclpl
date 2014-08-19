@@ -64,7 +64,27 @@ BaseEnv = Environment.new(echo: :command) do |env|
   env["CFLAGS"] += ['-Wall', '-Wextra' ]#, '-Werror']
 end
 
-task(:build) { BaseEnv.Program('build/bin/sclpl', FileList['source/sclpl/*.c']) }
+#------------------------------------------------------------------------------
+# Rscons Build Targets
+#------------------------------------------------------------------------------
+task :default => [:build]
+
+desc "Build all targets"
+task :build => [:sclpl]
+
+desc "Build the sclpl compiler and interpreter"
+task :sclpl => ['source/sclpl/grammar.c'] do
+  BaseEnv.Program('build/bin/sclpl', FileList['source/sclpl/*.c'])
+end
+
+file 'source/sclpl/grammar.c' => ['source/sclpl/grammar.y'] do
+  grammar = File.readlines('source/grammar.y').map{|l| l.chomp().inspect }
+  File.open('source/grammar.c','w') do |f|
+    f.write("const char Grammar[] = \n");
+    grammar.each { |l| f.write("#{l}\n") }
+    f.write(";\n");
+  end
+end
 
 #------------------------------------------------------------------------------
 # Cleanup Target
