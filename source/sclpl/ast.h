@@ -15,11 +15,12 @@ typedef enum {
     INTEGER,
     CHARACTER,
     STRING,
+    SEXPR,
     UNKNOWN
 } ast_type_t;
 
 typedef struct {
-    char* file;
+    const char* file;
     size_t line;
     size_t column;
 } pos_t;
@@ -56,10 +57,9 @@ void ast_set_value(ast_t* p_ast, void* value);
 
 const void* ast_get_value(ast_t* p_ast);
 
-void ast_set_children(ast_t* p_ast, child_t* p_children);
-
-const child_t* ast_get_children(ast_t* p_ast);
+ast_t* ast_add_child(ast_t* p_ast, ast_t* p_child);
 
 ast_t* ast_map(const ast_t* p_ast, ast_map_fn_t p_fn);
+
 
 #endif /* AST_H */

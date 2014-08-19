@@ -57,7 +57,7 @@ at_exit { Environment.process_all }
 
 # Define the compiler environment
 BaseEnv = Environment.new(echo: :command) do |env|
-  env.build_dir('source/','build/obj/source')
+  env.build_dir('source','build/obj/source')
   env['CC'] = 'clang'
   env['CXX'] = 'clang'
   env['LD'] = 'clang'
@@ -78,8 +78,8 @@ task :sclpl => ['source/sclpl/grammar.c'] do
 end
 
 file 'source/sclpl/grammar.c' => ['source/sclpl/grammar.y'] do
-  grammar = File.readlines('source/grammar.y').map{|l| l.chomp().inspect }
-  File.open('source/grammar.c','w') do |f|
+  grammar = File.readlines('source/sclpl/grammar.y').map{|l| l.chomp().inspect }
+  File.open('source/sclpl/grammar.c','w') do |f|
     f.write("const char Grammar[] = \n");
     grammar.each { |l| f.write("#{l}\n") }
     f.write(";\n");
