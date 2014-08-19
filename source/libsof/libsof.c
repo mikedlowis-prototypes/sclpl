@@ -206,7 +206,7 @@ size_t libsof_add_symbol(sof_file_t* obj, const char* name, uint32_t value, uint
 size_t libsof_add_st_entry(sof_file_t* obj, uint32_t name, uint32_t value, uint32_t size, uint32_t info)
 {
     sof_st_entry_t new_sym = { name, value, size, info };
-    return libsof_add_to_segment( (void**)&(obj->symbols), &(obj->header->sym_tbl_sz), &new_sym, sizeof(sof_st_entry_t) );
+    return libsof_add_to_segment( (void**)&(obj->symbols), (size_t*)&(obj->header->sym_tbl_sz), &new_sym, sizeof(sof_st_entry_t) );
 }
 
 sof_st_entry_t const* libsof_get_st_entry(sof_file_t* obj, size_t offset)
@@ -216,7 +216,7 @@ sof_st_entry_t const* libsof_get_st_entry(sof_file_t* obj, size_t offset)
 
 size_t libsof_add_string(sof_file_t* obj, char const* name)
 {
-    return libsof_add_to_segment( (void**)&(obj->strings), &(obj->header->sym_str_tbl_sz), name, strlen(name) + 1 );
+    return libsof_add_to_segment( (void**)&(obj->strings), (size_t*)&(obj->header->sym_str_tbl_sz), name, strlen(name) + 1 );
 }
 
 char const* libsof_get_string(sof_file_t* obj, size_t offset)
@@ -226,7 +226,7 @@ char const* libsof_get_string(sof_file_t* obj, size_t offset)
 
 size_t libsof_add_data(sof_file_t* obj, uint8_t const* data, size_t length)
 {
-    return libsof_add_to_segment( (void**)&(obj->data), &(obj->header->data_sz), data, length );
+    return libsof_add_to_segment( (void**)&(obj->data), (size_t*)&(obj->header->data_sz), data, length );
 }
 
 uint8_t const* libsof_get_data(sof_file_t* obj, size_t offset)
@@ -236,7 +236,7 @@ uint8_t const* libsof_get_data(sof_file_t* obj, size_t offset)
 
 size_t libsof_add_code(sof_file_t* obj, uint32_t const* code, size_t length)
 {
-    return libsof_add_to_segment( (void**)&(obj->code), &(obj->header->code_sz), code, length * sizeof(uint32_t) );
+    return libsof_add_to_segment( (void**)&(obj->code), (size_t*)&(obj->header->code_sz), code, length * sizeof(uint32_t) );
 }
 
 uint32_t const* libsof_get_code(sof_file_t* obj, size_t offset)
