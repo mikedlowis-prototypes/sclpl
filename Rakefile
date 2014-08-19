@@ -8,6 +8,11 @@ rescue Bundler::BundlerError => e
   raise LoadError.new("Unable to Bundler.setup(): You probably need to run `bundle install`: #{e.message}")
 end
 require 'rscons'
+require 'rbconfig'
+
+def windows?
+  RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+end
 
 #------------------------------------------------------------------------------
 # Clang Toolchain Targets
@@ -18,7 +23,7 @@ CLANG_BIN_NAME = 'clang'
 CLANG_SRC_DIR = 'source/vendor/llvm-3.4.2'
 CLANG_CMAKE_GENERATOR = ENV['CMAKE_GENERATOR'] || "Unix Makefiles"
 CLANG_CMAKE_OPTS = [ '-DCMAKE_BUILD_TYPE=Release' ]
-CLANG_MAKE_CMD = 'make'
+CLANG_MAKE_CMD = windows? ? 'nmake' : 'make'
 
 file "#{CLANG_BUILD_DIR}/Makefile" => FileList["#{CLANG_SRC_DIR}/cmake/**/*"] do
     FileUtils.mkdir_p(CLANG_BUILD_DIR)
@@ -34,7 +39,7 @@ file "#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}" => ["#{CLANG_BUILD_DIR}/Makefile"] + F
 end
 
 task :clang => ["#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}"] do
-    ENV['PATH'].unshift(CLANG_BIN_DIR)
+    ENV['PATH'] = "#{CLANG_BIN_DIR}#{windows? ? ';':':'}#{ENV['PATH']}"
 end
 
 #------------------------------------------------------------------------------
@@ -70,7 +75,7 @@ end
 task :default => [:build]
 
 desc "Build all targets"
-task :build => [:sclpl]
+task :build => [:clang, :sclpl]
 
 desc "Build the sclpl compiler and interpreter"
 task :sclpl => ['source/sclpl/grammar.c'] do

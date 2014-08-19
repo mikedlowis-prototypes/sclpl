@@ -1,8 +1,10 @@
 const char Grammar[] = 
 ""
+"program : /^/ <expr> /$/ ;"
+""
 "replexpr : <ws> <expr> /[^\\n]*\\n/ ;"
 ""
-"expr : <sexpr> | <qexpr> | <atom> ;"
+"expr : <sexpr> | <qexpr> | <radixnum> | <float> | <int> | <ch> | <str> | <bool> | <var> ;"
 ""
 "sexpr : '(' (<ws> <expr> <ws>)* ')' ;"
 ""

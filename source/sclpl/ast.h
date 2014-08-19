@@ -13,6 +13,7 @@
 typedef enum {
     BOOLEAN,
     INTEGER,
+    FLOAT,
     CHARACTER,
     STRING,
     SEXPR,
