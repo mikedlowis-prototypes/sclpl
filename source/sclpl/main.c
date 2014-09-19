@@ -1,133 +1,225 @@
 #include "mpc.h"
-#include "ast.h"
+#include "scanner.h"
+#include "lexer.h"
 #include <stdio.h>
-#include <assert.h>
+
+/*****************************************************************************/
+typedef struct {
+    lexer_t* p_lexer;
+    lex_tok_t* p_tok;
+} parser_t;
+
+parser_t* parser_new(char* p_prompt, FILE* input)
+{
+    parser_t* p_parser = (parser_t*)malloc(sizeof(parser_t));
+    p_parser->p_lexer = lexer_new(p_prompt, input);
+    p_parser->p_tok = NULL;
+    return p_parser;
+}
+
+void parser_fetch(parser_t* p_parser)
+{
+    p_parser->p_tok = lexer_read(p_parser->p_lexer);
+}
+
+lex_tok_t* parser_peek(parser_t* p_parser)
+{
+    if (NULL == p_parser->p_tok)
+        parser_fetch(p_parser);
+    return p_parser->p_tok;
+}
+
+void parser_error(parser_t* p_parser, const char* p_text)
+{
+    (void)p_parser;
+    fprintf(stderr,"Error: %s\n",p_text);
+    exit(1);
+}
+
+bool parser_accept(parser_t* p_parser, lex_tok_type_t type)
+{
+    bool ret = false;
+    if (parser_peek(p_parser)->type == type) {
+        p_parser->p_tok = NULL;
+        ret = true;
+    }
+    return ret;
+}
+
+bool parser_accept_str(parser_t* p_parser, lex_tok_type_t type, const char* p_text)
+{
+    bool ret = false;
+    if ((parser_peek(p_parser)->type == type) && (0 == strcmp((char*)(p_parser->p_tok->value), p_text))) {
+        p_parser->p_tok = NULL;
+        ret = true;
+    }
+    return ret;
+}
+
+bool parser_expect(parser_t* p_parser, lex_tok_type_t type)
+{
+    bool ret = false;
+    if (parser_accept(p_parser, type)) {
+        ret = true;
+    } else {
+        parser_error(p_parser, "Unexpected token");
+    }
+    return ret;
+}
+
+bool parser_expect_str(parser_t* p_parser, lex_tok_type_t type, const char* p_text)
+{
+    bool ret = false;
+    if (parser_accept_str(p_parser, type, p_text)) {
+        ret = true;
+    } else {
+        parser_error(p_parser, "Unexpected token");
+    }
+    return ret;
+}
+
+/*****************************************************************************/
+void parser_toplevel(parser_t* p_parser);
+void parser_import(parser_t* p_parser);
+void parser_definition(parser_t* p_parser);
+void parser_expression(parser_t* p_parser);
+void parser_literal(parser_t* p_parser);
+void parser_arglist(parser_t* p_parser);
+void parser_if_stmnt(parser_t* p_parser);
+void parser_fn_stmnt(parser_t* p_parser);
+
+void parser_toplevel(parser_t* p_parser)
+{
+    if (parser_accept_str(p_parser, VAR, "import"))
+        parser_import(p_parser);
+    else if (parser_accept_str(p_parser, VAR, "def"))
+        parser_definition(p_parser);
+    else if (p_parser->p_lexer->scanner->p_input == stdin)
+        parser_expression(p_parser);
+    else
+        parser_error(p_parser, "Unrecognized top-level form");
+}
+
+void parser_import(parser_t* p_parser)
+{
+    parser_expect(p_parser, VAR);
+    parser_expect(p_parser, END);
+}
+
+void parser_definition(parser_t* p_parser)
+{
+    parser_expect(p_parser,VAR);
+    if (parser_peek(p_parser)->type == LPAR) {
+        parser_fn_stmnt(p_parser);
+    } else {
+        parser_expression(p_parser);
+        parser_expect(p_parser,END);
+    }
+}
+
+void parser_expression(parser_t* p_parser)
+{
+    if (parser_accept(p_parser, LPAR)) {
+        parser_expression(p_parser);
+        parser_accept(p_parser, RPAR);
+    } else if (parser_accept_str(p_parser, VAR, "if")) {
+        parser_if_stmnt(p_parser);
+    } else if (parser_accept_str(p_parser, VAR, "fn")) {
+        parser_fn_stmnt(p_parser);
+    } else if (parser_peek(p_parser)->type == VAR) {
+        parser_expect(p_parser, VAR);
+        if (parser_peek(p_parser)->type == LPAR) {
+            parser_arglist(p_parser);
+        }
+    } else {
+        parser_literal(p_parser);
+    }
+}
+
+void parser_literal(parser_t* p_parser)
+{
+    switch (parser_peek(p_parser)->type)
+    {
+        case BOOL:
+        case CHAR:
+        case STRING:
+        case INT:
+        case FLOAT:
+            parser_accept(p_parser, parser_peek(p_parser)->type);
+            break;
+
+        default:
+            parser_error(p_parser, "Not a valid expression");
+            break;
+    }
+}
+
+void parser_arglist(parser_t* p_parser)
+{
+    parser_expect(p_parser, LPAR);
+    while(parser_peek(p_parser)->type != RPAR) {
+        parser_expression(p_parser);
+        if(parser_peek(p_parser)->type != RPAR)
+            parser_expect(p_parser, COMMA);
+    }
+    parser_expect(p_parser, RPAR);
+}
+
+void parser_if_stmnt(parser_t* p_parser)
+{
+    parser_expression(p_parser);
+    parser_expression(p_parser);
+    parser_expect_str(p_parser,VAR,"else");
+    parser_expression(p_parser);
+    parser_expect(p_parser,END);
+}
+
+void parser_fn_stmnt(parser_t* p_parser)
+{
+    parser_expect(p_parser, LPAR);
+    while(parser_peek(p_parser)->type != RPAR) {
+        parser_expect(p_parser, VAR);
+        if(parser_peek(p_parser)->type != RPAR)
+            parser_expect(p_parser, COMMA);
+    }
+    parser_expect(p_parser, RPAR);
+    while(parser_peek(p_parser)->type != END) {
+        parser_expression(p_parser);
+    }
+    parser_expect(p_parser, END);
+}
 
 /* SCLPL Parser
  *****************************************************************************/
-/* Grammar is auto generated into 'source/grammar.c' */
-extern const char Grammar[];
+/* TODO:
 
-static ast_t* read_sexpr(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
+    * Gracefully handle EOF
+    * Formalize grammar for parser
+    * Paren for function application must be on same line as variable in REPL
+    * "end" and ';' must be equivalent
+    * skip line on error and terminate after full program parse
+    * skip line and print on error but do not terminate the REPL
+    * Phase out use of MPC
+    * Integrate libcds
+    * Integrate command line parsing
 
-static ast_t* read_qexpr(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
-
-static ast_t* read_char(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
-
-static ast_t* read_string(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
-
-static ast_t* read_var(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
-
-static ast_t* read_bool(const mpc_ast_t* t) {
-    (void)t;
-    return NULL;
-}
-
-static ast_t* read_float(const mpc_ast_t* t) {
-    double* p_dbl = (double*)malloc(sizeof(double));
-    ast_t* p_ast = ast_new(FLOAT, p_dbl);
-    ast_set_pos(p_ast, "<stdin>", t->state.row, t->state.col);
-    errno = 0;
-    *p_dbl = strtod(t->contents, NULL);
-    assert(errno == 0);
-    return p_ast;
-}
-
-static ast_t* read_int(const mpc_ast_t* t, int base) {
-    long* p_int = (long*)malloc(sizeof(long));
-    printf("reading int with base: %d\n", base);
-    ast_t* p_ast = ast_new(INTEGER, p_int);
-    ast_set_pos(p_ast, "<stdin>", t->state.row, t->state.col);
-    errno = 0;
-    *p_int = strtol(t->contents, NULL, base);
-    assert(errno == 0);
-    return p_ast;
-}
-
-static int read_radix(const mpc_ast_t* t) {
-    switch( t->children[0]->contents[1] ) {
-        case 'b': return 2;
-        case 'o': return 8;
-        case 'd': return 10;
-        case 'x': return 16;
-        default:  return 10;
-    }
-}
-
-ast_t* format_expr_ast(mpc_ast_t* expr) {
-    ast_t* p_ast = NULL;
-
-    /* Handle the current node */
-    if (0 == strcmp("sexpr|>", expr->tag)) {
-    } else if (0 == strcmp("qexpr|>", expr->tag)) {
-    } else if (0 == strcmp("radixnum|>", expr->tag)) {
-        p_ast = read_int(expr->children[1], read_radix(expr));
-        printf("int: %d\n", *((long*)p_ast->value));
-    } else if (0 == strcmp("expr|float|regex", expr->tag)) {
-        p_ast = read_float(expr);
-        printf("double: %f\n", *((double*)p_ast->value));
-    } else if (0 == strcmp("expr|int|regex", expr->tag)) {
-        p_ast = read_int(expr,10);
-        printf("int: %d\n", *((long*)p_ast->value));
-    } else if (0 == strcmp("ch|>", expr->tag)) {
-    } else if (0 == strcmp("str|>", expr->tag)) {
-    } else if (0 == strcmp("expr|bool|str", expr->tag)) {
-    } else if (0 == strcmp("expr|var|regex", expr->tag)) {
-    } else {
-        printf("unknown tag: '%s'\n", expr->tag);
-        free(p_ast->pos);
-        free(p_ast);
-        p_ast = NULL;
-    }
-
-    return p_ast;
-}
+*/
 
 int main(int argc, char **argv) {
-    mpc_parser_t* ReplExpr = mpc_new("replexpr");
-    mpc_parser_t* Expr = mpc_new("expr");
-    mpc_parser_t* SExpr = mpc_new("sexpr");
-    mpc_parser_t* QExpr = mpc_new("qexpr");
-    mpc_parser_t* Atom = mpc_new("atom");
-    mpc_parser_t* Int = mpc_new("int");
-    mpc_parser_t* Float = mpc_new("float");
-    mpc_parser_t* Radix = mpc_new("radixnum");
-    mpc_parser_t* Char = mpc_new("ch");
-    mpc_parser_t* String = mpc_new("str");
-    mpc_parser_t* Bool = mpc_new("bool");
-    mpc_parser_t* Var = mpc_new("var");
-    mpc_parser_t* WS = mpc_new("ws");
-    mpca_lang(MPCA_LANG_WHITESPACE_SENSITIVE, Grammar,
-        ReplExpr, Expr, SExpr, QExpr, Atom, Int, Float, Radix, Char, String, Bool, Var, WS, NULL);
-    while(!feof(stdin)) {
-        mpc_result_t r;
-        printf(":> ");
-        if (mpc_parse_pipe("<stdin>", stdin, ReplExpr, &r)) {
-            mpc_ast_t* expr = (mpc_ast_t*)(((mpc_ast_t*)r.output)->children[1]);
-            mpc_ast_print(expr);
-            format_expr_ast(expr);
-            mpc_ast_delete(r.output);
-        } else {
-            mpc_err_print(r.error);
-            mpc_err_delete(r.error);
-            while('\n' != fgetc(stdin)){}
-        }
+    (void)argc;
+    (void)argv;
+
+    //scanner_t* p_scanner = scanner_new(":> ", stdin);
+    //while(!scanner_eof(p_scanner)) {
+    //    printf("TOK: '%s'\n", scanner_read(p_scanner) );
+    //    puts("OK.");
+    //}
+
+    parser_t* p_parser = parser_new(":> ", stdin);
+    while(true) {
+        parser_toplevel(p_parser);
+        puts("OK.");
     }
-    mpc_cleanup(13, ReplExpr, Expr, SExpr, QExpr, Atom, Int, Float, Radix, Char, String, Bool, Var, WS);
+
     return 0;
 }

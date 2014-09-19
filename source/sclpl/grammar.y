@@ -1,19 +1,13 @@
 
-program : /^/ <expr> /$/ ;
+token : /^/ <atom> /$/ ;
 
-replexpr : <ws> <expr> /[^\n]*\n/ ;
+atom : <punc> | <radixnum> | <floating> | <integer> | <character> | <boolean> | <var> ;
 
-expr : <sexpr> | <qexpr> | <radixnum> | <float> | <int> | <ch> | <str> | <bool> | <var> ;
+punc : /['"(){}\[\];,]/ ;
 
-sexpr : '(' (<ws> <expr> <ws>)* ')' ;
+floating : /[-+]?[0-9]+\.[0-9]+/ ;
 
-qexpr : ('\'' | '`' | ',') <expr> ;
-
-atom : <float> | <int> | <radixnum> | <ch> | <str> | <bool> | <var> ;
-
-int : /[-+]?[0-9]+/ ;
-
-float : /[-+]?[0-9]+\.[0-9]+/ ;
+integer : /[-+]?[0-9]+/ ;
 
 radixnum : "0b" /[0-1]+/
          | "0o" /[0-7]+/
@@ -21,14 +15,10 @@ radixnum : "0b" /[0-1]+/
          | "0x" /[0-9a-fA-F]+/
          ;
 
-ch : '\\' ("space"|"newline"|"return"|"tab"|"vtab")
-   | '\\' /./
-   ;
+character : '\\' ("space"|"newline"|"return"|"tab"|"vtab")
+          | '\\' /./
+          ;
 
-str : '"' /[^"]*/ '"' ;
+boolean : "true" | "false" ;
 
-bool : "True" | "False" ;
-
-var : /[^() \t\r\n#`'"]+/ ;
-
-ws : '#' /[^\n]*\n/ | /[ \t\r\n]*/ ;
+var : /.*/ ;
