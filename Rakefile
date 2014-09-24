@@ -1,17 +1,17 @@
-#------------------------------------------------------------------------------
-# Bundler Setup
-#------------------------------------------------------------------------------
-require "bundler"
-begin
-  Bundler.setup(:default, :development)
-rescue Bundler::BundlerError => e
-  raise LoadError.new("Unable to Bundler.setup(): You probably need to run `bundle install`: #{e.message}")
-end
-require 'rscons'
-require 'rbconfig'
+require './build-system/setup'
 
 def windows?
   RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+end
+
+#------------------------------------------------------------------------------
+# Envrionment Definitions
+#------------------------------------------------------------------------------
+# Define the compiler environment
+BaseEnv = BuildEnv.new(echo: :command) do |env|
+  env.build_dir('source','build/obj/source')
+  env.set_toolset(:clang)
+  env["CFLAGS"] += ['-Wall', '-Wextra' ]#, '-Werror']
 end
 
 #------------------------------------------------------------------------------
@@ -40,33 +40,6 @@ end
 
 task :clang => ["#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}"] do
     ENV['PATH'] = "#{CLANG_BIN_DIR}#{windows? ? ';':':'}#{ENV['PATH']}"
-end
-
-#------------------------------------------------------------------------------
-# Envrionment Definitions
-#------------------------------------------------------------------------------
-class Environment < Rscons::Environment
-  @@environments = []
-  def initialize(args,&block)
-    super(args,&block)
-    @@environments << self
-  end
-
-  def self.process_all()
-    @@environments.each {|e| e.process }
-  end
-end
-
-# Process all environments so we actually build the targets
-at_exit { Environment.process_all }
-
-# Define the compiler environment
-BaseEnv = Environment.new(echo: :command) do |env|
-  env.build_dir('source','build/obj/source')
-  env['CC'] = 'clang'
-  env['CXX'] = 'clang'
-  env['LD'] = 'clang'
-  env["CFLAGS"] += ['-Wall', '-Wextra' ]#, '-Werror']
 end
 
 #------------------------------------------------------------------------------
