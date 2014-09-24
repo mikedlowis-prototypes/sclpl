@@ -1,13 +1,17 @@
 require './build-system/setup'
 
+def windows?
+  RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+end
+
+#------------------------------------------------------------------------------
+# Envrionment Definitions
+#------------------------------------------------------------------------------
 # Define the compiler environment
 BaseEnv = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
-  env.set_toolset(:clang)
-#  env['CC'] = 'clang'
-#  env['CXX'] = 'clang'
-#  env['LD'] = 'clang'
-  env["CFLAGS"] += ['--std=gnu99', '-Wall', '-Wextra' ]#, '-Werror']
+  env.set_toolset(:gcc)
+  env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra']#, '-Werror']
 end
 
 #------------------------------------------------------------------------------

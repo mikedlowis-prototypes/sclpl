@@ -44,15 +44,17 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
     mpc_result_t r;
     lex_tok_t* p_tok = NULL;
     char* text = scanner_read(p_lexer->scanner);
-    if (mpc_parse("<stdin>", text, p_lexer->lexrule, &r)) {
-        mpc_ast_print(((mpc_ast_t*)r.output)->children[1]);
-        p_tok = lexer_translate( ((mpc_ast_t*)r.output)->children[1] );
-        mpc_ast_delete(r.output);
-    } else {
-        mpc_err_print(r.error);
-        mpc_err_delete(r.error);
+    if (NULL != text) {
+        if (mpc_parse("<stdin>", text, p_lexer->lexrule, &r)) {
+            mpc_ast_print(((mpc_ast_t*)r.output)->children[1]);
+            p_tok = lexer_translate( ((mpc_ast_t*)r.output)->children[1] );
+            mpc_ast_delete(r.output);
+        } else {
+            mpc_err_print(r.error);
+            mpc_err_delete(r.error);
+        }
+        free(text);
     }
-    free(text);
     return p_tok;
 }
 
