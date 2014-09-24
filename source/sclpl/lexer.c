@@ -93,14 +93,14 @@ lex_tok_t* lexer_punc(mpc_ast_t* p_tok_ast)
 {
     lex_tok_t* p_tok = NULL;
     switch (p_tok_ast->contents[0]) {
-        case '(': p_tok = lex_tok_new(LPAR,   NULL); break;
-        case ')': p_tok = lex_tok_new(RPAR,   NULL); break;
-        case '{': p_tok = lex_tok_new(LBRACE, NULL); break;
-        case '}': p_tok = lex_tok_new(RBRACE, NULL); break;
-        case '[': p_tok = lex_tok_new(LBRACK, NULL); break;
-        case ']': p_tok = lex_tok_new(RBRACK, NULL); break;
-        case ';': p_tok = lex_tok_new(END,    NULL); break;
-        case ',': p_tok = lex_tok_new(COMMA,  NULL); break;
+        case '(': p_tok = lex_tok_new(T_LPAR,   NULL); break;
+        case ')': p_tok = lex_tok_new(T_RPAR,   NULL); break;
+        case '{': p_tok = lex_tok_new(T_LBRACE, NULL); break;
+        case '}': p_tok = lex_tok_new(T_RBRACE, NULL); break;
+        case '[': p_tok = lex_tok_new(T_LBRACK, NULL); break;
+        case ']': p_tok = lex_tok_new(T_RBRACK, NULL); break;
+        case ';': p_tok = lex_tok_new(T_END,    NULL); break;
+        case ',': p_tok = lex_tok_new(T_COMMA,  NULL); break;
     }
     return p_tok;
 }
@@ -116,7 +116,7 @@ lex_tok_t* lexer_integer(mpc_ast_t* p_tok_ast, int base)
     errno = 0;
     *p_int = strtol(p_tok_ast->contents, NULL, base);
     assert(errno == 0);
-    return lex_tok_new(INT, p_int);
+    return lex_tok_new(T_INT, p_int);
 }
 
 lex_tok_t* lexer_float(mpc_ast_t* p_tok_ast)
@@ -125,7 +125,7 @@ lex_tok_t* lexer_float(mpc_ast_t* p_tok_ast)
     errno = 0;
     *p_dbl = strtod(p_tok_ast->contents, NULL);
     assert(errno == 0);
-    return lex_tok_new(FLOAT, p_dbl);
+    return lex_tok_new(T_FLOAT, p_dbl);
 }
 
 lex_tok_t* lexer_char(mpc_ast_t* p_tok_ast)
@@ -139,11 +139,11 @@ lex_tok_t* lexer_char(mpc_ast_t* p_tok_ast)
         "\v\0vtab"
     };
     if (strlen(p_tok_ast->contents) == 1) {
-        p_tok = lex_tok_new(CHAR, (void*)(p_tok_ast->contents[0]));
+        p_tok = lex_tok_new(T_CHAR, (void*)(p_tok_ast->contents[0]));
     } else {
         for(int i = 0; i < 5; i++) {
             if (strcmp(p_tok_ast->contents, &(lookup_table[i][2]))) {
-                p_tok = lex_tok_new(CHAR, (void*)(lookup_table[i][0]));
+                p_tok = lex_tok_new(T_CHAR, (void*)(lookup_table[i][0]));
                 break;
             }
         }
@@ -153,13 +153,13 @@ lex_tok_t* lexer_char(mpc_ast_t* p_tok_ast)
 
 lex_tok_t* lexer_bool(mpc_ast_t* p_tok_ast)
 {
-    return lex_tok_new(BOOL, (void*)((0==strcmp(p_tok_ast->contents,"True")) ? true : false));
+    return lex_tok_new(T_BOOL, (void*)((0==strcmp(p_tok_ast->contents,"True")) ? true : false));
 }
 
 lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast)
 {
     char* p_str = lexer_dup(p_tok_ast->contents);
-    return lex_tok_new(VAR, p_str);
+    return lex_tok_new(T_VAR, p_str);
 }
 
 lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {

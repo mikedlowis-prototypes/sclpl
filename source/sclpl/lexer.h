@@ -19,8 +19,8 @@ typedef struct {
 } lexer_t;
 
 typedef enum {
-    END, STRING, CHAR, INT, FLOAT, BOOL, LBRACE, RBRACE, LBRACK, RBRACK, LPAR,
-    RPAR, COMMA, VAR, END_FILE
+    T_END, T_STRING, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_LBRACE, T_RBRACE,
+    T_LBRACK, T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_VAR, T_END_FILE
 } lex_tok_type_t;
 
 typedef struct {

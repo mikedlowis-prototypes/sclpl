@@ -1,6 +1,7 @@
 #include "mpc.h"
 #include "scanner.h"
 #include "lexer.h"
+#include "opts.h"
 #include <stdio.h>
 
 /*****************************************************************************/
@@ -9,7 +10,7 @@ typedef struct {
     lex_tok_t* p_tok;
 } parser_t;
 
-lex_tok_t tok_eof = { END_FILE, NULL, 0, 0, NULL };
+lex_tok_t tok_eof = { T_END_FILE, NULL, 0, 0, NULL };
 
 parser_t* parser_new(char* p_prompt, FILE* input)
 {
@@ -34,7 +35,7 @@ lex_tok_t* parser_peek(parser_t* p_parser)
 }
 
 bool parser_eof(parser_t* p_parser) {
-    return (parser_peek(p_parser)->type == END_FILE);
+    return (parser_peek(p_parser)->type == T_END_FILE);
 }
 
 void parser_error(parser_t* p_parser, const char* p_text)
@@ -98,9 +99,9 @@ void parser_fn_stmnt(parser_t* p_parser);
 
 void parser_toplevel(parser_t* p_parser)
 {
-    if (parser_accept_str(p_parser, VAR, "import"))
+    if (parser_accept_str(p_parser, T_VAR, "import"))
         parser_import(p_parser);
-    else if (parser_accept_str(p_parser, VAR, "def"))
+    else if (parser_accept_str(p_parser, T_VAR, "def"))
         parser_definition(p_parser);
     else if (p_parser->p_lexer->scanner->p_input == stdin)
         parser_expression(p_parser);
@@ -110,33 +111,33 @@ void parser_toplevel(parser_t* p_parser)
 
 void parser_import(parser_t* p_parser)
 {
-    parser_expect(p_parser, VAR);
-    parser_expect(p_parser, END);
+    parser_expect(p_parser, T_VAR);
+    parser_expect(p_parser, T_END);
 }
 
 void parser_definition(parser_t* p_parser)
 {
-    parser_expect(p_parser,VAR);
-    if (parser_peek(p_parser)->type == LPAR) {
+    parser_expect(p_parser,T_VAR);
+    if (parser_peek(p_parser)->type == T_LPAR) {
         parser_fn_stmnt(p_parser);
     } else {
         parser_expression(p_parser);
-        parser_expect(p_parser,END);
+        parser_expect(p_parser,T_END);
     }
 }
 
 void parser_expression(parser_t* p_parser)
 {
-    if (parser_accept(p_parser, LPAR)) {
+    if (parser_accept(p_parser, T_LPAR)) {
         parser_expression(p_parser);
-        parser_accept(p_parser, RPAR);
-    } else if (parser_accept_str(p_parser, VAR, "if")) {
+        parser_accept(p_parser, T_RPAR);
+    } else if (parser_accept_str(p_parser, T_VAR, "if")) {
         parser_if_stmnt(p_parser);
-    } else if (parser_accept_str(p_parser, VAR, "fn")) {
+    } else if (parser_accept_str(p_parser, T_VAR, "fn")) {
         parser_fn_stmnt(p_parser);
-    } else if (parser_peek(p_parser)->type == VAR) {
-        parser_expect(p_parser, VAR);
-        if (parser_peek(p_parser)->type == LPAR) {
+    } else if (parser_peek(p_parser)->type == T_VAR) {
+        parser_expect(p_parser, T_VAR);
+        if (parser_peek(p_parser)->type == T_LPAR) {
             parser_arglist(p_parser);
         }
     } else {
@@ -148,11 +149,11 @@ void parser_literal(parser_t* p_parser)
 {
     switch (parser_peek(p_parser)->type)
     {
-        case BOOL:
-        case CHAR:
-        case STRING:
-        case INT:
-        case FLOAT:
+        case T_BOOL:
+        case T_CHAR:
+        case T_STRING:
+        case T_INT:
+        case T_FLOAT:
             parser_accept(p_parser, parser_peek(p_parser)->type);
             break;
 
@@ -164,37 +165,37 @@ void parser_literal(parser_t* p_parser)
 
 void parser_arglist(parser_t* p_parser)
 {
-    parser_expect(p_parser, LPAR);
-    while(parser_peek(p_parser)->type != RPAR) {
+    parser_expect(p_parser, T_LPAR);
+    while(parser_peek(p_parser)->type != T_RPAR) {
         parser_expression(p_parser);
-        if(parser_peek(p_parser)->type != RPAR)
-            parser_expect(p_parser, COMMA);
+        if(parser_peek(p_parser)->type != T_RPAR)
+            parser_expect(p_parser, T_COMMA);
     }
-    parser_expect(p_parser, RPAR);
+    parser_expect(p_parser, T_RPAR);
 }
 
 void parser_if_stmnt(parser_t* p_parser)
 {
     parser_expression(p_parser);
     parser_expression(p_parser);
-    parser_expect_str(p_parser,VAR,"else");
+    parser_expect_str(p_parser,T_VAR,"else");
     parser_expression(p_parser);
-    parser_expect(p_parser,END);
+    parser_expect(p_parser,T_END);
 }
 
 void parser_fn_stmnt(parser_t* p_parser)
 {
-    parser_expect(p_parser, LPAR);
-    while(parser_peek(p_parser)->type != RPAR) {
-        parser_expect(p_parser, VAR);
-        if(parser_peek(p_parser)->type != RPAR)
-            parser_expect(p_parser, COMMA);
+    parser_expect(p_parser, T_LPAR);
+    while(parser_peek(p_parser)->type != T_RPAR) {
+        parser_expect(p_parser, T_VAR);
+        if(parser_peek(p_parser)->type != T_RPAR)
+            parser_expect(p_parser, T_COMMA);
     }
-    parser_expect(p_parser, RPAR);
-    while(parser_peek(p_parser)->type != END) {
+    parser_expect(p_parser, T_RPAR);
+    while(parser_peek(p_parser)->type != T_END) {
         parser_expression(p_parser);
     }
-    parser_expect(p_parser, END);
+    parser_expect(p_parser, T_END);
 }
 
 /* SCLPL Parser

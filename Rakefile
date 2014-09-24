@@ -8,10 +8,11 @@ end
 # Envrionment Definitions
 #------------------------------------------------------------------------------
 # Define the compiler environment
-BaseEnv = BuildEnv.new(echo: :command) do |env|
+base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
   env.set_toolset(:clang)
   env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra']#, '-Werror']
+  env["CPPPATH"] << 'modules/libopts/source'
 end
 
 #------------------------------------------------------------------------------
@@ -53,7 +54,8 @@ task :build => [:clang, :sclpl]
 
 desc "Build the sclpl compiler and interpreter"
 task :sclpl => ['source/sclpl/grammar.c'] do
-  BaseEnv.Program('build/bin/sclpl', FileList['source/sclpl/*.c'])
+  base_env.Program('build/bin/sclpl',
+    FileList['source/sclpl/*.c', 'modules/libopts/source/*.c'])
 end
 
 file 'source/sclpl/grammar.c' => ['source/sclpl/grammar.y'] do
