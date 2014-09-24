@@ -5,6 +5,7 @@
   $HeadURL$
   */
 #include "lexer.h"
+#include <string.h>
 
 static lex_tok_t* lexer_translate(mpc_ast_t* p_tok_ast);
 static lex_tok_t* lexer_punc(mpc_ast_t* p_tok_ast);
@@ -16,6 +17,14 @@ static lex_tok_t* lexer_bool(mpc_ast_t* p_tok_ast);
 static lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast);
 static lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val);
 static int read_radix(const mpc_ast_t* t);
+
+static char* lexer_dup(const char* p_old) {
+    size_t length = strlen(p_old);
+    char* p_str = (char*)malloc(length+1);
+    memcpy(p_str, p_old, length);
+    p_str[length] = '\0';
+    return p_str;
+}
 
 /* Grammar is auto generated into 'source/grammar.c' */
 extern const char Grammar[];
@@ -149,7 +158,7 @@ lex_tok_t* lexer_bool(mpc_ast_t* p_tok_ast)
 
 lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast)
 {
-    char* p_str = strdup(p_tok_ast->contents);
+    char* p_str = lexer_dup(p_tok_ast->contents);
     return lex_tok_new(VAR, p_str);
 }
 
