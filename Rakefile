@@ -10,7 +10,7 @@ end
 # Define the compiler environment
 BaseEnv = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
-  env.set_toolset(:gcc)
+  env.set_toolset(:clang)
   env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra']#, '-Werror']
 end
 
@@ -38,9 +38,10 @@ file "#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}" => ["#{CLANG_BUILD_DIR}/Makefile"] + F
     end
 end
 
-task :clang => ["#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}"] do
-    ENV['PATH'] = "#{CLANG_BIN_DIR}#{windows? ? ';':':'}#{ENV['PATH']}"
-end
+task :clang => ["#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}"]
+
+# Register clang with the environment
+ENV['PATH'] = "#{CLANG_BIN_DIR}#{windows? ? ';':':'}#{ENV['PATH']}"
 
 #------------------------------------------------------------------------------
 # Rscons Build Targets
