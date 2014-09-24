@@ -20,7 +20,7 @@ typedef struct {
 
 typedef enum {
     END, STRING, CHAR, INT, FLOAT, BOOL, LBRACE, RBRACE, LBRACK, RBRACK, LPAR,
-    RPAR, COMMA, VAR
+    RPAR, COMMA, VAR, END_FILE
 } lex_tok_type_t;
 
 typedef struct {

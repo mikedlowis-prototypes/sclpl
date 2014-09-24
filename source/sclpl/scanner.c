@@ -89,11 +89,14 @@ static void scanner_skip_ws(scanner_t* p_scanner) {
     /* If we haven't read a line yet, read one now */
     if (NULL == p_scanner->p_line)
         scanner_getline(p_scanner);
-    while('\0' == scanner_current(p_scanner) || scanner_oneof(p_scanner, " \t\r\n")) {
-        if ('\0' == scanner_current(p_scanner) && !scanner_eof(p_scanner)) {
+    /* Fast forward past whitespace and read a newline if necessary  */
+    while(!scanner_eof(p_scanner)) {
+        if ('\0' == scanner_current(p_scanner)) {
             scanner_getline(p_scanner);
-        } else {
+        } else if (scanner_oneof(p_scanner, " \t\r\n")) {
             p_scanner->index++;
+        } else {
+            break;
         }
     }
 }

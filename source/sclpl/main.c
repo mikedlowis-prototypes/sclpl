@@ -9,6 +9,8 @@ typedef struct {
     lex_tok_t* p_tok;
 } parser_t;
 
+lex_tok_t tok_eof = { END_FILE, NULL, 0, 0, NULL };
+
 parser_t* parser_new(char* p_prompt, FILE* input)
 {
     parser_t* p_parser = (parser_t*)malloc(sizeof(parser_t));
@@ -20,6 +22,8 @@ parser_t* parser_new(char* p_prompt, FILE* input)
 void parser_fetch(parser_t* p_parser)
 {
     p_parser->p_tok = lexer_read(p_parser->p_lexer);
+    if (NULL == p_parser->p_tok)
+        p_parser->p_tok = &tok_eof;
 }
 
 lex_tok_t* parser_peek(parser_t* p_parser)
@@ -27,6 +31,10 @@ lex_tok_t* parser_peek(parser_t* p_parser)
     if (NULL == p_parser->p_tok)
         parser_fetch(p_parser);
     return p_parser->p_tok;
+}
+
+bool parser_eof(parser_t* p_parser) {
+    return (parser_peek(p_parser)->type == END_FILE);
 }
 
 void parser_error(parser_t* p_parser, const char* p_text)
@@ -193,7 +201,6 @@ void parser_fn_stmnt(parser_t* p_parser)
  *****************************************************************************/
 /* TODO:
 
-    * Gracefully handle EOF
     * Formalize grammar for parser
     * Paren for function application must be on same line as variable in REPL
     * "end" and ';' must be equivalent
@@ -209,14 +216,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    //scanner_t* p_scanner = scanner_new(":> ", stdin);
-    //while(!scanner_eof(p_scanner)) {
-    //    printf("TOK: '%s'\n", scanner_read(p_scanner) );
-    //    puts("OK.");
-    //}
-
     parser_t* p_parser = parser_new(":> ", stdin);
-    while(true) {
+    while(!parser_eof(p_parser)) {
         parser_toplevel(p_parser);
         puts("OK.");
     }
