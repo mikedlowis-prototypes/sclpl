@@ -7,18 +7,11 @@
 #include "lexer.h"
 #include <string.h>
 
-static lex_tok_t* lexer_translate(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_punc(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_radix(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_integer(mpc_ast_t* p_tok_ast, int base);
-static lex_tok_t* lexer_float(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_char(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_bool(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast);
-static lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val);
-static int read_radix(const mpc_ast_t* t);
+bool lexer_oneof(const char* class, char c) {
+    return false;
+}
 
-static char* lexer_dup(const char* p_old) {
+char* lexer_dup(const char* p_old) {
     size_t length = strlen(p_old);
     char* p_str = (char*)malloc(length+1);
     memcpy(p_str, p_old, length);
@@ -26,25 +19,23 @@ static char* lexer_dup(const char* p_old) {
     return p_str;
 }
 
-/* Grammar is auto generated into 'source/grammar.c' */
-extern const char Grammar[];
+lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
+    lex_tok_t* p_tok = (lex_tok_t*)malloc(sizeof(lex_tok_t));
+    p_tok->type  = type;
+    p_tok->value = val;
+    return p_tok;
+}
+
+lex_tok_t* lexer_make_token(char* text);
+lex_tok_t* lexer_punc(char* text);
+lex_tok_t* lexer_char(char* text);
+lex_tok_t* lexer_radix_int(char* text);
+lex_tok_t* lexer_number(char* text);
+lex_tok_t* lexer_bool(char* text);
+lex_tok_t* lexer_var(char* text);
 
 lexer_t* lexer_new(char* p_prompt, FILE* p_input) {
     lexer_t* p_lexer = (lexer_t*)malloc(sizeof(lexer_t));
-    /* Build the token parser */
-    mpc_parser_t* token     = mpc_new("token");
-    mpc_parser_t* atom      = mpc_new("atom");
-    mpc_parser_t* punc      = mpc_new("punc");
-    mpc_parser_t* floating  = mpc_new("floating");
-    mpc_parser_t* integer   = mpc_new("integer");
-    mpc_parser_t* radix_num = mpc_new("radixnum");
-    mpc_parser_t* character = mpc_new("character");
-    mpc_parser_t* boolean   = mpc_new("boolean");
-    mpc_parser_t* variable  = mpc_new("var");
-    mpca_lang(MPCA_LANG_DEFAULT, Grammar,
-        token, atom, punc, floating, integer, radix_num, character, boolean, variable, NULL);
-    /* Build the Lexer */
-    p_lexer->lexrule = token;
     p_lexer->scanner = scanner_new(p_prompt, p_input);
     return p_lexer;
 }
@@ -54,19 +45,91 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
     lex_tok_t* p_tok = NULL;
     char* text = scanner_read(p_lexer->scanner);
     if (NULL != text) {
-        if (mpc_parse("<stdin>", text, p_lexer->lexrule, &r)) {
-            mpc_ast_print(((mpc_ast_t*)r.output)->children[1]);
-            p_tok = lexer_translate( ((mpc_ast_t*)r.output)->children[1] );
-            mpc_ast_delete(r.output);
-        } else {
-            mpc_err_print(r.error);
-            mpc_err_delete(r.error);
-        }
+        p_tok = lexer_make_token(text);
         free(text);
     }
     return p_tok;
 }
 
+lex_tok_t* lexer_make_token(char* text) {
+    lex_tok_t* p_tok = NULL;
+    if (lexer_oneof("()[];,'\"", text[0])) {
+        p_tok = lexer_punc(text);
+    } else if (text[0] == '\\') {
+        p_tok = lexer_char(text);
+    } else if ((text[0] == '0') && lexer_oneof("bodx",text[1])) {
+        p_tok = lexer_radix_int(text);
+    } else if (lexer_oneof("+-0123456789",text[0])) {
+        p_tok = lexer_number(text);
+    } else if ((0 == strcmp(text,"true")) || (0 == strcmp(text,"false"))) {
+        p_tok = lexer_bool(text);
+    } else {
+        p_tok = lexer_var(text);
+    }
+    return p_tok;
+}
+
+
+lex_tok_t* lexer_punc(char* text)
+{
+    lex_tok_t* p_tok = NULL;
+    switch (text[0]) {
+        case '(': p_tok = lex_tok_new(T_LPAR,   NULL); break;
+        case ')': p_tok = lex_tok_new(T_RPAR,   NULL); break;
+        case '{': p_tok = lex_tok_new(T_LBRACE, NULL); break;
+        case '}': p_tok = lex_tok_new(T_RBRACE, NULL); break;
+        case '[': p_tok = lex_tok_new(T_LBRACK, NULL); break;
+        case ']': p_tok = lex_tok_new(T_RBRACK, NULL); break;
+        case ';': p_tok = lex_tok_new(T_END,    NULL); break;
+        case ',': p_tok = lex_tok_new(T_COMMA,  NULL); break;
+    }
+    return p_tok;
+}
+
+lex_tok_t* lexer_char(char* text)
+{
+    lex_tok_t* p_tok = NULL;
+    static const char* lookup_table[5] = {
+        " \0space",
+        "\n\0newline",
+        "\r\0return",
+        "\t\0tab",
+        "\v\0vtab"
+    };
+    if (strlen(text) == 1) {
+        p_tok = lex_tok_new(T_CHAR, (void*)(text[0]));
+    } else {
+        for(int i = 0; i < 5; i++) {
+            if (strcmp(text, &(lookup_table[i][2]))) {
+                p_tok = lex_tok_new(T_CHAR, (void*)(lookup_table[i][0]));
+                break;
+            }
+        }
+    }
+    return p_tok;
+}
+
+lex_tok_t* lexer_radix_int(char* text)
+{
+    return NULL;
+}
+
+lex_tok_t* lexer_number(char* text)
+{
+    return NULL;
+}
+
+lex_tok_t* lexer_bool(char* text)
+{
+    return lex_tok_new(T_BOOL, (void*)((0 == strcmp(text,"true")) ? true : false));
+}
+
+lex_tok_t* lexer_var(char* text)
+{
+    return lex_tok_new(T_VAR, lexer_dup(text));
+}
+
+#if 0
 lex_tok_t* lexer_translate(mpc_ast_t* p_tok_ast) {
     lex_tok_t* p_tok = (lex_tok_t*)malloc(sizeof(lex_tok_t));
     if (0 == strncmp("atom|punc", p_tok_ast->tag, 9)) {
@@ -162,12 +225,6 @@ lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast)
     return lex_tok_new(T_VAR, p_str);
 }
 
-lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
-    lex_tok_t* p_tok = (lex_tok_t*)malloc(sizeof(lex_tok_t));
-    p_tok->type  = type;
-    p_tok->value = val;
-    return p_tok;
-}
 
 static int read_radix(const mpc_ast_t* t) {
     switch( t->children[0]->contents[1] ) {
@@ -178,3 +235,4 @@ static int read_radix(const mpc_ast_t* t) {
         default:  return 10;
     }
 }
+#endif
