@@ -8,13 +8,11 @@
 #define LEXER_H
 
 #include "scanner.h"
-#include "mpc.h"
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
 typedef struct {
-    mpc_parser_t* lexrule;
     scanner_t* scanner;
 } lexer_t;
 

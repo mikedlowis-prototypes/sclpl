@@ -11,7 +11,7 @@ end
 base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
   env.set_toolset(:clang)
-  env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra']#, '-Werror']
+  env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra', '-Werror']
   env["CPPPATH"] << 'modules/libopts/source'
 end
 
@@ -53,18 +53,9 @@ desc "Build all targets"
 task :build => [:clang, :sclpl]
 
 desc "Build the sclpl compiler and interpreter"
-task :sclpl => ['source/sclpl/grammar.c'] do
+task :sclpl do
   base_env.Program('build/bin/sclpl',
     FileList['source/sclpl/*.c', 'modules/libopts/source/*.c'])
-end
-
-file 'source/sclpl/grammar.c' => ['source/sclpl/grammar.y'] do
-  grammar = File.readlines('source/sclpl/grammar.y').map{|l| l.chomp().inspect }
-  File.open('source/sclpl/grammar.c','w') do |f|
-    f.write("const char Grammar[] = \n");
-    grammar.each { |l| f.write("#{l}\n") }
-    f.write(";\n");
-  end
 end
 
 #------------------------------------------------------------------------------

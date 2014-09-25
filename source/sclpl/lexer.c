@@ -6,8 +6,26 @@
   */
 #include "lexer.h"
 #include <string.h>
+#include <stdlib.h>
 
 bool lexer_oneof(const char* class, char c) {
+    bool ret = false;
+    size_t sz = strlen(class);
+    for (size_t idx = 0; idx < sz; idx++) {
+        if (c == class[idx]) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
+bool is_float(char* text) {
+    while (text[0] != '\0')
+        if (text[0] == '.')
+            return true;
+        else
+            text++;
     return false;
 }
 
@@ -26,13 +44,46 @@ lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
     return p_tok;
 }
 
+static int read_radix(char ch) {
+    switch(ch) {
+        case 'b': return 2;
+        case 'o': return 8;
+        case 'd': return 10;
+        case 'h': return 16;
+        default:  return 10;
+    }
+}
+
 lex_tok_t* lexer_make_token(char* text);
 lex_tok_t* lexer_punc(char* text);
 lex_tok_t* lexer_char(char* text);
 lex_tok_t* lexer_radix_int(char* text);
 lex_tok_t* lexer_number(char* text);
+lex_tok_t* lexer_integer(char* text, int base);
+lex_tok_t* lexer_float(char* text);
 lex_tok_t* lexer_bool(char* text);
 lex_tok_t* lexer_var(char* text);
+
+char* lexer_tok_type_str(lex_tok_t* p_tok) {
+    switch(p_tok->type) {
+        case T_END:      return "T_END";
+        case T_STRING:   return "T_STRING";
+        case T_CHAR:     return "T_CHAR";
+        case T_INT:      return "T_INT";
+        case T_FLOAT:    return "T_FLOAT";
+        case T_BOOL:     return "T_BOOL";
+        case T_LBRACE:   return "T_LBRACE";
+        case T_RBRACE:   return "T_RBRACE";
+        case T_LBRACK:   return "T_LBRACK";
+        case T_RBRACK:   return "T_RBRACK";
+        case T_LPAR:     return "T_LPAR";
+        case T_RPAR:     return "T_RPAR";
+        case T_COMMA:    return "T_COMMA";
+        case T_VAR:      return "T_VAR";
+        case T_END_FILE: return "T_END_FILE";
+        default:         return NULL;
+    }
+}
 
 lexer_t* lexer_new(char* p_prompt, FILE* p_input) {
     lexer_t* p_lexer = (lexer_t*)malloc(sizeof(lexer_t));
@@ -41,11 +92,12 @@ lexer_t* lexer_new(char* p_prompt, FILE* p_input) {
 }
 
 lex_tok_t* lexer_read(lexer_t* p_lexer) {
-    mpc_result_t r;
     lex_tok_t* p_tok = NULL;
     char* text = scanner_read(p_lexer->scanner);
     if (NULL != text) {
         p_tok = lexer_make_token(text);
+        if (NULL != p_tok)
+            printf("TOK: '%s' -> %s\n", text, lexer_tok_type_str(p_tok));
         free(text);
     }
     return p_tok;
@@ -53,7 +105,9 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
 
 lex_tok_t* lexer_make_token(char* text) {
     lex_tok_t* p_tok = NULL;
-    if (lexer_oneof("()[];,'\"", text[0])) {
+    if ((0 == strcmp(text,"end") || (text[0] == ';'))) {
+        p_tok = lex_tok_new(T_END, NULL);
+    } else if (lexer_oneof("()[];,'\"", text[0])) {
         p_tok = lexer_punc(text);
     } else if (text[0] == '\\') {
         p_tok = lexer_char(text);
@@ -68,7 +122,6 @@ lex_tok_t* lexer_make_token(char* text) {
     }
     return p_tok;
 }
-
 
 lex_tok_t* lexer_punc(char* text)
 {
@@ -97,11 +150,11 @@ lex_tok_t* lexer_char(char* text)
         "\v\0vtab"
     };
     if (strlen(text) == 1) {
-        p_tok = lex_tok_new(T_CHAR, (void*)(text[0]));
+        p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)text[0]));
     } else {
         for(int i = 0; i < 5; i++) {
             if (strcmp(text, &(lookup_table[i][2]))) {
-                p_tok = lex_tok_new(T_CHAR, (void*)(lookup_table[i][0]));
+                p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)lookup_table[i][0]));
                 break;
             }
         }
@@ -111,12 +164,33 @@ lex_tok_t* lexer_char(char* text)
 
 lex_tok_t* lexer_radix_int(char* text)
 {
-    return NULL;
+    return lexer_integer(text, read_radix(text[1]));
 }
 
 lex_tok_t* lexer_number(char* text)
 {
-    return NULL;
+    if (is_float(text))
+        return lexer_integer(text, 10);
+    else
+        return lexer_float(text);
+}
+
+lex_tok_t* lexer_integer(char* text, int base)
+{
+    long* p_int = (long*)malloc(sizeof(long));
+    errno = 0;
+    *p_int = strtol(text, NULL, base);
+    assert(errno == 0);
+    return lex_tok_new(T_INT, p_int);
+}
+
+lex_tok_t* lexer_float(char* text)
+{
+    double* p_dbl = (double*)malloc(sizeof(double));
+    errno = 0;
+    *p_dbl = strtod(text, NULL);
+    assert(errno == 0);
+    return lex_tok_new(T_FLOAT, p_dbl);
 }
 
 lex_tok_t* lexer_bool(char* text)
@@ -129,110 +203,3 @@ lex_tok_t* lexer_var(char* text)
     return lex_tok_new(T_VAR, lexer_dup(text));
 }
 
-#if 0
-lex_tok_t* lexer_translate(mpc_ast_t* p_tok_ast) {
-    lex_tok_t* p_tok = (lex_tok_t*)malloc(sizeof(lex_tok_t));
-    if (0 == strncmp("atom|punc", p_tok_ast->tag, 9)) {
-        p_tok = lexer_punc(p_tok_ast);
-    } else if (0 == strncmp("radixnum", p_tok_ast->tag, 8)) {
-        p_tok = lexer_radix(p_tok_ast);
-    } else if (0 == strncmp("atom|integer", p_tok_ast->tag, 12)) {
-        p_tok = lexer_integer(p_tok_ast, 10);
-    } else if (0 == strncmp("atom|floating", p_tok_ast->tag, 13)) {
-        p_tok = lexer_float(p_tok_ast);
-    } else if (0 == strncmp("character", p_tok_ast->tag, 9)) {
-        p_tok = lexer_char(p_tok_ast);
-    } else if (0 == strncmp("atom|boolean", p_tok_ast->tag, 12)) {
-        p_tok = lexer_bool(p_tok_ast);
-    } else if (0 == strncmp("atom|var", p_tok_ast->tag, 8)) {
-        p_tok = lexer_var(p_tok_ast);
-    } else {
-        puts("unknown");
-    }
-    return p_tok;
-}
-
-lex_tok_t* lexer_punc(mpc_ast_t* p_tok_ast)
-{
-    lex_tok_t* p_tok = NULL;
-    switch (p_tok_ast->contents[0]) {
-        case '(': p_tok = lex_tok_new(T_LPAR,   NULL); break;
-        case ')': p_tok = lex_tok_new(T_RPAR,   NULL); break;
-        case '{': p_tok = lex_tok_new(T_LBRACE, NULL); break;
-        case '}': p_tok = lex_tok_new(T_RBRACE, NULL); break;
-        case '[': p_tok = lex_tok_new(T_LBRACK, NULL); break;
-        case ']': p_tok = lex_tok_new(T_RBRACK, NULL); break;
-        case ';': p_tok = lex_tok_new(T_END,    NULL); break;
-        case ',': p_tok = lex_tok_new(T_COMMA,  NULL); break;
-    }
-    return p_tok;
-}
-
-lex_tok_t* lexer_radix(mpc_ast_t* p_tok_ast)
-{
-    return lexer_integer(p_tok_ast->children[1], read_radix(p_tok_ast));
-}
-
-lex_tok_t* lexer_integer(mpc_ast_t* p_tok_ast, int base)
-{
-    long* p_int = (long*)malloc(sizeof(long));
-    errno = 0;
-    *p_int = strtol(p_tok_ast->contents, NULL, base);
-    assert(errno == 0);
-    return lex_tok_new(T_INT, p_int);
-}
-
-lex_tok_t* lexer_float(mpc_ast_t* p_tok_ast)
-{
-    double* p_dbl = (double*)malloc(sizeof(double));
-    errno = 0;
-    *p_dbl = strtod(p_tok_ast->contents, NULL);
-    assert(errno == 0);
-    return lex_tok_new(T_FLOAT, p_dbl);
-}
-
-lex_tok_t* lexer_char(mpc_ast_t* p_tok_ast)
-{
-    lex_tok_t* p_tok = NULL;
-    static const char* lookup_table[5] = {
-        " \0space",
-        "\n\0newline",
-        "\r\0return",
-        "\t\0tab",
-        "\v\0vtab"
-    };
-    if (strlen(p_tok_ast->contents) == 1) {
-        p_tok = lex_tok_new(T_CHAR, (void*)(p_tok_ast->contents[0]));
-    } else {
-        for(int i = 0; i < 5; i++) {
-            if (strcmp(p_tok_ast->contents, &(lookup_table[i][2]))) {
-                p_tok = lex_tok_new(T_CHAR, (void*)(lookup_table[i][0]));
-                break;
-            }
-        }
-    }
-    return p_tok;
-}
-
-lex_tok_t* lexer_bool(mpc_ast_t* p_tok_ast)
-{
-    return lex_tok_new(T_BOOL, (void*)((0==strcmp(p_tok_ast->contents,"True")) ? true : false));
-}
-
-lex_tok_t* lexer_var(mpc_ast_t* p_tok_ast)
-{
-    char* p_str = lexer_dup(p_tok_ast->contents);
-    return lex_tok_new(T_VAR, p_str);
-}
-
-
-static int read_radix(const mpc_ast_t* t) {
-    switch( t->children[0]->contents[1] ) {
-        case 'b': return 2;
-        case 'o': return 8;
-        case 'd': return 10;
-        case 'h': return 16;
-        default:  return 10;
-    }
-}
-#endif

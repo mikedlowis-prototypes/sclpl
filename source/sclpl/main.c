@@ -1,8 +1,8 @@
-#include "mpc.h"
 #include "scanner.h"
 #include "lexer.h"
 #include "opts.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 /*****************************************************************************/
 typedef struct {
