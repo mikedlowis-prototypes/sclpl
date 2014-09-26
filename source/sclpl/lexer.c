@@ -136,7 +136,7 @@ static lex_tok_t* lexer_number(char* text)
 static lex_tok_t* lexer_integer(char* text, int base)
 {
     char* end;
-    long* p_int = (long*)malloc(sizeof(long));
+    long* p_int = (long*)mem_allocate(sizeof(long), NULL);
     errno = 0;
     *p_int = strtol(text, &end, base);
     assert(errno == 0);
@@ -146,7 +146,7 @@ static lex_tok_t* lexer_integer(char* text, int base)
 static lex_tok_t* lexer_float(char* text)
 {
     char* end;
-    double* p_dbl = (double*)malloc(sizeof(double));
+    double* p_dbl = (double*)mem_allocate(sizeof(double), NULL);
     errno = 0;
     *p_dbl = strtod(text, &end);
     assert(errno == 0);
@@ -207,7 +207,7 @@ static bool is_float(char* text) {
 
 static char* lexer_dup(const char* p_old) {
     size_t length = strlen(p_old);
-    char* p_str = (char*)malloc(length+1);
+    char* p_str = (char*)mem_allocate(length+1, NULL);
     memcpy(p_str, p_old, length);
     p_str[length] = '\0';
     return p_str;

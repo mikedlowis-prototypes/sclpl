@@ -11,6 +11,8 @@ lex_tok_t tok_eof = { T_END_FILE, NULL, 0, 0, NULL };
 
 static void parser_free(void* p_obj) {
     parser_t* p_parser = (parser_t*)p_obj;
+    if ((NULL != p_parser->p_tok) && (&tok_eof != p_parser->p_tok))
+        mem_release(p_parser->p_tok);
     mem_release(p_parser->p_lexer);
     mem_release(p_parser->p_tok_buf);
 }
@@ -53,6 +55,7 @@ bool parser_accept(parser_t* p_parser, lex_tok_type_t type)
 {
     bool ret = false;
     if (parser_peek(p_parser)->type == type) {
+        vec_push_back(p_parser->p_tok_buf, p_parser->p_tok);
         p_parser->p_tok = NULL;
         ret = true;
     }
@@ -63,6 +66,7 @@ bool parser_accept_str(parser_t* p_parser, lex_tok_type_t type, const char* p_te
 {
     bool ret = false;
     if ((parser_peek(p_parser)->type == type) && (0 == strcmp((char*)(p_parser->p_tok->value), p_text))) {
+        vec_push_back(p_parser->p_tok_buf, p_parser->p_tok);
         p_parser->p_tok = NULL;
         ret = true;
     }
