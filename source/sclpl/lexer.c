@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 bool lexer_oneof(const char* class, char c) {
     bool ret = false;
@@ -169,33 +170,37 @@ lex_tok_t* lexer_radix_int(char* text)
 
 lex_tok_t* lexer_number(char* text)
 {
+    lex_tok_t* p_tok = NULL;
     if (is_float(text))
-        return lexer_integer(text, 10);
+        p_tok = lexer_float(text);
     else
-        return lexer_float(text);
+        p_tok = lexer_integer(text, 10);
+    return (NULL == p_tok) ? lexer_var(text) : p_tok;
 }
 
 lex_tok_t* lexer_integer(char* text, int base)
 {
+    char* end;
     long* p_int = (long*)malloc(sizeof(long));
     errno = 0;
-    *p_int = strtol(text, NULL, base);
+    *p_int = strtol(text, &end, base);
     assert(errno == 0);
-    return lex_tok_new(T_INT, p_int);
+    return (end[0] == '\0') ? lex_tok_new(T_INT, p_int) : NULL;
 }
 
 lex_tok_t* lexer_float(char* text)
 {
+    char* end;
     double* p_dbl = (double*)malloc(sizeof(double));
     errno = 0;
-    *p_dbl = strtod(text, NULL);
+    *p_dbl = strtod(text, &end);
     assert(errno == 0);
-    return lex_tok_new(T_FLOAT, p_dbl);
+    return (end[0] == '\0') ? lex_tok_new(T_FLOAT, p_dbl) : NULL;
 }
 
 lex_tok_t* lexer_bool(char* text)
 {
-    return lex_tok_new(T_BOOL, (void*)((0 == strcmp(text,"true")) ? true : false));
+    return lex_tok_new(T_BOOL, (void*)((intptr_t)((0 == strcmp(text,"true")) ? true : false)));
 }
 
 lex_tok_t* lexer_var(char* text)
