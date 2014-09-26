@@ -5,89 +5,44 @@
   $HeadURL$
   */
 #include "lexer.h"
+#include "mem.h"
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 
-bool lexer_oneof(const char* class, char c) {
-    bool ret = false;
-    size_t sz = strlen(class);
-    for (size_t idx = 0; idx < sz; idx++) {
-        if (c == class[idx]) {
-            ret = true;
-            break;
-        }
-    }
-    return ret;
+static lex_tok_t* lexer_make_token(char* text);
+static lex_tok_t* lexer_punc(char* text);
+static lex_tok_t* lexer_char(char* text);
+static lex_tok_t* lexer_radix_int(char* text);
+static lex_tok_t* lexer_number(char* text);
+static lex_tok_t* lexer_integer(char* text, int base);
+static lex_tok_t* lexer_float(char* text);
+static lex_tok_t* lexer_bool(char* text);
+static lex_tok_t* lexer_var(char* text);
+static char* lexer_tok_type_str(lex_tok_t* p_tok);
+static bool lexer_oneof(const char* class, char c);
+static bool is_float(char* text);
+static char* lexer_dup(const char* p_old);
+static int read_radix(char ch);
+
+static void lex_tok_free(void* p_obj) {
+    lex_tok_t* p_tok = (lex_tok_t*)p_obj;
+    mem_release(p_tok->value);
 }
 
-bool is_float(char* text) {
-    while (text[0] != '\0')
-        if (text[0] == '.')
-            return true;
-        else
-            text++;
-    return false;
-}
-
-char* lexer_dup(const char* p_old) {
-    size_t length = strlen(p_old);
-    char* p_str = (char*)malloc(length+1);
-    memcpy(p_str, p_old, length);
-    p_str[length] = '\0';
-    return p_str;
-}
-
-lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
-    lex_tok_t* p_tok = (lex_tok_t*)malloc(sizeof(lex_tok_t));
+static lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
+    lex_tok_t* p_tok = (lex_tok_t*)mem_allocate(sizeof(lex_tok_t), &lex_tok_free);
     p_tok->type  = type;
     p_tok->value = val;
     return p_tok;
 }
 
-static int read_radix(char ch) {
-    switch(ch) {
-        case 'b': return 2;
-        case 'o': return 8;
-        case 'd': return 10;
-        case 'h': return 16;
-        default:  return 10;
-    }
-}
-
-lex_tok_t* lexer_make_token(char* text);
-lex_tok_t* lexer_punc(char* text);
-lex_tok_t* lexer_char(char* text);
-lex_tok_t* lexer_radix_int(char* text);
-lex_tok_t* lexer_number(char* text);
-lex_tok_t* lexer_integer(char* text, int base);
-lex_tok_t* lexer_float(char* text);
-lex_tok_t* lexer_bool(char* text);
-lex_tok_t* lexer_var(char* text);
-
-char* lexer_tok_type_str(lex_tok_t* p_tok) {
-    switch(p_tok->type) {
-        case T_END:      return "T_END";
-        case T_STRING:   return "T_STRING";
-        case T_CHAR:     return "T_CHAR";
-        case T_INT:      return "T_INT";
-        case T_FLOAT:    return "T_FLOAT";
-        case T_BOOL:     return "T_BOOL";
-        case T_LBRACE:   return "T_LBRACE";
-        case T_RBRACE:   return "T_RBRACE";
-        case T_LBRACK:   return "T_LBRACK";
-        case T_RBRACK:   return "T_RBRACK";
-        case T_LPAR:     return "T_LPAR";
-        case T_RPAR:     return "T_RPAR";
-        case T_COMMA:    return "T_COMMA";
-        case T_VAR:      return "T_VAR";
-        case T_END_FILE: return "T_END_FILE";
-        default:         return NULL;
-    }
+static void lexer_free(void* p_obj) {
+    mem_release(((lexer_t*)p_obj)->scanner);
 }
 
 lexer_t* lexer_new(char* p_prompt, FILE* p_input) {
-    lexer_t* p_lexer = (lexer_t*)malloc(sizeof(lexer_t));
+    lexer_t* p_lexer = (lexer_t*)mem_allocate(sizeof(lexer_t), &lexer_free);
     p_lexer->scanner = scanner_new(p_prompt, p_input);
     return p_lexer;
 }
@@ -104,7 +59,7 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
     return p_tok;
 }
 
-lex_tok_t* lexer_make_token(char* text) {
+static lex_tok_t* lexer_make_token(char* text) {
     lex_tok_t* p_tok = NULL;
     if ((0 == strcmp(text,"end") || (text[0] == ';'))) {
         p_tok = lex_tok_new(T_END, NULL);
@@ -124,7 +79,7 @@ lex_tok_t* lexer_make_token(char* text) {
     return p_tok;
 }
 
-lex_tok_t* lexer_punc(char* text)
+static lex_tok_t* lexer_punc(char* text)
 {
     lex_tok_t* p_tok = NULL;
     switch (text[0]) {
@@ -140,7 +95,7 @@ lex_tok_t* lexer_punc(char* text)
     return p_tok;
 }
 
-lex_tok_t* lexer_char(char* text)
+static lex_tok_t* lexer_char(char* text)
 {
     lex_tok_t* p_tok = NULL;
     static const char* lookup_table[5] = {
@@ -163,12 +118,12 @@ lex_tok_t* lexer_char(char* text)
     return p_tok;
 }
 
-lex_tok_t* lexer_radix_int(char* text)
+static lex_tok_t* lexer_radix_int(char* text)
 {
     return lexer_integer(text, read_radix(text[1]));
 }
 
-lex_tok_t* lexer_number(char* text)
+static lex_tok_t* lexer_number(char* text)
 {
     lex_tok_t* p_tok = NULL;
     if (is_float(text))
@@ -178,7 +133,7 @@ lex_tok_t* lexer_number(char* text)
     return (NULL == p_tok) ? lexer_var(text) : p_tok;
 }
 
-lex_tok_t* lexer_integer(char* text, int base)
+static lex_tok_t* lexer_integer(char* text, int base)
 {
     char* end;
     long* p_int = (long*)malloc(sizeof(long));
@@ -188,7 +143,7 @@ lex_tok_t* lexer_integer(char* text, int base)
     return (end[0] == '\0') ? lex_tok_new(T_INT, p_int) : NULL;
 }
 
-lex_tok_t* lexer_float(char* text)
+static lex_tok_t* lexer_float(char* text)
 {
     char* end;
     double* p_dbl = (double*)malloc(sizeof(double));
@@ -198,13 +153,72 @@ lex_tok_t* lexer_float(char* text)
     return (end[0] == '\0') ? lex_tok_new(T_FLOAT, p_dbl) : NULL;
 }
 
-lex_tok_t* lexer_bool(char* text)
+static lex_tok_t* lexer_bool(char* text)
 {
     return lex_tok_new(T_BOOL, (void*)((intptr_t)((0 == strcmp(text,"true")) ? true : false)));
 }
 
-lex_tok_t* lexer_var(char* text)
+static lex_tok_t* lexer_var(char* text)
 {
     return lex_tok_new(T_VAR, lexer_dup(text));
 }
 
+static char* lexer_tok_type_str(lex_tok_t* p_tok) {
+    switch(p_tok->type) {
+        case T_END:      return "T_END";
+        case T_STRING:   return "T_STRING";
+        case T_CHAR:     return "T_CHAR";
+        case T_INT:      return "T_INT";
+        case T_FLOAT:    return "T_FLOAT";
+        case T_BOOL:     return "T_BOOL";
+        case T_LBRACE:   return "T_LBRACE";
+        case T_RBRACE:   return "T_RBRACE";
+        case T_LBRACK:   return "T_LBRACK";
+        case T_RBRACK:   return "T_RBRACK";
+        case T_LPAR:     return "T_LPAR";
+        case T_RPAR:     return "T_RPAR";
+        case T_COMMA:    return "T_COMMA";
+        case T_VAR:      return "T_VAR";
+        case T_END_FILE: return "T_END_FILE";
+        default:         return NULL;
+    }
+}
+
+static bool lexer_oneof(const char* class, char c) {
+    bool ret = false;
+    size_t sz = strlen(class);
+    for (size_t idx = 0; idx < sz; idx++) {
+        if (c == class[idx]) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
+static bool is_float(char* text) {
+    while (text[0] != '\0')
+        if (text[0] == '.')
+            return true;
+        else
+            text++;
+    return false;
+}
+
+static char* lexer_dup(const char* p_old) {
+    size_t length = strlen(p_old);
+    char* p_str = (char*)malloc(length+1);
+    memcpy(p_str, p_old, length);
+    p_str[length] = '\0';
+    return p_str;
+}
+
+static int read_radix(char ch) {
+    switch(ch) {
+        case 'b': return 2;
+        case 'o': return 8;
+        case 'd': return 10;
+        case 'h': return 16;
+        default:  return 10;
+    }
+}

@@ -9,9 +9,15 @@
 
 lex_tok_t tok_eof = { T_END_FILE, NULL, 0, 0, NULL };
 
+static void parser_free(void* p_obj) {
+    parser_t* p_parser = (parser_t*)p_obj;
+    mem_release(p_parser->p_lexer);
+    mem_release(p_parser->p_tok_buf);
+}
+
 parser_t* parser_new(char* p_prompt, FILE* input)
 {
-    parser_t* p_parser = (parser_t*)malloc(sizeof(parser_t));
+    parser_t* p_parser = (parser_t*)mem_allocate(sizeof(parser_t), &parser_free);
     p_parser->p_lexer = lexer_new(p_prompt, input);
     p_parser->p_tok = NULL;
     p_parser->p_tok_buf = vec_new(0);

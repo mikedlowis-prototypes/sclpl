@@ -1,10 +1,5 @@
 #include "scanner.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include "mem.h"
 
 static void scanner_getline(scanner_t* p_scanner);
 static void scanner_skip_ws(scanner_t* p_scanner);
@@ -12,8 +7,14 @@ static char scanner_current(scanner_t* p_scanner);
 static bool scanner_oneof(scanner_t* p_scanner, const char* p_set);
 static char* scanner_dup(scanner_t* p_scanner, size_t start_idx, size_t len);
 
+void scanner_free(void* p_obj) {
+    scanner_t* p_scanner = (scanner_t*)p_obj;
+    if (p_scanner->p_line)
+        free(p_scanner->p_line);
+}
+
 scanner_t* scanner_new(char* p_prompt, FILE* p_file) {
-    scanner_t* p_scanner = (scanner_t*)malloc(sizeof(scanner_t));
+    scanner_t* p_scanner = (scanner_t*)mem_allocate(sizeof(scanner_t), &scanner_free);
     p_scanner->p_line   = NULL;
     p_scanner->index    = 0;
     p_scanner->p_input  = p_file;

@@ -6,9 +6,9 @@
 /* Command Line Options
  *****************************************************************************/
 OptionConfig_T Options_Config[] = {
-    { SHORT, (char*)"L",   (char*)"scan", 0, (char*)"Output the results of lexical analysis and quit"},
-    { SHORT, (char*)"P",   (char*)"scan", 0, (char*)"Output the results of parsing quit"},
-    { END,   (char*)NULL,  (char*)NULL,     0, (char*)NULL }
+    { SHORT, (char*)"L",  (char*)"scan",  0, (char*)"Output the results of lexical analysis and quit"},
+    { SHORT, (char*)"P",  (char*)"parse", 0, (char*)"Output the results of parsing quit"},
+    { END,   (char*)NULL, (char*)NULL,    0, (char*)NULL }
 };
 
 /* SCLPL Parser
@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
         grammar_toplevel(p_parser);
         puts("OK.");
     }
+    mem_release(p_parser);
 
     (void)results;
     return 0;
