@@ -12,7 +12,7 @@ base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
   env.set_toolset(:clang)
   env["CFLAGS"] += ['--std=c99', '-Wall', '-Wextra', '-Werror']
-  env["CPPPATH"] << 'modules/libopts/source'
+  env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
 end
 
 #------------------------------------------------------------------------------
@@ -53,9 +53,17 @@ desc "Build all targets"
 task :build => [:clang, :sclpl]
 
 desc "Build the sclpl compiler and interpreter"
-task :sclpl do
+task :sclpl => [:libcds, :libopts] do
   base_env.Program('build/bin/sclpl',
-    FileList['source/sclpl/*.c', 'modules/libopts/source/*.c'])
+    FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
+end
+
+task :libcds do
+  base_env.Library('build/lib/libcds.a', FileList['modules/libcds/source/**/*.c'])
+end
+
+task :libopts do
+  base_env.Library('build/lib/libopts.a', FileList['modules/libopts/source/**/*.c'])
 end
 
 #------------------------------------------------------------------------------
