@@ -10,6 +10,16 @@
 #include "lexer.h"
 #include "vec.h"
 
+typedef enum { ATOM, TREE } tree_tag_t;
+
+typedef struct {
+    tree_tag_t tag;
+    union {
+        lex_tok_t* tok;
+        vec_t* vec;
+    } ptr;
+} tree_t;
+
 typedef struct {
     lexer_t* p_lexer;
     lex_tok_t* p_tok;
@@ -33,5 +43,9 @@ bool parser_accept_str(parser_t* p_parser, lex_tok_type_t type, const char* p_te
 bool parser_expect(parser_t* p_parser, lex_tok_type_t type);
 
 bool parser_expect_str(parser_t* p_parser, lex_tok_type_t type, const char* p_text);
+
+size_t parser_mark(parser_t* p_parser);
+
+void parser_reduce(parser_t* p_parser, size_t mark);
 
 #endif /* PARSER_H */

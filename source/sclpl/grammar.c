@@ -20,12 +20,15 @@ void grammar_toplevel(parser_t* p_parser)
 
 void grammar_import(parser_t* p_parser)
 {
+    size_t mark = parser_mark(p_parser);
     parser_expect(p_parser, T_VAR);
     parser_expect(p_parser, T_END);
+    parser_reduce(p_parser, mark);
 }
 
 void grammar_definition(parser_t* p_parser)
 {
+    size_t mark = parser_mark(p_parser);
     parser_expect(p_parser,T_VAR);
     if (parser_peek(p_parser)->type == T_LPAR) {
         grammar_fn_stmnt(p_parser);
@@ -33,6 +36,7 @@ void grammar_definition(parser_t* p_parser)
         grammar_expression(p_parser);
         parser_expect(p_parser,T_END);
     }
+    parser_reduce(p_parser, mark);
 }
 
 void grammar_expression(parser_t* p_parser)
@@ -74,6 +78,7 @@ void grammar_literal(parser_t* p_parser)
 
 void grammar_arglist(parser_t* p_parser)
 {
+    size_t mark = parser_mark(p_parser);
     parser_expect(p_parser, T_LPAR);
     while(parser_peek(p_parser)->type != T_RPAR) {
         grammar_expression(p_parser);
@@ -81,28 +86,35 @@ void grammar_arglist(parser_t* p_parser)
             parser_expect(p_parser, T_COMMA);
     }
     parser_expect(p_parser, T_RPAR);
+    parser_reduce(p_parser, mark);
 }
 
 void grammar_if_stmnt(parser_t* p_parser)
 {
+    size_t mark = parser_mark(p_parser);
     grammar_expression(p_parser);
     grammar_expression(p_parser);
     parser_expect_str(p_parser,T_VAR,"else");
     grammar_expression(p_parser);
     parser_expect(p_parser,T_END);
+    parser_reduce(p_parser, mark);
 }
 
 void grammar_fn_stmnt(parser_t* p_parser)
 {
+    size_t mark1 = parser_mark(p_parser);
     parser_expect(p_parser, T_LPAR);
+    size_t mark2 = parser_mark(p_parser);
     while(parser_peek(p_parser)->type != T_RPAR) {
         parser_expect(p_parser, T_VAR);
         if(parser_peek(p_parser)->type != T_RPAR)
             parser_expect(p_parser, T_COMMA);
     }
     parser_expect(p_parser, T_RPAR);
+    parser_reduce(p_parser, mark2);
     while(parser_peek(p_parser)->type != T_END) {
         grammar_expression(p_parser);
     }
     parser_expect(p_parser, T_END);
+    parser_reduce(p_parser, mark1);
 }

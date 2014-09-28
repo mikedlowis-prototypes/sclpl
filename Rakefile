@@ -10,7 +10,7 @@ end
 # Define the compiler environment
 base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
-  env.set_toolset(:gcc)
+  env.set_toolset(:clang)
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra'] #, '-Werror']
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
 end
