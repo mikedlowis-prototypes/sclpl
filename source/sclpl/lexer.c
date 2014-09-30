@@ -27,7 +27,8 @@ static int read_radix(char ch);
 
 static void lex_tok_free(void* p_obj) {
     lex_tok_t* p_tok = (lex_tok_t*)p_obj;
-    mem_release(p_tok->value);
+    if (NULL != p_tok->value)
+        mem_release(p_tok->value);
 }
 
 static lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {

@@ -42,8 +42,10 @@ void grammar_definition(parser_t* p_parser)
 void grammar_expression(parser_t* p_parser)
 {
     if (parser_accept(p_parser, T_LPAR)) {
+        size_t mark = parser_mark(p_parser);
         grammar_expression(p_parser);
-        parser_accept(p_parser, T_RPAR);
+        parser_expect(p_parser, T_RPAR);
+        parser_reduce(p_parser, mark);
     } else if (parser_accept_str(p_parser, T_VAR, "if")) {
         grammar_if_stmnt(p_parser);
     } else if (parser_accept_str(p_parser, T_VAR, "fn")) {

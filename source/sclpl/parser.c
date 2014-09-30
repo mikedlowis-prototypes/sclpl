@@ -11,8 +11,9 @@ lex_tok_t tok_eof = { T_END_FILE, NULL, 0, 0, NULL };
 
 static void parser_free(void* p_obj) {
     parser_t* p_parser = (parser_t*)p_obj;
-    if ((NULL != p_parser->p_tok) && (&tok_eof != p_parser->p_tok))
+    if ((NULL != p_parser->p_tok) && (&tok_eof != p_parser->p_tok)) {
         mem_release(p_parser->p_tok);
+    }
     mem_release(p_parser->p_lexer);
     mem_release(p_parser->p_tok_buf);
 }
@@ -27,7 +28,10 @@ parser_t* parser_new(char* p_prompt, FILE* input)
 }
 
 static void parser_tree_free(void* p_obj) {
-    mem_release(((tree_t*)p_obj)->ptr.tok);
+    tree_t* p_tree = ((tree_t*)p_obj);
+    if (NULL != p_tree->ptr.tok) {
+        mem_release(p_tree->ptr.tok);
+    }
 }
 
 static tree_t* parser_tree_new(tree_tag_t tag, void* p_obj) {
