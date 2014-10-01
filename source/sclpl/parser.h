@@ -48,4 +48,6 @@ size_t parser_mark(parser_t* p_parser);
 
 void parser_reduce(parser_t* p_parser, size_t mark);
 
+tree_t* parser_get_tree(parser_t* p_parser);
+
 #endif /* PARSER_H */

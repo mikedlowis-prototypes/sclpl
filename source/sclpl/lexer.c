@@ -19,7 +19,6 @@ static lex_tok_t* lexer_integer(char* text, int base);
 static lex_tok_t* lexer_float(char* text);
 static lex_tok_t* lexer_bool(char* text);
 static lex_tok_t* lexer_var(char* text);
-static char* lexer_tok_type_str(lex_tok_t* p_tok);
 static bool lexer_oneof(const char* class, char c);
 static bool is_float(char* text);
 static char* lexer_dup(const char* p_old);
@@ -164,7 +163,7 @@ static lex_tok_t* lexer_var(char* text)
     return lex_tok_new(T_VAR, lexer_dup(text));
 }
 
-static char* lexer_tok_type_str(lex_tok_t* p_tok) {
+char* lexer_tok_type_str(lex_tok_t* p_tok) {
     switch(p_tok->type) {
         case T_END:      return "T_END";
         case T_STRING:   return "T_STRING";

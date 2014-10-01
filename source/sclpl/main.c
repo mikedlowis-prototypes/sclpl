@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "opts.h"
 #include "grammar.h"
+#include "lexer.h"
 
 /* Command Line Options
  *****************************************************************************/
@@ -14,32 +15,25 @@ OptionConfig_T Options_Config[] = {
 /* SCLPL Parser
  *****************************************************************************/
 
-void print_subtree(tree_t* p_tree, int depth);
-
-void print_tree(vec_t* p_vec, int depth);
-
-void print_subtree(tree_t* p_tree, int depth) {
-    puts("printing subtree");
-    for(int i = 0; i < (4 * depth); i++) printf("%c", ' ');
-    if (p_tree->tag == ATOM) {
-        printf("ATOM (%p)\n", p_tree);
-    } else {
-        printf("TREE (%p)\n", p_tree);
-        print_tree(p_tree->ptr.vec, depth+1);
-    }
-    puts("printed subtree");
+void print_indent(int depth) {
+    for(int i = 0; i < (2 * depth); i++)
+        printf("%c", ' ');
 }
 
-void print_tree(vec_t* p_vec, int depth) {
-    puts("printing tree");
-    for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-        puts("(");
-        tree_t* p_tree = (tree_t*)vec_at(p_vec, idx);
-        puts("-");
-        print_subtree(p_tree, depth);
+void print_tree(tree_t* p_tree, int depth) {
+    print_indent(depth);
+    if (p_tree->tag == ATOM) {
+        lex_tok_t* p_tok = p_tree->ptr.tok;
+        printf("<token(%s)>\n", lexer_tok_type_str(p_tok));
+    } else {
+        puts("(tree:");
+        vec_t* p_vec = p_tree->ptr.vec;
+        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
+            print_tree((tree_t*)vec_at(p_vec, idx), depth+1);
+        }
+        print_indent(depth);
         puts(")");
     }
-    puts("printed tree");
 }
 
 /* TODO:
@@ -55,9 +49,9 @@ int main(int argc, char **argv) {
 
     parser_t* p_parser = parser_new(":> ", stdin);
     while(!parser_eof(p_parser)) {
-        grammar_toplevel(p_parser);
-        print_tree(p_parser->p_tok_buf, 0);
-        vec_clear(p_parser->p_tok_buf);
+        tree_t* p_tree = grammar_toplevel(p_parser);
+        print_tree(p_tree, 0);
+        mem_release(p_tree);
         puts("OK.");
     }
     mem_release(p_parser);

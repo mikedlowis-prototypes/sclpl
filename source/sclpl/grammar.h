@@ -7,7 +7,7 @@
 
 #include "parser.h"
 
-void grammar_toplevel(parser_t* p_parser);
+tree_t* grammar_toplevel(parser_t* p_parser);
 
 void grammar_import(parser_t* p_parser);
 

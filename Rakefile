@@ -10,6 +10,7 @@ end
 # Define the compiler environment
 base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
+  env.build_dir('modules','build/obj/modules')
   env.set_toolset(:clang)
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra'] #, '-Werror']
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
@@ -35,7 +36,7 @@ end
 
 file "#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}" => ["#{CLANG_BUILD_DIR}/Makefile"] + FileList["#{CLANG_SRC_DIR}/tools/clang/**/*.c"] do
     FileUtils.cd(CLANG_BUILD_DIR) do
-        sh "#{CLANG_MAKE_CMD} clang"
+        sh "#{CLANG_MAKE_CMD} clang llvm-ar"
     end
 end
 
@@ -79,6 +80,6 @@ task :clean_all => [:clean] do
   end
 end
 
-desc "Clobber the build driectory and all it's contents"
+desc "Clobber the build directory and all it's contents"
 task(:clobber) { FileUtils.rm_rf('build/') }
 

@@ -6,7 +6,7 @@
   */
 #include "grammar.h"
 
-void grammar_toplevel(parser_t* p_parser)
+tree_t* grammar_toplevel(parser_t* p_parser)
 {
     if (parser_accept_str(p_parser, T_VAR, "import"))
         grammar_import(p_parser);
@@ -16,6 +16,7 @@ void grammar_toplevel(parser_t* p_parser)
         grammar_expression(p_parser);
     else
         parser_error(p_parser, "Unrecognized top-level form");
+    return parser_get_tree(p_parser);
 }
 
 void grammar_import(parser_t* p_parser)

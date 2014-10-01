@@ -120,11 +120,16 @@ void parser_reduce(parser_t* p_parser, size_t mark)
     vec_t* p_buf  = p_parser->p_tok_buf;
     vec_t* p_form = vec_new(0);
     for(size_t idx = mark; idx < vec_size(p_buf); idx++) {
-        tree_tag_t tag = ((tree_t*)vec_at(p_buf, idx))->tag;
-        tree_t* p_tree = parser_tree_new(tag, mem_retain(vec_at(p_buf, idx)));
+        tree_t* p_tree = mem_retain(vec_at(p_buf, idx));
         vec_push_back(p_form, p_tree);
     }
-    vec_erase(p_parser->p_tok_buf, mark, vec_size(p_parser->p_tok_buf)-1);
-    vec_push_back(p_parser->p_tok_buf, parser_tree_new(TREE, p_form));
+    vec_erase(p_buf, mark, vec_size(p_buf)-1);
+    vec_push_back(p_buf, parser_tree_new(TREE, p_form));
+}
+
+tree_t* parser_get_tree(parser_t* p_parser) {
+    tree_t* p_tree = parser_tree_new(TREE, p_parser->p_tok_buf);
+    p_parser->p_tok_buf = vec_new(0);
+    return p_tree;
 }
 

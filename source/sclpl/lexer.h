@@ -33,4 +33,6 @@ lexer_t* lexer_new(char* p_prompt, FILE* p_input);
 
 lex_tok_t* lexer_read(lexer_t* p_lexer);
 
+char* lexer_tok_type_str(lex_tok_t* p_tok);
+
 #endif /* LEXER_H */
