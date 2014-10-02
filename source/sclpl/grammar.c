@@ -5,18 +5,25 @@
   $HeadURL$
   */
 #include "grammar.h"
+#include "exn.h"
 
 tree_t* grammar_toplevel(parser_t* p_parser)
 {
-    if (parser_accept_str(p_parser, T_VAR, "import"))
-        grammar_import(p_parser);
-    else if (parser_accept_str(p_parser, T_VAR, "def"))
-        grammar_definition(p_parser);
-    else if (p_parser->p_lexer->scanner->p_input == stdin)
-        grammar_expression(p_parser);
-    else
-        parser_error(p_parser, "Unrecognized top-level form");
-    return parser_get_tree(p_parser);
+    tree_t* p_tree = NULL;
+    try {
+        if (parser_accept_str(p_parser, T_VAR, "import"))
+            grammar_import(p_parser);
+        else if (parser_accept_str(p_parser, T_VAR, "def"))
+            grammar_definition(p_parser);
+        else if (p_parser->p_lexer->scanner->p_input == stdin)
+            grammar_expression(p_parser);
+        else
+            parser_error(p_parser, "Unrecognized top-level form");
+        p_tree = parser_get_tree(p_parser);
+    } catch(ParseException) {
+        fprintf(stderr, "Invalid Syntax\n");
+    }
+    return p_tree;
 }
 
 void grammar_import(parser_t* p_parser)

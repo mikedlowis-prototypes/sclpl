@@ -50,9 +50,13 @@ int main(int argc, char **argv) {
     parser_t* p_parser = parser_new(":> ", stdin);
     while(!parser_eof(p_parser)) {
         tree_t* p_tree = grammar_toplevel(p_parser);
-        print_tree(p_tree, 0);
-        mem_release(p_tree);
-        puts("OK.");
+        if (NULL != p_tree) {
+            print_tree(p_tree, 0);
+            mem_release(p_tree);
+            puts("OK.");
+        } else {
+            parser_resume(p_parser);
+        }
     }
     mem_release(p_parser);
 

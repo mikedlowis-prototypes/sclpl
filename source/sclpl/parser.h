@@ -9,6 +9,9 @@
 
 #include "lexer.h"
 #include "vec.h"
+#include "exn.h"
+
+DECLARE_EXCEPTION(ParseException);
 
 typedef enum { ATOM, TREE } tree_tag_t;
 
@@ -33,6 +36,8 @@ void parser_fetch(parser_t* p_parser);
 lex_tok_t* parser_peek(parser_t* p_parser);
 
 bool parser_eof(parser_t* p_parser);
+
+void parser_resume(parser_t* p_parser);
 
 void parser_error(parser_t* p_parser, const char* p_text);
 

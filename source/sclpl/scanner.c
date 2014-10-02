@@ -1,7 +1,6 @@
 #include "scanner.h"
 #include "mem.h"
 
-static void scanner_getline(scanner_t* p_scanner);
 static void scanner_skip_ws(scanner_t* p_scanner);
 static char scanner_current(scanner_t* p_scanner);
 static bool scanner_oneof(scanner_t* p_scanner, const char* p_set);
@@ -60,7 +59,7 @@ bool scanner_eol(scanner_t* p_scanner)
     return ret;
 }
 
-static void scanner_getline(scanner_t* p_scanner) {
+void scanner_getline(scanner_t* p_scanner) {
     int c;
     size_t capacity = 8;
     size_t index    = 0;

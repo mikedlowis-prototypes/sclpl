@@ -25,4 +25,6 @@ bool scanner_eof(scanner_t* p_scanner);
 
 bool scanner_eol(scanner_t* p_scanner);
 
+void scanner_getline(scanner_t* p_scanner);
+
 #endif /* SCANNER_H */

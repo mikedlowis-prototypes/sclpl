@@ -7,6 +7,8 @@
 #include "parser.h"
 #include "vec.h"
 
+DEFINE_EXCEPTION(ParseException, &RuntimeException);
+
 lex_tok_t tok_eof = { T_END_FILE, NULL, 0, 0, NULL };
 
 static void parser_free(void* p_obj) {
@@ -59,11 +61,16 @@ bool parser_eof(parser_t* p_parser) {
     return (parser_peek(p_parser)->type == T_END_FILE);
 }
 
+void parser_resume(parser_t* p_parser) {
+    if (NULL != p_parser->p_tok)
+        mem_release(p_parser->p_tok);
+    vec_clear(p_parser->p_tok_buf);
+    lexer_skipline(p_parser->p_lexer);
+}
+
 void parser_error(parser_t* p_parser, const char* p_text)
 {
-    (void)p_parser;
-    fprintf(stderr,"Error: %s\n",p_text);
-    exit(1);
+    throw_msg(ParseException, p_text);
 }
 
 bool parser_accept(parser_t* p_parser, lex_tok_type_t type)
@@ -128,8 +135,14 @@ void parser_reduce(parser_t* p_parser, size_t mark)
 }
 
 tree_t* parser_get_tree(parser_t* p_parser) {
-    tree_t* p_tree = parser_tree_new(TREE, p_parser->p_tok_buf);
-    p_parser->p_tok_buf = vec_new(0);
+    tree_t* p_tree = NULL;
+    if (1 == vec_size(p_parser->p_tok_buf)) {
+        p_tree = mem_retain(vec_at(p_parser->p_tok_buf, 0));
+        vec_clear(p_parser->p_tok_buf);
+    } else {
+        p_tree = parser_tree_new(TREE, p_parser->p_tok_buf);
+        p_parser->p_tok_buf = vec_new(0);
+    }
     return p_tree;
 }
 

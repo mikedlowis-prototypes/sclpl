@@ -52,11 +52,15 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
     char* text = scanner_read(p_lexer->scanner);
     if (NULL != text) {
         p_tok = lexer_make_token(text);
-        if (NULL != p_tok)
-            printf("TOK: '%s' -> %s\n", text, lexer_tok_type_str(p_tok));
+        //if (NULL != p_tok)
+        //    printf("TOK: '%s' -> %s\n", text, lexer_tok_type_str(p_tok));
         free(text);
     }
     return p_tok;
+}
+
+void lexer_skipline(lexer_t* p_lexer) {
+    scanner_getline(p_lexer->scanner);
 }
 
 static lex_tok_t* lexer_make_token(char* text) {
