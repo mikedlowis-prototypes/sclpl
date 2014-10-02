@@ -62,8 +62,10 @@ bool parser_eof(parser_t* p_parser) {
 }
 
 void parser_resume(parser_t* p_parser) {
-    if (NULL != p_parser->p_tok)
+    if (NULL != p_parser->p_tok) {
         mem_release(p_parser->p_tok);
+        p_parser->p_tok = NULL;
+    }
     vec_clear(p_parser->p_tok_buf);
     lexer_skipline(p_parser->p_lexer);
 }
