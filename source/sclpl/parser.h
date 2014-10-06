@@ -31,6 +31,8 @@ typedef struct {
 
 parser_t* parser_new(char* p_prompt, FILE* input);
 
+tree_t* parser_tree_new(tree_tag_t tag, void* p_obj);
+
 void parser_fetch(parser_t* p_parser);
 
 lex_tok_t* parser_peek(parser_t* p_parser);

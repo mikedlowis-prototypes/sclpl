@@ -14,6 +14,7 @@ base_env = BuildEnv.new(echo: :command) do |env|
   env.set_toolset(:clang)
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra'] #, '-Werror']
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
+  env["AR"] = 'ar'
 end
 
 #------------------------------------------------------------------------------

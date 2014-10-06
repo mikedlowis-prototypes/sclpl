@@ -70,8 +70,7 @@ void grammar_expression(parser_t* p_parser)
 
 void grammar_literal(parser_t* p_parser)
 {
-    switch (parser_peek(p_parser)->type)
-    {
+    switch (parser_peek(p_parser)->type) {
         case T_BOOL:
         case T_CHAR:
         case T_STRING:

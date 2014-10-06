@@ -36,7 +36,7 @@ static void parser_tree_free(void* p_obj) {
     }
 }
 
-static tree_t* parser_tree_new(tree_tag_t tag, void* p_obj) {
+tree_t* parser_tree_new(tree_tag_t tag, void* p_obj) {
     tree_t* p_tree = (tree_t*)mem_allocate(sizeof(tree_t), &parser_tree_free);
     p_tree->tag     = tag;
     p_tree->ptr.tok = (lex_tok_t*)p_obj;
