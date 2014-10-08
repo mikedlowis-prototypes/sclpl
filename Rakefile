@@ -1,3 +1,5 @@
+require "rspec"
+require "rspec/core/rake_task"
 require './build-system/setup'
 
 def windows?
@@ -11,10 +13,16 @@ end
 base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
   env.build_dir('modules','build/obj/modules')
-  env.set_toolset(:clang)
+  env.set_toolset(:gcc)
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra'] #, '-Werror']
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
-  env["AR"] = 'ar'
+end
+
+test_env = base_env.clone do |env|
+  env.build_dir('source','build/obj/test/source')
+  env.build_dir('modules','build/obj/test/modules')
+  env['CFLAGS'] +=  ['--coverage']
+  env['LDFLAGS'] += ['--coverage']
 end
 
 #------------------------------------------------------------------------------
@@ -84,3 +92,17 @@ end
 desc "Clobber the build directory and all it's contents"
 task(:clobber) { FileUtils.rm_rf('build/') }
 
+#------------------------------------------------------------------------------
+# RSpec Tests for the Compiler
+#------------------------------------------------------------------------------
+# Make the specs depend on the libs
+task :spec => [:libcds, :libopts]
+
+# Build and test the compiler with coverage
+RSpec::Core::RakeTask.new(:spec) do |t,args|
+  t.rspec_opts = ['--format', 'documentation']
+  test_env.Program('build/bin/sclpl-test',
+    FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
+  base_env.process
+  test_env.process
+end

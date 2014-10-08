@@ -8,15 +8,15 @@
 
 /* Command Line Options
  *****************************************************************************/
-OptionConfig_T Options_Config[] = {
-    { "tokens",    false, "mode",    "Emit the token output of lexical analysis for the given file"},
-    { "ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
-    { "repl",      false, "mode",    "Execute the application in a REPL"},
-    { "staticlib", false, "mode",    "Compile the application as a static library"},
-    { "sharedlib", false, "mode",    "Compile the application as a shared library"},
-    { "program",   false, "mode",    "Compile the application as an executable"},
-    { "R",         true,  "include", "Add a path to the list of require paths"},
-    { NULL,        false, NULL,      NULL }
+opts_cfg_t Options_Config[] = {
+    {"tokens",    false, "mode",    "Emit the token output of lexical analysis for the given file"},
+    {"ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
+    {"repl",      false, "mode",    "Execute the application in a REPL"},
+    {"staticlib", false, "mode",    "Compile the application as a static library"},
+    {"sharedlib", false, "mode",    "Compile the application as a shared library"},
+    {"program",   false, "mode",    "Compile the application as an executable"},
+    {"R",         true,  "include", "Add a path to the list of require paths"},
+    {NULL,        false, NULL,      NULL }
 };
 
 /* Tree Printing
