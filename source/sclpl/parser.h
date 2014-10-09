@@ -57,4 +57,6 @@ void parser_reduce(parser_t* p_parser, size_t mark);
 
 tree_t* parser_get_tree(parser_t* p_parser);
 
+void parser_insert(parser_t* p_parser, lex_tok_type_t type, void* value);
+
 #endif /* PARSER_H */

@@ -31,10 +31,14 @@ typedef struct {
 
 lexer_t* lexer_new(char* p_prompt, FILE* p_input);
 
+lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val);
+
 lex_tok_t* lexer_read(lexer_t* p_lexer);
 
 void lexer_skipline(lexer_t* p_lexer);
 
 char* lexer_tok_type_str(lex_tok_t* p_tok);
+
+char* lexer_dup(const char* p_old);
 
 #endif /* LEXER_H */

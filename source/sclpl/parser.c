@@ -149,3 +149,9 @@ tree_t* parser_get_tree(parser_t* p_parser) {
     return p_tree;
 }
 
+void parser_insert(parser_t* p_parser, lex_tok_type_t type, void* value) {
+    lex_tok_t* p_tok = lex_tok_new(type, value);
+    tree_t*   p_tree = parser_tree_new(ATOM, p_tok);
+    vec_push_back(p_parser->p_tok_buf, p_tree);
+}
+

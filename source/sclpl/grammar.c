@@ -5,6 +5,7 @@
   $HeadURL$
   */
 #include "grammar.h"
+#include "lexer.h"
 #include "exn.h"
 
 tree_t* grammar_toplevel(parser_t* p_parser)
@@ -39,6 +40,7 @@ void grammar_definition(parser_t* p_parser)
     size_t mark = parser_mark(p_parser);
     parser_expect(p_parser,T_VAR);
     if (parser_peek(p_parser)->type == T_LPAR) {
+        parser_insert(p_parser, T_VAR, lexer_dup("fn"));
         grammar_fn_stmnt(p_parser);
     } else {
         grammar_expression(p_parser);

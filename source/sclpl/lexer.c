@@ -21,7 +21,6 @@ static lex_tok_t* lexer_bool(char* text);
 static lex_tok_t* lexer_var(char* text);
 static bool lexer_oneof(const char* class, char c);
 static bool is_float(char* text);
-static char* lexer_dup(const char* p_old);
 static int read_radix(char ch);
 
 static void lex_tok_free(void* p_obj) {
@@ -30,7 +29,7 @@ static void lex_tok_free(void* p_obj) {
         mem_release(p_tok->value);
 }
 
-static lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
+lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val) {
     lex_tok_t* p_tok = (lex_tok_t*)mem_allocate(sizeof(lex_tok_t), &lex_tok_free);
     p_tok->type  = type;
     p_tok->value = val;
@@ -209,7 +208,7 @@ static bool is_float(char* text) {
     return false;
 }
 
-static char* lexer_dup(const char* p_old) {
+char* lexer_dup(const char* p_old) {
     size_t length = strlen(p_old);
     char* p_str = (char*)mem_allocate(length+1, NULL);
     memcpy(p_str, p_old, length);
