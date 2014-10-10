@@ -51,8 +51,6 @@ lex_tok_t* lexer_read(lexer_t* p_lexer) {
     char* text = scanner_read(p_lexer->scanner);
     if (NULL != text) {
         p_tok = lexer_make_token(text);
-        //if (NULL != p_tok)
-        //    printf("TOK: '%s' -> %s\n", text, lexer_tok_type_str(p_tok));
         free(text);
     }
     return p_tok;
@@ -66,7 +64,7 @@ static lex_tok_t* lexer_make_token(char* text) {
     lex_tok_t* p_tok = NULL;
     if ((0 == strcmp(text,"end") || (text[0] == ';'))) {
         p_tok = lex_tok_new(T_END, NULL);
-    } else if (lexer_oneof("()[];,'\"", text[0])) {
+    } else if (lexer_oneof("()[]{};,'\"", text[0])) {
         p_tok = lexer_punc(text);
     } else if (text[0] == '\\') {
         p_tok = lexer_char(text);
@@ -86,14 +84,16 @@ static lex_tok_t* lexer_punc(char* text)
 {
     lex_tok_t* p_tok = NULL;
     switch (text[0]) {
-        case '(': p_tok = lex_tok_new(T_LPAR,   NULL); break;
-        case ')': p_tok = lex_tok_new(T_RPAR,   NULL); break;
-        case '{': p_tok = lex_tok_new(T_LBRACE, NULL); break;
-        case '}': p_tok = lex_tok_new(T_RBRACE, NULL); break;
-        case '[': p_tok = lex_tok_new(T_LBRACK, NULL); break;
-        case ']': p_tok = lex_tok_new(T_RBRACK, NULL); break;
-        case ';': p_tok = lex_tok_new(T_END,    NULL); break;
-        case ',': p_tok = lex_tok_new(T_COMMA,  NULL); break;
+        case '(':  p_tok = lex_tok_new(T_LPAR,   NULL); break;
+        case ')':  p_tok = lex_tok_new(T_RPAR,   NULL); break;
+        case '{':  p_tok = lex_tok_new(T_LBRACE, NULL); break;
+        case '}':  p_tok = lex_tok_new(T_RBRACE, NULL); break;
+        case '[':  p_tok = lex_tok_new(T_LBRACK, NULL); break;
+        case ']':  p_tok = lex_tok_new(T_RBRACK, NULL); break;
+        case ';':  p_tok = lex_tok_new(T_END,    NULL); break;
+        case ',':  p_tok = lex_tok_new(T_COMMA,  NULL); break;
+        case '\'': p_tok = lex_tok_new(T_SQUOTE, NULL); break;
+        case '"':  p_tok = lex_tok_new(T_DQUOTE, NULL); break;
     }
     return p_tok;
 }
@@ -164,27 +164,6 @@ static lex_tok_t* lexer_bool(char* text)
 static lex_tok_t* lexer_var(char* text)
 {
     return lex_tok_new(T_VAR, lexer_dup(text));
-}
-
-char* lexer_tok_type_str(lex_tok_t* p_tok) {
-    switch(p_tok->type) {
-        case T_END:      return "T_END";
-        case T_STRING:   return "T_STRING";
-        case T_CHAR:     return "T_CHAR";
-        case T_INT:      return "T_INT";
-        case T_FLOAT:    return "T_FLOAT";
-        case T_BOOL:     return "T_BOOL";
-        case T_LBRACE:   return "T_LBRACE";
-        case T_RBRACE:   return "T_RBRACE";
-        case T_LBRACK:   return "T_LBRACK";
-        case T_RBRACK:   return "T_RBRACK";
-        case T_LPAR:     return "T_LPAR";
-        case T_RPAR:     return "T_RPAR";
-        case T_COMMA:    return "T_COMMA";
-        case T_VAR:      return "T_VAR";
-        case T_END_FILE: return "T_END_FILE";
-        default:         return NULL;
-    }
 }
 
 static bool lexer_oneof(const char* class, char c) {

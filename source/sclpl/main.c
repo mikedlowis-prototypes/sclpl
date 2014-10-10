@@ -29,8 +29,7 @@ void print_indent(int depth) {
 void print_tree(tree_t* p_tree, int depth) {
     print_indent(depth);
     if (p_tree->tag == ATOM) {
-        lex_tok_t* p_tok = p_tree->ptr.tok;
-        printf("<tok %s>\n", lexer_tok_type_str(p_tok));
+        pprint_token(stdout, p_tree->ptr.tok);
     } else {
         puts("(tree");
         vec_t* p_vec = p_tree->ptr.vec;
@@ -84,7 +83,7 @@ static int emit_tokens(void) {
     lexer_t* p_lexer = lexer_new(NULL, stdin);
     lex_tok_t* token;
     while(NULL != (token = lexer_read(p_lexer))) {
-        printf("<tok %s>\n", lexer_tok_type_str(token));
+        pprint_token(stdout, token);
         mem_release(token);
     }
     mem_release(p_lexer);

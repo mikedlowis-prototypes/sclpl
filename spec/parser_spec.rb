@@ -29,6 +29,7 @@ end
 
 describe "parser" do
   it "should parse a definition" do
-    expect(parser('def foo 123;')).to eq([ ['T_VAR', 'T_VAR', 'T_INT'] ])
+    expect(parser('def foo 123;')).to eq([
+      ['T_VAR:def', 'T_VAR:foo', 'T_INT:123'] ])
   end
 end

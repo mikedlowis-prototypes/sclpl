@@ -17,8 +17,8 @@ typedef struct {
 } lexer_t;
 
 typedef enum {
-    T_END, T_STRING, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_LBRACE, T_RBRACE,
-    T_LBRACK, T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_VAR, T_END_FILE
+    T_VAR, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE, T_LBRACK,
+    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_END_FILE
 } lex_tok_type_t;
 
 typedef struct {
@@ -36,8 +36,6 @@ lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val);
 lex_tok_t* lexer_read(lexer_t* p_lexer);
 
 void lexer_skipline(lexer_t* p_lexer);
-
-char* lexer_tok_type_str(lex_tok_t* p_tok);
 
 char* lexer_dup(const char* p_old);
 
