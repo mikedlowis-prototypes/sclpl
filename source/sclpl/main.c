@@ -5,6 +5,7 @@
 #include "grammar.h"
 #include "parser.h"
 #include "lexer.h"
+#include "pprint.h"
 
 /* Command Line Options
  *****************************************************************************/
@@ -18,28 +19,6 @@ opts_cfg_t Options_Config[] = {
     {"R",         true,  "include", "Add a path to the list of require paths"},
     {NULL,        false, NULL,      NULL }
 };
-
-/* Tree Printing
- *****************************************************************************/
-void print_indent(int depth) {
-    for(int i = 0; i < (2 * depth); i++)
-        printf("%c", ' ');
-}
-
-void print_tree(tree_t* p_tree, int depth) {
-    print_indent(depth);
-    if (p_tree->tag == ATOM) {
-        pprint_token(stdout, p_tree->ptr.tok);
-    } else {
-        puts("(tree");
-        vec_t* p_vec = p_tree->ptr.vec;
-        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-            print_tree((tree_t*)vec_at(p_vec, idx), depth+1);
-        }
-        print_indent(depth);
-        puts(")");
-    }
-}
 
 /* Tree Rewriting
  *****************************************************************************/
@@ -55,6 +34,8 @@ bool is_punctuation(lex_tok_t* p_tok) {
         case T_RPAR:
         case T_COMMA:
             ret = true;
+        default:
+            break;
     }
     return ret;
 }
@@ -97,7 +78,7 @@ static int emit_tree(void) {
         tree_t* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
             tree_t* p_ast = convert_to_ast(p_tree);
-            print_tree(p_ast, 0);
+            pprint_tree(stdout, p_ast, 0);
             mem_release(p_tree);
             mem_release(p_ast);
         } else {
@@ -115,7 +96,7 @@ static int exec_repl(void) {
         tree_t* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
             tree_t* p_ast = convert_to_ast(p_tree);
-            print_tree(p_ast, 0);
+            pprint_tree(stdout, p_ast, 0);
             mem_release(p_tree);
             mem_release(p_ast);
             puts("OK.");

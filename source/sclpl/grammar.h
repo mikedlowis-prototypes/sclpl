@@ -9,7 +9,7 @@
 
 tree_t* grammar_toplevel(parser_t* p_parser);
 
-void grammar_import(parser_t* p_parser);
+void grammar_require(parser_t* p_parser);
 
 void grammar_definition(parser_t* p_parser);
 

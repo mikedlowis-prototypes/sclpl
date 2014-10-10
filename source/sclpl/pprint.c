@@ -6,6 +6,11 @@
   */
 #include "pprint.h"
 
+static void print_indent(FILE* file, int depth) {
+    for(int i = 0; i < (2 * depth); i++)
+        fprintf(file, "%c", ' ');
+}
+
 static const char* token_type_to_string(lex_tok_type_t type) {
     switch(type) {
         case T_STRING:   return "T_STRING";
@@ -36,13 +41,13 @@ void pprint_token_type(FILE* file, lex_tok_t* token) {
 void pprint_token_value(FILE* file, lex_tok_t* token) {
     void* value = token->value;
     switch(token->type) {
-        case T_STRING: fprintf(file, "'%s'", ((char*)value));      break;
-        case T_CHAR:   fprintf(file, "\\%c", ((char)value));       break;
-        case T_INT:    fprintf(file, "%d",   *((long int*)value)); break;
-        case T_FLOAT:  fprintf(file, "%f",   *((double*)value));   break;
-        case T_BOOL:   fprintf(file, "%b",   ((bool)value));       break;
-        case T_VAR:    fprintf(file, "%s",   ((char*)value));      break;
-        default:       fprintf(file, "???");                       break;
+        case T_STRING: fprintf(file, "'%s'", ((char*)value));              break;
+        case T_CHAR:   fprintf(file, "\\%c", ((char)(int)value));          break;
+        case T_INT:    fprintf(file, "%ld",  *((long int*)value));         break;
+        case T_FLOAT:  fprintf(file, "%f",   *((double*)value));           break;
+        case T_BOOL:   fprintf(file, "%s",   ((int)value)?"true":"false"); break;
+        case T_VAR:    fprintf(file, "%s",   ((char*)value));              break;
+        default:       fprintf(file, "???");                               break;
     }
 }
 
@@ -57,8 +62,19 @@ void pprint_token(FILE* file, lex_tok_t* token)
 }
 
 
-void pprint_tree(FILE* file, tree_t* tree)
+void pprint_tree(FILE* file, tree_t* tree, int depth)
 {
-
+    print_indent(file, depth);
+    if (tree->tag == ATOM) {
+        pprint_token(file, tree->ptr.tok);
+    } else {
+        puts("(tree");
+        vec_t* p_vec = tree->ptr.vec;
+        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
+            pprint_tree(file, (tree_t*)vec_at(p_vec, idx), depth+1);
+        }
+        print_indent(file, depth);
+        puts(")");
+    }
 }
 

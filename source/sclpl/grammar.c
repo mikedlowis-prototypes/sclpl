@@ -12,14 +12,12 @@ tree_t* grammar_toplevel(parser_t* p_parser)
 {
     tree_t* p_tree = NULL;
     try {
-        if (parser_accept_str(p_parser, T_VAR, "import"))
-            grammar_import(p_parser);
+        if (parser_accept_str(p_parser, T_VAR, "require"))
+            grammar_require(p_parser);
         else if (parser_accept_str(p_parser, T_VAR, "def"))
             grammar_definition(p_parser);
-        else if (p_parser->p_lexer->scanner->p_input == stdin)
-            grammar_expression(p_parser);
         else
-            parser_error(p_parser, "Unrecognized top-level form");
+            grammar_expression(p_parser);
         p_tree = parser_get_tree(p_parser);
     } catch(ParseException) {
         fprintf(stderr, "Invalid Syntax\n");
@@ -27,7 +25,7 @@ tree_t* grammar_toplevel(parser_t* p_parser)
     return p_tree;
 }
 
-void grammar_import(parser_t* p_parser)
+void grammar_require(parser_t* p_parser)
 {
     size_t mark = parser_mark(p_parser);
     parser_expect(p_parser, T_VAR);
@@ -83,7 +81,6 @@ void grammar_literal(parser_t* p_parser)
 
         default:
             parser_error(p_parser, "Not a valid expression");
-            break;
     }
 }
 
@@ -105,8 +102,9 @@ void grammar_if_stmnt(parser_t* p_parser)
     size_t mark = parser_mark(p_parser);
     grammar_expression(p_parser);
     grammar_expression(p_parser);
-    parser_expect_str(p_parser,T_VAR,"else");
-    grammar_expression(p_parser);
+    if (parser_accept_str(p_parser, T_VAR, "else")) {
+        grammar_expression(p_parser);
+    }
     parser_expect(p_parser,T_END);
     parser_reduce(p_parser, mark);
 }

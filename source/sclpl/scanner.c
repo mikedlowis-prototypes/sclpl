@@ -30,7 +30,8 @@ char* scanner_read(scanner_t* p_scanner) {
             p_scanner->index++;
         } else {
             size_t start =  p_scanner->index;
-            while(!scanner_oneof(p_scanner," \t\r\n()[];,'\"")) {
+            while(!scanner_oneof(p_scanner," \t\r\n()[];,'\"") &&
+                  (scanner_current(p_scanner) != '\0')) {
                 p_scanner->index++;
             }
             p_tok = scanner_dup(p_scanner, start, p_scanner->index - start);

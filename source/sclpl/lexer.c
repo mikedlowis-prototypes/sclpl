@@ -25,7 +25,7 @@ static int read_radix(char ch);
 
 static void lex_tok_free(void* p_obj) {
     lex_tok_t* p_tok = (lex_tok_t*)p_obj;
-    if (NULL != p_tok->value)
+    if ((p_tok->type != T_BOOL) && (p_tok->type != T_CHAR) && (NULL != p_tok->value))
         mem_release(p_tok->value);
 }
 
@@ -108,8 +108,8 @@ static lex_tok_t* lexer_char(char* text)
         "\t\0tab",
         "\v\0vtab"
     };
-    if (strlen(text) == 1) {
-        p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)text[0]));
+    if (strlen(text) == 2) {
+        p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)text[1]));
     } else {
         for(int i = 0; i < 5; i++) {
             if (strcmp(text, &(lookup_table[i][2]))) {
