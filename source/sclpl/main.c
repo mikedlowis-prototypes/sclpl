@@ -12,6 +12,7 @@
 opts_cfg_t Options_Config[] = {
     {"tokens",    false, "mode",    "Emit the token output of lexical analysis for the given file"},
     {"ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
+    {"csource",   false, "mode",    "Emit the intermediate C source file for the given file"},
     {"repl",      false, "mode",    "Execute the application in a REPL"},
     {"staticlib", false, "mode",    "Compile the application as a static library"},
     {"sharedlib", false, "mode",    "Compile the application as a shared library"},
@@ -90,6 +91,27 @@ static int emit_tree(void) {
     return ret;
 }
 
+static int emit_csource(void) {
+    int ret = 0;
+    parser_t* p_parser = parser_new(NULL, stdin);
+    vec_t* p_vec = vec_new(0);
+    while(!parser_eof(p_parser)) {
+        tree_t* p_tree = grammar_toplevel(p_parser);
+        if (NULL != p_tree) {
+            tree_t* p_ast = convert_to_ast(p_tree);
+            mem_release(p_tree);
+            vec_push_back(p_vec, p_ast);
+        } else {
+            parser_resume(p_parser);
+            ret = 1;
+        }
+    }
+    codegen_csource(stdout, p_vec);
+    mem_release(p_vec);
+    mem_release(p_parser);
+    return ret;
+}
+
 static int exec_repl(void) {
     parser_t* p_parser = parser_new(":> ", stdin);
     while(!parser_eof(p_parser)) {
@@ -137,6 +159,8 @@ int main(int argc, char **argv) {
         return emit_tokens();
     } else if (opts_equal(NULL, "mode", "ast")) {
         return emit_tree();
+    } else if (opts_equal(NULL, "mode", "csource")) {
+        return emit_csource();
     } else if (opts_equal(NULL, "mode", "staticlib")) {
         return emit_staticlib();
     } else if (opts_equal(NULL, "mode", "sharedlib")) {
