@@ -44,6 +44,31 @@ static bool is_formtype(tree_t* p_tree, const char* val) {
 
 /*****************************************************************************/
 
+static void lift_funcs(vec_t* fnlst, tree_t* tree) {
+    if (is_formtype(tree, "fn"))
+        vec_push_back(fnlst, mem_retain(tree));
+
+    if (tree->tag == TREE) {
+        vec_t* p_vec = tree->ptr.vec;
+        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
+            lift_funcs(fnlst, (tree_t*)vec_at(p_vec, idx));
+        }
+    }
+}
+
+static vec_t* find_fn_literals(vec_t* prgrm) {
+    vec_t* fnlst = vec_new(0);
+    for (size_t idx = 0; idx < vec_size(prgrm); idx++) {
+        tree_t* tree = (tree_t*)vec_at(prgrm, idx);
+        if (!is_formtype(tree, "require")) {
+            lift_funcs(fnlst, tree);
+        }
+    }
+    return fnlst;
+}
+
+/*****************************************************************************/
+
 static void print_indent(int depth) {
     for(int i = 0; i < (4 * depth); i++)
         printf("%c", ' ');
@@ -78,30 +103,31 @@ static void emit_expression(tree_t* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: printf("'%s'", ((char*)tok->value));              break;
-            case T_CHAR:   printf("\\%c", ((char)(int)tok->value));          break;
-            case T_INT:    printf("%ld",  *((long int*)tok->value));         break;
-            case T_FLOAT:  printf("%f",   *((double*)tok->value));           break;
-            case T_BOOL:   printf("%s",   ((int)tok->value)?"true":"false"); break;
-            case T_VAR:    printf("%s",   ((char*)tok->value));              break;
+            case T_STRING: printf("make(string,'%s')", ((char*)tok->value));              break;
+            case T_CHAR:   printf("make(char,\\%c)",   ((char)(int)tok->value));          break;
+            case T_INT:    printf("make(int,%ld)",     *((long int*)tok->value));         break;
+            case T_FLOAT:  printf("make(float,%f)",    *((double*)tok->value));           break;
+            case T_BOOL:   printf("make(bool,%s)",     ((int)tok->value)?"true":"false"); break;
+            case T_VAR:    printf("%s",                ((char*)tok->value));              break;
         }
     } else if (is_formtype(p_tree, "if")) {
-        printf("IF(");
+        printf("IF (");
         emit_expression(get_child(p_tree, 1), depth);
         printf(")\n");
         print_indent(depth+1);
         emit_expression(get_child(p_tree, 2), depth+1);
-
+        printf("\n");
+        print_indent(depth);
+        printf("ELSE\n");
+        print_indent(depth+1);
         if (vec_size(p_tree->ptr.vec) > 3) {
-            printf("\n");
-            print_indent(depth);
-            printf("ELSE\n");
-            print_indent(depth+1);
             emit_expression(get_child(p_tree, 4), depth+1);
+        } else {
+            printf("NIL");
         }
 
     } else if (is_formtype(p_tree, "fn")) {
-        printf("<func>");
+        printf("make(fn,&fn%d)", 42);
     } else {
         vec_t* vec = p_tree->ptr.vec;
         printf("%s(", (char*)get_val(vec_at(vec,0)));
@@ -111,6 +137,38 @@ static void emit_expression(tree_t* p_tree, int depth) {
                 printf(", ");
         }
         printf(")");
+    }
+}
+
+static void emit_fn_declarations(vec_t* fnlst) {
+    char name[64];
+    for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
+        sprintf(name,"fn%d", idx);
+        printf("static ");
+        emit_fn_signature(name, (tree_t*)vec_at(fnlst,idx));
+        puts(";");
+    }
+    puts("");
+}
+
+static void emit_fn_definitions(vec_t* fnlst) {
+    char name[64];
+    for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
+        tree_t* func = (tree_t*)vec_at(fnlst,idx);
+        sprintf(name,"fn%d", idx);
+        printf("static ");
+        emit_fn_signature(name, func);
+        puts(" {");
+
+        vec_t* body = (vec_t*)func->ptr.vec;
+        for (size_t i = 2; i < vec_size(body); i++) {
+            printf("    ");
+            if (i+1 == vec_size(body))
+                printf("return ");
+            emit_expression( (tree_t*)vec_at(body,i), 1 );
+            printf(";\n");
+        }
+        puts("}\n");
     }
 }
 
@@ -141,6 +199,9 @@ static void emit_footer(void) {
 void codegen_csource(FILE* file, vec_t* program) {
     emit_header();
     emit_def_placeholders(program);
+    vec_t* funcs = find_fn_literals(program);
+    emit_fn_declarations(funcs);
+    emit_fn_definitions(funcs);
     emit_toplevel(program);
     emit_footer();
 }
