@@ -62,7 +62,7 @@ bool parser_eof(parser_t* p_parser) {
 }
 
 void parser_resume(parser_t* p_parser) {
-    if (NULL != p_parser->p_tok) {
+    if ((NULL != p_parser->p_tok) && (&tok_eof != p_parser->p_tok)) {
         mem_release(p_parser->p_tok);
         p_parser->p_tok = NULL;
     }
