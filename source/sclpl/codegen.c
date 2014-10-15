@@ -67,6 +67,16 @@ static vec_t* find_fn_literals(vec_t* prgrm) {
     return fnlst;
 }
 
+static size_t get_fn_id(vec_t* funcs, tree_t* fn) {
+    size_t idx;
+    for (idx = 0; idx < vec_size(funcs); idx++) {
+        if (fn == vec_at(funcs,idx)) {
+            break;
+        }
+    }
+    return idx;
+}
+
 /*****************************************************************************/
 
 static void print_indent(int depth) {
@@ -75,14 +85,52 @@ static void print_indent(int depth) {
 }
 
 static void emit_header(void) {
-    puts("#include <sclpl.h>\n");
+    //puts("#include <sclpl.h>\n");
+    printf(
+        "\n#include <stdbool.h>"
+        "\n"
+        "\ntypedef void* _Value;"
+        "\n"
+        "\n#define NIL ((_Value) 0)"
+        "\n#define apply(a,...) ((_Value)0)"
+        "\n#define IF(cnd) (cnd)?"
+        "\n#define ELSE    :"
+        "\n"
+        "\n#define make(type, value) \\"
+        "\n    make_ ## type (value)"
+        "\n"
+        "\nstatic _Value make_string(const char* val) {"
+        "\n    return NIL;"
+        "\n}"
+        "\n"
+        "\nstatic _Value make_char(char val) {"
+        "\n    return NIL;"
+        "\n}"
+        "\n"
+        "\nstatic _Value make_int(long int val) {"
+        "\n    return NIL;"
+        "\n}"
+        "\n"
+        "\nstatic _Value make_float(double val) {"
+        "\n    return NIL;"
+        "\n}"
+        "\n"
+        "\nstatic _Value make_bool(bool val) {"
+        "\n    return NIL;"
+        "\n}"
+        "\n"
+        "\n#define make_fn(value) make_func((void*)(value))"
+        "\nstatic _Value make_func(void* val) {"
+        "\n    return NIL;"
+        "\n}"
+    );
 }
 
 static void emit_fn_signature(char* name, tree_t* fnval) {
-    printf("val %s(", name);
+    printf("_Value %s(", name);
     vec_t* params = get_child(fnval, 1)->ptr.vec;
     for (size_t i = 0; i < vec_size(params); i++) {
-        printf("val %s", (char*)get_val((tree_t*)vec_at(params,i)));
+        printf("_Value %s", (char*)get_val((tree_t*)vec_at(params,i)));
         if (i+1 < vec_size(params))
             printf(", ");
     }
@@ -93,13 +141,13 @@ static void emit_def_placeholders(vec_t* prgrm) {
     for (size_t idx = 0; idx < vec_size(prgrm); idx++) {
         tree_t* p_tree = (tree_t*)vec_at(prgrm, idx);
         if (is_formtype(p_tree, "def")) {
-            printf("val %s;\n", (char*)get_child_val(p_tree,1));
+            printf("_Value %s;\n", (char*)get_child_val(p_tree,1));
         }
     }
     puts("");
 }
 
-static void emit_expression(tree_t* p_tree, int depth) {
+static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
@@ -112,27 +160,27 @@ static void emit_expression(tree_t* p_tree, int depth) {
         }
     } else if (is_formtype(p_tree, "if")) {
         printf("IF (");
-        emit_expression(get_child(p_tree, 1), depth);
+        emit_expression(fnlst, get_child(p_tree, 1), depth);
         printf(")\n");
         print_indent(depth+1);
-        emit_expression(get_child(p_tree, 2), depth+1);
+        emit_expression(fnlst, get_child(p_tree, 2), depth+1);
         printf("\n");
         print_indent(depth);
         printf("ELSE\n");
         print_indent(depth+1);
         if (vec_size(p_tree->ptr.vec) > 3) {
-            emit_expression(get_child(p_tree, 4), depth+1);
+            emit_expression(fnlst, get_child(p_tree, 4), depth+1);
         } else {
             printf("NIL");
         }
 
     } else if (is_formtype(p_tree, "fn")) {
-        printf("make(fn,&fn%d)", 42);
+        printf("make(fn,&fn%d)", get_fn_id(fnlst, p_tree));
     } else {
         vec_t* vec = p_tree->ptr.vec;
-        printf("%s(", (char*)get_val(vec_at(vec,0)));
+        printf("apply(%s, ", (char*)get_val(vec_at(vec,0)));
         for (size_t idx = 1; idx < vec_size(vec); idx++) {
-            emit_expression((tree_t*)vec_at(vec,idx), depth);
+            emit_expression(fnlst, (tree_t*)vec_at(vec,idx), depth);
             if (idx+1 < vec_size(vec))
                 printf(", ");
         }
@@ -165,14 +213,14 @@ static void emit_fn_definitions(vec_t* fnlst) {
             printf("    ");
             if (i+1 == vec_size(body))
                 printf("return ");
-            emit_expression( (tree_t*)vec_at(body,i), 1 );
+            emit_expression(fnlst, (tree_t*)vec_at(body,i), 1);
             printf(";\n");
         }
         puts("}\n");
     }
 }
 
-static void emit_toplevel(vec_t* prgrm) {
+static void emit_toplevel(vec_t* fnlst, vec_t* prgrm) {
     puts("void toplevel(void) {");
     for (size_t idx = 0; idx < vec_size(prgrm); idx++) {
         tree_t* p_tree = (tree_t*)vec_at(prgrm, idx);
@@ -181,19 +229,26 @@ static void emit_toplevel(vec_t* prgrm) {
             printf("    %s_toplevel();\n", (char*)get_child_val(p_tree,1));
         } else if (is_formtype(p_tree, "def")) {
             printf("    %s = ", (char*)get_child_val(p_tree,1));
-            emit_expression(get_child(p_tree, 2), 0);
+            emit_expression(fnlst, get_child(p_tree, 2), 0);
             printf(";\n");
         } else {
-            printf("    ");
-            emit_expression(p_tree, 1);
-            printf(";\n");
+            printf("    (void)(");
+            emit_expression(fnlst, p_tree, 1);
+            printf(");\n");
         }
     }
     puts("}");
 }
 
 static void emit_footer(void) {
-
+    puts(
+        "\nint main(int argc, char** argv) {"
+        "\n    (void)argc;"
+        "\n    (void)argv;"
+        "\n    toplevel();"
+        "\n    return 0;"
+        "\n}"
+    );
 }
 
 void codegen_csource(FILE* file, vec_t* program) {
@@ -202,6 +257,6 @@ void codegen_csource(FILE* file, vec_t* program) {
     vec_t* funcs = find_fn_literals(program);
     emit_fn_declarations(funcs);
     emit_fn_definitions(funcs);
-    emit_toplevel(program);
+    emit_toplevel(funcs, program);
     emit_footer();
 }
