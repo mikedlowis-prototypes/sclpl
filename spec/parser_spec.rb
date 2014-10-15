@@ -21,7 +21,6 @@ def ast(input)
   out, err, status = Open3.capture3('./build/bin/sclpl-test', '--ast', :stdin_data => input)
   raise err unless err == ""
   raise "Parser command returned non-zero status" unless status.success?
-  #out.gsub!(/<tok (T_[A-Z]+)>/,'\1')
   out.gsub!(/([()])|tree/,' \1 ')
   off, expr = re_structure(out.split)
   expr

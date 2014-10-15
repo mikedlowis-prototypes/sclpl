@@ -258,5 +258,6 @@ void codegen_csource(FILE* file, vec_t* program) {
     emit_fn_declarations(funcs);
     emit_fn_definitions(funcs);
     emit_toplevel(funcs, program);
+    mem_release(funcs);
     emit_footer();
 }
