@@ -1,31 +1,5 @@
 require 'open3'
 
-def re_structure( token_array, offset = 0 )
-  struct = []
-  while( offset < token_array.length )
-    if(token_array[offset] == "(")
-      # Multiple assignment from the array that re_structure() returns
-      offset, tmp_array = re_structure(token_array, offset + 1)
-      struct << tmp_array
-    elsif(token_array[offset] == ")")
-      break
-    else
-      struct << token_array[offset]
-    end
-    offset += 1
-  end
-  return [offset, struct]
-end
-
-def ast(input)
-  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--ast', :stdin_data => input)
-  raise err unless err == ""
-  raise "Parser command returned non-zero status" unless status.success?
-  out.gsub!(/([()])|tree/,' \1 ')
-  off, expr = re_structure(out.split)
-  expr
-end
-
 describe "sclpl grammar" do
   context "requires" do
     it "should parse a require statement" do

@@ -1,11 +1,4 @@
-require 'open3'
-
-def lexer(input)
-  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--tokens', :stdin_data => input)
-  raise "Lexer command returned non-zero status" unless status.success?
-  raise err unless err == ""
-  out.gsub(/<tok (T_[A-Z]+)>/,'\1').split
-end
+require 'spec_helper'
 
 describe "lexer" do
   context "punctuation" do
@@ -156,7 +149,6 @@ describe "lexer" do
     end
 
     it "should recognize a string that spans lines" do
-      pending "S-Expression parser is stupid. fix it."
       expect(lexer("\"a\nb\"")).to eq ["T_STRING:\"a\nb\""]
     end
   end
