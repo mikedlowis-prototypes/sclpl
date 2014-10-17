@@ -5,6 +5,7 @@ static void scanner_skip_ws(scanner_t* p_scanner);
 static char scanner_current(scanner_t* p_scanner);
 static bool scanner_oneof(scanner_t* p_scanner, const char* p_set);
 static char* scanner_dup(scanner_t* p_scanner, size_t start_idx, size_t len);
+static char* scanner_read_string(scanner_t* p_scanner);
 
 void scanner_free(void* p_obj) {
     scanner_t* p_scanner = (scanner_t*)p_obj;
@@ -25,11 +26,13 @@ char* scanner_read(scanner_t* p_scanner) {
     char* p_tok = NULL;
     scanner_skip_ws(p_scanner);
     if (!scanner_eof(p_scanner)) {
-        if (scanner_oneof(p_scanner, "()[]{};,'\"")) {
+        if (scanner_oneof(p_scanner, "()[]{};,'")) {
             p_tok = scanner_dup(p_scanner, p_scanner->index, 1);
             p_scanner->index++;
+        } else if (scanner_current(p_scanner) == '"') {
+            p_tok = scanner_read_string(p_scanner);
         } else {
-            size_t start =  p_scanner->index;
+            size_t start = p_scanner->index;
             while(!scanner_oneof(p_scanner," \t\r\n()[];,'\"") &&
                   (scanner_current(p_scanner) != '\0')) {
                 p_scanner->index++;
@@ -38,6 +41,44 @@ char* scanner_read(scanner_t* p_scanner) {
         }
     }
     return p_tok;
+}
+
+static char* scanner_read_string(scanner_t* p_scanner) {
+    size_t capacity = 8;
+    size_t index = 0;
+    char*  tok = (char*)malloc(sizeof(capacity));
+
+    /* Skip the first " */
+    tok[index++] = scanner_current(p_scanner);
+    tok[index] = '\0';
+    p_scanner->index++;
+
+    /* Read the contents of the string */
+    while ('"' != scanner_current(p_scanner)) {
+        /* Resize the buffer if necessary */
+        if ((index+2) >= capacity)
+            capacity = capacity << 1;
+
+        /* EOF results in an assertion (don't do) */
+        if (scanner_eof(p_scanner))
+            assert(false);
+
+        /* Read the char */
+        tok[index++] = scanner_current(p_scanner);
+        tok[index] = '\0';
+        p_scanner->index++;
+
+        /* Get the next line if necessary */
+        if ('\n' == tok[index-1])
+            scanner_getline(p_scanner);
+    }
+
+    /* Skip the last " */
+    tok[index++] = scanner_current(p_scanner);
+    tok[index] = '\0';
+    p_scanner->index++;
+
+    return tok;
 }
 
 bool scanner_eof(scanner_t* p_scanner)

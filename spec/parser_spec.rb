@@ -137,7 +137,6 @@ describe "sclpl grammar" do
 
   context "literals" do
     it "should parse a string" do
-      pending "Waiting for implementation of string literals"
       expect(ast('"foo"')).to eq(['T_STRING:"foo"'])
     end
 

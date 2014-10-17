@@ -64,11 +64,13 @@ static lex_tok_t* lexer_make_token(char* text) {
     lex_tok_t* p_tok = NULL;
     if ((0 == strcmp(text,"end") || (text[0] == ';'))) {
         p_tok = lex_tok_new(T_END, NULL);
-    } else if (lexer_oneof("()[]{};,'\"", text[0])) {
+    } else if (lexer_oneof("()[]{};,'", text[0])) {
         p_tok = lexer_punc(text);
+    } else if ('"' == text[0]) {
+        p_tok = lex_tok_new(T_STRING, lexer_dup(text));
     } else if (text[0] == '\\') {
         p_tok = lexer_char(text);
-    } else if ((text[0] == '0') && lexer_oneof("bodx",text[1])) {
+    } else if ((text[0] == '0') && lexer_oneof("bodh",text[1])) {
         p_tok = lexer_radix_int(text);
     } else if (lexer_oneof("+-0123456789",text[0])) {
         p_tok = lexer_number(text);
@@ -93,7 +95,6 @@ static lex_tok_t* lexer_punc(char* text)
         case ';':  p_tok = lex_tok_new(T_END,    NULL); break;
         case ',':  p_tok = lex_tok_new(T_COMMA,  NULL); break;
         case '\'': p_tok = lex_tok_new(T_SQUOTE, NULL); break;
-        case '"':  p_tok = lex_tok_new(T_DQUOTE, NULL); break;
     }
     return p_tok;
 }
@@ -112,7 +113,7 @@ static lex_tok_t* lexer_char(char* text)
         p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)text[1]));
     } else {
         for(int i = 0; i < 5; i++) {
-            if (strcmp(text, &(lookup_table[i][2]))) {
+            if (0 == strcmp(&text[1], &(lookup_table[i][2]))) {
                 p_tok = lex_tok_new(T_CHAR, (void*)((intptr_t)lookup_table[i][0]));
                 break;
             }
@@ -123,7 +124,7 @@ static lex_tok_t* lexer_char(char* text)
 
 static lex_tok_t* lexer_radix_int(char* text)
 {
-    return lexer_integer(text, read_radix(text[1]));
+    return lexer_integer(&text[2], read_radix(text[1]));
 }
 
 static lex_tok_t* lexer_number(char* text)

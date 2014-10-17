@@ -34,6 +34,24 @@ static const char* token_type_to_string(lex_tok_type_t type) {
     }
 }
 
+static void print_char(FILE* file, char ch) {
+    int i;
+    static const char* lookup_table[5] = {
+        " \0space",
+        "\n\0newline",
+        "\r\0return",
+        "\t\0tab",
+        "\v\0vtab"
+    };
+    for(i = 0; i < 5; i++) {
+        if (ch == lookup_table[i][0]) {
+            fprintf(file, "\\%s", &(lookup_table[i][2]));
+            break;
+        }
+    }
+    if (i == 5) fprintf(file, "\\%c", ch);
+}
+
 void pprint_token_type(FILE* file, lex_tok_t* token) {
     fprintf(file, "%s", token_type_to_string(token->type));
 }
@@ -41,8 +59,8 @@ void pprint_token_type(FILE* file, lex_tok_t* token) {
 void pprint_token_value(FILE* file, lex_tok_t* token) {
     void* value = token->value;
     switch(token->type) {
-        case T_STRING: fprintf(file, "'%s'", ((char*)value));              break;
-        case T_CHAR:   fprintf(file, "\\%c", ((char)(int)value));          break;
+        case T_STRING: fprintf(file, "%s", ((char*)value));              break;
+        case T_CHAR:   print_char(file, ((char)(int)value));               break;
         case T_INT:    fprintf(file, "%ld",  *((long int*)value));         break;
         case T_FLOAT:  fprintf(file, "%f",   *((double*)value));           break;
         case T_BOOL:   fprintf(file, "%s",   ((int)value)?"true":"false"); break;
