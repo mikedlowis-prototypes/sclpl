@@ -18,6 +18,10 @@ base_env = BuildEnv.new(echo: :command) do |env|
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
 end
 
+main_env = base_env.clone do |env|
+  env["CFLAGS"] += ['-O3']
+end
+
 test_env = base_env.clone do |env|
   env.build_dir('source','build/obj/test/source')
   env.build_dir('modules','build/obj/test/modules')
@@ -64,16 +68,16 @@ task :build => [:clang, :sclpl]
 
 desc "Build the sclpl compiler and interpreter"
 task :sclpl => [:libcds, :libopts] do
-  base_env.Program('build/bin/sclpl',
+  main_env.Program('build/bin/sclpl',
     FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
 end
 
 task :libcds do
-  base_env.Library('build/lib/libcds.a', FileList['modules/libcds/source/**/*.c'])
+  main_env.Library('build/lib/libcds.a', FileList['modules/libcds/source/**/*.c'])
 end
 
 task :libopts do
-  base_env.Library('build/lib/libopts.a', FileList['modules/libopts/source/**/*.c'])
+  main_env.Library('build/lib/libopts.a', FileList['modules/libopts/source/**/*.c'])
 end
 
 #------------------------------------------------------------------------------
@@ -103,6 +107,6 @@ RSpec::Core::RakeTask.new(:spec) do |t,args|
   t.rspec_opts = ['--format', 'documentation']
   test_env.Program('build/bin/sclpl-test',
     FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
-  base_env.process
+  main_env.process
   test_env.process
 end

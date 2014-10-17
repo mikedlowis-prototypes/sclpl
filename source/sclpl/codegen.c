@@ -85,45 +85,7 @@ static void print_indent(int depth) {
 }
 
 static void emit_header(void) {
-    //puts("#include <sclpl.h>\n");
-    printf(
-        "\n#include <stdbool.h>"
-        "\n"
-        "\ntypedef void* _Value;"
-        "\n"
-        "\n#define NIL ((_Value) 0)"
-        "\n#define apply(a,...) ((_Value)0)"
-        "\n#define IF(cnd) (cnd)?"
-        "\n#define ELSE    :"
-        "\n"
-        "\n#define make(type, value) \\"
-        "\n    make_ ## type (value)"
-        "\n"
-        "\nstatic _Value make_string(const char* val) {"
-        "\n    return NIL;"
-        "\n}"
-        "\n"
-        "\nstatic _Value make_char(char val) {"
-        "\n    return NIL;"
-        "\n}"
-        "\n"
-        "\nstatic _Value make_int(long int val) {"
-        "\n    return NIL;"
-        "\n}"
-        "\n"
-        "\nstatic _Value make_float(double val) {"
-        "\n    return NIL;"
-        "\n}"
-        "\n"
-        "\nstatic _Value make_bool(bool val) {"
-        "\n    return NIL;"
-        "\n}"
-        "\n"
-        "\n#define make_fn(value) make_func((void*)(value))"
-        "\nstatic _Value make_func(void* val) {"
-        "\n    return NIL;"
-        "\n}"
-    );
+    puts("#include <sclpl.h>\n");
 }
 
 static void emit_fn_signature(char* name, tree_t* fnval) {
@@ -151,12 +113,12 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: printf("make(string,'%s')", ((char*)tok->value));              break;
-            case T_CHAR:   printf("make(char,\\%c)",   ((char)(int)tok->value));          break;
-            case T_INT:    printf("make(int,%ld)",     *((long int*)tok->value));         break;
-            case T_FLOAT:  printf("make(float,%f)",    *((double*)tok->value));           break;
-            case T_BOOL:   printf("make(bool,%s)",     ((int)tok->value)?"true":"false"); break;
-            case T_VAR:    printf("%s",                ((char*)tok->value));              break;
+            case T_STRING: printf("__string(%s)", ((char*)tok->value));              break;
+            case T_CHAR:   printf("__char('%c')", ((char)(int)tok->value));          break;
+            case T_INT:    printf("__int(%ld)",   *((long int*)tok->value));         break;
+            case T_FLOAT:  printf("__float(%f)",  *((double*)tok->value));           break;
+            case T_BOOL:   printf("__bool(%s)",   ((int)tok->value)?"true":"false"); break;
+            case T_VAR:    printf("%s",           ((char*)tok->value));              break;
         }
     } else if (is_formtype(p_tree, "if")) {
         printf("IF (");

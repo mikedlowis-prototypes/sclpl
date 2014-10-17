@@ -28,7 +28,7 @@ tree_t* grammar_toplevel(parser_t* p_parser)
 void grammar_require(parser_t* p_parser)
 {
     size_t mark = parser_mark(p_parser);
-    parser_expect(p_parser, T_VAR);
+    parser_expect(p_parser, T_STRING);
     parser_expect(p_parser, T_END);
     parser_reduce(p_parser, mark);
 }

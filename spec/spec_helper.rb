@@ -49,3 +49,9 @@ def ast(input)
   expr
 end
 
+def ccode(input)
+  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--csource', :stdin_data => input)
+  raise err unless err == ""
+  raise "Parser command returned non-zero status" unless status.success?
+  out
+end

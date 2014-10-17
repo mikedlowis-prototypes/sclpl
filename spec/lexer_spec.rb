@@ -144,8 +144,12 @@ describe "lexer" do
       expect(lexer('"a"')).to eq ['T_STRING:"a"']
     end
 
-    it "should recognize a string with one element" do
+    it "should recognize a string with two elements" do
       expect(lexer('"ab"')).to eq ['T_STRING:"ab"']
+    end
+
+    it "should recognize a string with a space" do
+      expect(lexer('"a b"')).to eq ['T_STRING:"a b"']
     end
 
     it "should recognize a string that spans lines" do

@@ -3,15 +3,15 @@ require 'open3'
 describe "sclpl grammar" do
   context "requires" do
     it "should parse a require statement" do
-      expect(ast('require foo;')).to eq([ ['T_VAR:require', 'T_VAR:foo'] ])
+      expect(ast('require "foo";')).to eq([ ['T_VAR:require', 'T_STRING:"foo"'] ])
     end
 
     it "should parse a require statement using end keyword" do
-        expect(ast('require foo end')).to eq([ ['T_VAR:require', 'T_VAR:foo'] ])
+        expect(ast('require "foo" end')).to eq([ ['T_VAR:require', 'T_STRING:"foo"'] ])
     end
 
     it "should error on missing semicolon" do
-      expect{ast('require foo')}.to raise_error /Invalid Syntax/
+      expect{ast('require "foo"')}.to raise_error /Invalid Syntax/
     end
 
     it "should error on missing filename" do
