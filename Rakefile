@@ -19,12 +19,14 @@ base_env = BuildEnv.new(echo: :command) do |env|
 end
 
 main_env = base_env.clone do |env|
+  env.build_dir('source','build/obj/source')
+  env.build_dir('modules','build/obj/modules')
   env["CFLAGS"] += ['-O3']
 end
 
 test_env = base_env.clone do |env|
-  env.build_dir('source','build/obj/test/source')
-  env.build_dir('modules','build/obj/test/modules')
+  env.build_dir('source','build/obj_test/source')
+  env.build_dir('modules','build/obj_test/modules')
   env['CFLAGS'] +=  ['--coverage']
   env['LDFLAGS'] += ['--coverage']
 end
@@ -109,4 +111,14 @@ RSpec::Core::RakeTask.new(:spec) do |t,args|
     FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
   main_env.process
   test_env.process
+end
+
+desc "Generate test coverage reports"
+task :coverage => [:spec] do
+  FileList['build/obj_test/**/*.gcno'].each do |gcno|
+    obj  = gcno.ext('o')
+    path = File.dirname(obj)
+    gcov = File.basename(obj).ext('c.gcov')
+    sh *['gcov', '-a', '-b', '-c', obj] and FileUtils.mv("./#{gcov}","#{path}/#{gcov}")
+  end
 end
