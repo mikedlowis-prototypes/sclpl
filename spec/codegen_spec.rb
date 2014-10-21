@@ -29,6 +29,11 @@ def w() 0;
 def x(a) 1;
 def y(a,b) 2;
 def z fn(a,b,c) 3;;
+
+w()
+x(1)
+y(1,2)
+z(1,2,3)
 eos
 
 ExpectedCode = <<-eos
@@ -59,10 +64,12 @@ _Value v;
 _Value w;
 _Value x;
 _Value y;
+_Value z;
 
 static _Value fn0();
 static _Value fn1(_Value a);
 static _Value fn2(_Value a, _Value b);
+static _Value fn3(_Value a, _Value b, _Value c);
 
 static _Value fn0() {
     return __int(0);
@@ -76,7 +83,13 @@ static _Value fn2(_Value a, _Value b) {
     return __int(2);
 }
 
+static _Value fn3(_Value a, _Value b, _Value c) {
+    return __int(3);
+}
+
 void toplevel(void) {
+    extern void foo_toplevel(void);
+    foo_toplevel();
     a = __int(123);
     b = __int(123);
     c = __int(-123);
@@ -102,6 +115,11 @@ void toplevel(void) {
     w = __func(&fn0);
     x = __func(&fn1);
     y = __func(&fn2);
+    z = __func(&fn3);
+    (void)(__call0(w));
+    (void)(__calln(x, 1, __int(1)));
+    (void)(__calln(y, 2, __int(1), __int(2)));
+    (void)(__calln(z, 3, __int(1), __int(2), __int(3)));
 }
 
 int main(int argc, char** argv) {
@@ -114,7 +132,6 @@ eos
 
 describe "code generation" do
   it "should generate some code" do
-    pending "busted"
     expect(ccode(InputSource)).to eq ExpectedCode
   end
 end

@@ -59,7 +59,7 @@ void pprint_token_type(FILE* file, lex_tok_t* token) {
 void pprint_token_value(FILE* file, lex_tok_t* token) {
     void* value = token->value;
     switch(token->type) {
-        case T_STRING: fprintf(file, "%s", ((char*)value));              break;
+        case T_STRING: fprintf(file, "\"%s\"", ((char*)value));            break;
         case T_CHAR:   print_char(file, ((char)(int)value));               break;
         case T_INT:    fprintf(file, "%ld",  *((long int*)value));         break;
         case T_FLOAT:  fprintf(file, "%f",   *((double*)value));           break;

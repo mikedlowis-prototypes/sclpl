@@ -84,6 +84,34 @@ static void print_indent(int depth) {
         printf("%c", ' ');
 }
 
+static void print_char(char ch) {
+    switch (ch) {
+        case '\r': printf("__char('\\r')");    break;
+        case '\n': printf("__char('\\n')");    break;
+        case '\t': printf("__char('\\t')");    break;
+        case '\v': printf("__char('\\v')");    break;
+        default:   printf("__char('%c')", ch); break;
+    }
+}
+
+static void print_string(const char* str) {
+    printf("__string(\"");
+    while('\0' != str[0])
+    {
+        switch (str[0]) {
+            case '\r': printf("\\r");        break;
+            case '\n': printf("\\n");        break;
+            case '\t': printf("\\t");        break;
+            case '\v': printf("\\v");        break;
+            default:   printf("%c", str[0]); break;
+        }
+        str++;
+    }
+    printf("\")");
+}
+
+/*****************************************************************************/
+
 static void emit_header(void) {
     puts("#include <sclpl.h>\n");
 }
@@ -113,8 +141,8 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: printf("__string(%s)", ((char*)tok->value));              break;
-            case T_CHAR:   printf("__char('%c')", ((char)(int)tok->value));          break;
+            case T_STRING: print_string(((char*)tok->value));                        break;
+            case T_CHAR:   print_char(((char)(int)tok->value));                      break;
             case T_INT:    printf("__int(%ld)",   *((long int*)tok->value));         break;
             case T_FLOAT:  printf("__float(%f)",  *((double*)tok->value));           break;
             case T_BOOL:   printf("__bool(%s)",   ((int)tok->value)?"true":"false"); break;
@@ -137,10 +165,18 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
         }
 
     } else if (is_formtype(p_tree, "fn")) {
-        printf("make(fn,&fn%d)", get_fn_id(fnlst, p_tree));
+        printf("__func(&fn%d)", get_fn_id(fnlst, p_tree));
     } else {
-        vec_t* vec = p_tree->ptr.vec;
-        printf("apply(%s, ", (char*)get_val(vec_at(vec,0)));
+        vec_t* vec   = p_tree->ptr.vec;
+        size_t nargs = vec_size(vec)-1;
+        /* Determine the calling convention based on number of args */
+        if (0 == nargs)
+            printf("__call0(%s", (char*)get_val(vec_at(vec,0)));
+        else if (nargs < 16)
+            printf("__calln(%s, %d, ", (char*)get_val(vec_at(vec,0)), nargs);
+        else
+            printf("__calln(%s, n, ", (char*)get_val(vec_at(vec,0)));
+        /* Print out the arguments */
         for (size_t idx = 1; idx < vec_size(vec); idx++) {
             emit_expression(fnlst, (tree_t*)vec_at(vec,idx), depth);
             if (idx+1 < vec_size(vec))

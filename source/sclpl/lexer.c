@@ -67,7 +67,8 @@ static lex_tok_t* lexer_make_token(char* text) {
     } else if (lexer_oneof("()[]{};,'", text[0])) {
         p_tok = lexer_punc(text);
     } else if ('"' == text[0]) {
-        p_tok = lex_tok_new(T_STRING, lexer_dup(text));
+        text[strlen(text)-1] = '\0';
+        p_tok = lex_tok_new(T_STRING, lexer_dup(&text[1]));
     } else if (text[0] == '\\') {
         p_tok = lexer_char(text);
     } else if ((text[0] == '0') && lexer_oneof("bodh",text[1])) {

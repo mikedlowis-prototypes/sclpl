@@ -106,7 +106,8 @@ static int emit_csource(void) {
             ret = 1;
         }
     }
-    codegen_csource(stdout, p_vec);
+    if (0 == ret)
+        codegen_csource(stdout, p_vec);
     mem_release(p_vec);
     mem_release(p_parser);
     return ret;
@@ -146,8 +147,6 @@ static int emit_program(void) {
 
     * Formalize grammar for parser
     * Paren for function application must be on same line as variable in REPL
-    * skip line on error and terminate after full program parse
-    * skip line and print on error but do not terminate the REPL
 
 */
 int main(int argc, char **argv) {
