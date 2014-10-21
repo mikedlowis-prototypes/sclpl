@@ -21,6 +21,41 @@ opts_cfg_t Options_Config[] = {
     {NULL,        false, NULL,      NULL }
 };
 
+void print_usage(void) {
+    opts_cfg_t* opts = &Options_Config[0];
+    bool opts_have_args = false;
+    size_t sz = 0;
+    /* Figure out the longest option name */
+    while (NULL != opts->name) {
+        size_t name_sz = strlen(opts->name);
+        if (name_sz > sz) {
+            sz = name_sz;
+        }
+        if (opts->has_arg) {
+            opts_have_args = true;
+        }
+        opts++;
+    }
+
+    /* Print the usage and option list */
+    printf("Usage: [OPTION]... [MODE] [FILE]\n\n");
+    size_t padding = sz + 4 + ((opts_have_args) ? 4 : 0);
+    char*  buffer  = (char*)malloc(padding+1);
+    opts = &Options_Config[0];
+    while (NULL != opts->name) {
+        if (1 == strlen(opts->name))
+            sprintf(buffer, " -%s", opts->name);
+        else
+            sprintf(buffer, " --%s", opts->name);
+        if (opts->has_arg) sprintf(&buffer[strlen(buffer)], "=ARG ");
+        printf("%-*s%s\n", padding, buffer, opts->desc);
+        opts++;
+    }
+    free(buffer);
+
+    exit(1);
+}
+
 /* Tree Rewriting
  *****************************************************************************/
 bool is_punctuation(lex_tok_t* p_tok) {
@@ -152,7 +187,9 @@ static int emit_program(void) {
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
 
-    if (!opts_is_set(NULL,"mode") || opts_equal(NULL, "mode", "repl")) {
+    if (!opts_is_set(NULL,"mode")) {
+        print_usage();
+    } else if(opts_equal(NULL, "mode", "repl")) {
         return exec_repl();
     } else if (opts_equal(NULL, "mode", "tokens")) {
         return emit_tokens();
@@ -166,6 +203,8 @@ int main(int argc, char **argv) {
         return emit_sharedlib();
     } else if (opts_equal(NULL, "mode", "program")) {
         return emit_program();
+    } else {
+        print_usage();
     }
 
     opts_reset();
