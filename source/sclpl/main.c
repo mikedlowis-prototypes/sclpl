@@ -17,8 +17,8 @@ opts_cfg_t Options_Config[] = {
     {"staticlib", false, "mode",    "Compile the application as a static library"},
     {"sharedlib", false, "mode",    "Compile the application as a shared library"},
     {"program",   false, "mode",    "Compile the application as an executable"},
-    {"e",         true,  "entry",   "Specify the file that contains the entry point for the executable"},
-    {"entry",     true,  "entry",   "Specify the file that contains the entry point for the executable"},
+    {"e",         true,  "entry",   "Specify the module that contains the entry point for the executable"},
+    {"entry",     true,  "entry",   "Specify the module that contains the entry point for the executable"},
     {"R",         true,  "include", "Add a path to the list of require paths"},
     {NULL,        false, NULL,      NULL }
 };
