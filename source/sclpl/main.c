@@ -182,6 +182,7 @@ static int emit_program(void) {
 
     * Formalize grammar for parser
     * Paren for function application must be on same line as variable in REPL
+    * Handle punctuation in the grammar directly instead of as an AST op.
 
 */
 int main(int argc, char **argv) {
