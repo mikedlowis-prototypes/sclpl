@@ -9,6 +9,7 @@
 
 /* Command Line Options
  *****************************************************************************/
+const char Usage[] = "Usage: sclpl [OPTION]... MODE [FILE]...\n";
 opts_cfg_t Options_Config[] = {
     {"tokens",    false, "mode",    "Emit the token output of lexical analysis for the given file"},
     {"ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
@@ -17,8 +18,8 @@ opts_cfg_t Options_Config[] = {
     {"staticlib", false, "mode",    "Compile the application as a static library"},
     {"sharedlib", false, "mode",    "Compile the application as a shared library"},
     {"program",   false, "mode",    "Compile the application as an executable"},
-    {"e",         true,  "entry",   "Specify the module that contains the entry point for the executable"},
     {"entry",     true,  "entry",   "Specify the module that contains the entry point for the executable"},
+    {"e",         true,  "entry",   "Specify the module that contains the entry point for the executable"},
     {"R",         true,  "include", "Add a path to the list of require paths"},
     {NULL,        false, NULL,      NULL }
 };
@@ -40,7 +41,7 @@ void print_usage(void) {
     }
 
     /* Print the usage and option list */
-    printf("Usage: [OPTION]... [MODE] [FILE]\n\n");
+    puts(Usage);
     size_t padding = sz + 4 + ((opts_have_args) ? 4 : 0);
     char*  buffer  = (char*)malloc(padding+1);
     opts = &Options_Config[0];
