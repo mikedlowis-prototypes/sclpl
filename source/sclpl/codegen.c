@@ -147,6 +147,7 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
             case T_FLOAT:  printf("__float(%f)",  *((double*)tok->value));           break;
             case T_BOOL:   printf("__bool(%s)",   ((int)tok->value)?"true":"false"); break;
             case T_VAR:    printf("%s",           ((char*)tok->value));              break;
+            default:                                                                 break;
         }
     } else if (is_formtype(p_tree, "if")) {
         printf("IF (");
@@ -165,15 +166,15 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
         }
 
     } else if (is_formtype(p_tree, "fn")) {
-        printf("__func(&fn%d)", get_fn_id(fnlst, p_tree));
+        printf("__func(&fn%d)", (int)get_fn_id(fnlst, p_tree));
     } else {
         vec_t* vec   = p_tree->ptr.vec;
-        size_t nargs = vec_size(vec)-1;
+        int nargs = vec_size(vec)-1;
         /* Determine the calling convention based on number of args */
         if (0 == nargs)
             printf("__call0(%s", (char*)get_val(vec_at(vec,0)));
         else if (nargs < 16)
-            printf("__calln(%s, %d, ", (char*)get_val(vec_at(vec,0)), nargs);
+            printf("__calln(%s, %d, ", (char*)get_val(vec_at(vec,0)), (int)nargs);
         else
             printf("__calln(%s, n, ", (char*)get_val(vec_at(vec,0)));
         /* Print out the arguments */
@@ -189,7 +190,7 @@ static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
 static void emit_fn_declarations(vec_t* fnlst) {
     char name[64];
     for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
-        sprintf(name,"fn%d", idx);
+        sprintf(name,"fn%d", (int)idx);
         printf("static ");
         emit_fn_signature(name, (tree_t*)vec_at(fnlst,idx));
         puts(";");
@@ -201,7 +202,7 @@ static void emit_fn_definitions(vec_t* fnlst) {
     char name[64];
     for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
         tree_t* func = (tree_t*)vec_at(fnlst,idx);
-        sprintf(name,"fn%d", idx);
+        sprintf(name,"fn%d", (int)idx);
         printf("static ");
         emit_fn_signature(name, func);
         puts(" {");
@@ -250,6 +251,7 @@ static void emit_footer(void) {
 }
 
 void codegen_csource(FILE* file, vec_t* program) {
+    (void)file;
     emit_header();
     emit_def_placeholders(program);
     vec_t* funcs = find_fn_literals(program);

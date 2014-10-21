@@ -14,7 +14,7 @@ base_env = BuildEnv.new(echo: :command) do |env|
   env.build_dir('source','build/obj/source')
   env.build_dir('modules','build/obj/modules')
   env.set_toolset(:gcc)
-  env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra'] #, '-Werror']
+  env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra', '-Werror']
   env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
 end
 
@@ -27,7 +27,7 @@ end
 test_env = base_env.clone do |env|
   env.build_dir('source','build/obj_test/source')
   env.build_dir('modules','build/obj_test/modules')
-  env['CFLAGS'] +=  ['--coverage']
+  env['CFLAGS'] +=  ['-O0', '--coverage']
   env['LDFLAGS'] += ['--coverage']
 end
 
