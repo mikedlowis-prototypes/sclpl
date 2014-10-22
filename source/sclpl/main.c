@@ -19,6 +19,7 @@ opts_cfg_t Options_Config[] = {
     {"ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
     {"csource",   false, "mode",    "Emit the intermediate C source file for the given file"},
     {"repl",      false, "mode",    "Execute the application in a REPL"},
+    {"object",    false, "mode",    "Compile the source as an object file"},
     {"staticlib", false, "mode",    "Compile the application as a static library"},
     {"sharedlib", false, "mode",    "Compile the application as a shared library"},
     {"program",   false, "mode",    "Compile the application as an executable"},
@@ -269,6 +270,10 @@ static int exec_repl(void) {
     return 0;
 }
 
+static int emit_object(void) {
+    return 0;
+}
+
 static int emit_staticlib(void) {
     return 0;
 }
@@ -304,6 +309,8 @@ int main(int argc, char **argv) {
         return emit_tree();
     } else if (opts_equal(NULL, "mode", "csource")) {
         return emit_csource();
+    } else if (opts_equal(NULL, "mode", "object")) {
+        return emit_object();
     } else if (opts_equal(NULL, "mode", "staticlib")) {
         return emit_staticlib();
     } else if (opts_equal(NULL, "mode", "sharedlib")) {
