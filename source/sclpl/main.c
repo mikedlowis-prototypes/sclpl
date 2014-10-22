@@ -143,7 +143,7 @@ str_t* get_filename(file_type_t ftype, str_t* infile) {
     str_t* ext_ind = str_new(".");
     size_t index   = str_rfind(infile, ext_ind);
     str_t* rawname = str_substr(infile, 0, str_size(infile)-index);
-    str_t* ext;
+    str_t* ext = NULL;
     switch (ftype) {
         case CSOURCE:   ext = str_new(".c");   break;
         case OBJECT:    ext = str_new(".o");   break;
@@ -154,7 +154,8 @@ str_t* get_filename(file_type_t ftype, str_t* infile) {
     str_t* fname = str_concat(rawname, ext);
     mem_release(ext_ind);
     mem_release(rawname);
-    mem_release(ext);
+    if (NULL != ext)
+        mem_release(ext);
     return fname;
 }
 
@@ -176,13 +177,13 @@ int translate(str_t* in, str_t* out) {
             ret = 1;
         }
     }
-    if (0 == ret)
-        codegen_csource(output, p_vec);
-    mem_release(p_vec);
-    mem_release(p_parser);
-
+    if (0 == ret) codegen_csource(output, p_vec);
     fclose(input);
     fclose(output);
+    if ((0 != ret) && (NULL != out))
+        remove(str_cstr(out));
+    mem_release(p_vec);
+    mem_release(p_parser);
     if (NULL != out)
         mem_release(out);
     return ret;
