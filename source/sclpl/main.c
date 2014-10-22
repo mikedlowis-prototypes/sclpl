@@ -64,6 +64,15 @@ void print_usage(void) {
     exit(1);
 }
 
+void error_msg(const char msg[], ...) {
+    va_list args;
+    va_start(args, msg);
+    fprintf(stderr, "Error: ");
+    vfprintf(stderr, msg, args);
+    va_end(args);
+    fputs("\n",stderr);
+}
+
 /* Tree Rewriting
  *****************************************************************************/
 bool is_punctuation(lex_tok_t* p_tok) {
@@ -120,7 +129,7 @@ list_t* input_files(void) {
     while (NULL != files[0]) {
         if (!file_exists(files[0])) {
             mem_release(infiles);
-            fprintf(stderr, "Error: no such file or directory: %s\n", files[0]);
+            error_msg("no such file or directory: %s", files[0]);
             exit(1);
         }
         list_push_front(infiles, str_new(files[0]));
@@ -160,13 +169,11 @@ str_t* get_filename(file_type_t ftype, str_t* infile) {
     return fname;
 }
 
-int translate(str_t* in, str_t* out) {
-    int ret = 0;
-    FILE* input  = (NULL == in)  ? stdin  : fopen(str_cstr(in), "r");
-    FILE* output = (NULL == out) ? stdout : fopen(str_cstr(out), "w");
-
+vec_t* parse_file(str_t* in) {
+    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
     parser_t* p_parser = parser_new(NULL, input);
     vec_t* p_vec = vec_new(0);
+    bool failed = false;
     while(!parser_eof(p_parser)) {
         tree_t* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
@@ -175,32 +182,41 @@ int translate(str_t* in, str_t* out) {
             vec_push_back(p_vec, p_ast);
         } else {
             parser_resume(p_parser);
-            ret = 1;
+            failed = true;
         }
     }
-    if (0 == ret) codegen_csource(output, p_vec);
-    fclose(input);
-    fclose(output);
-    if ((0 != ret) && (NULL != out))
-        remove(str_cstr(out));
-    mem_release(p_vec);
     mem_release(p_parser);
-    if (NULL != out)
-        mem_release(out);
-    return ret;
+    if (failed) mem_release(p_vec);
+    return ((failed) ? NULL : p_vec);
 }
 
-int compile(str_t* in, str_t* out) {
-    (void)in;
-    (void)out;
-    return 1;
+str_t* translate_file(str_t* in) {
+    str_t* ofname = NULL;
+    FILE* output;
+    if (NULL == in) {
+        output = stdout;
+    } else {
+        ofname = get_filename(CSOURCE, in);
+        output = fopen(str_cstr(ofname), "w");
+    }
+    vec_t* program = parse_file(in);
+    codegen_csource(output, program);
+    fclose(output);
+    mem_release(program);
+    return ofname;
 }
 
-int link_executable(list_t* objects, str_t* out) {
-    (void)objects;
-    (void)out;
-    return 1;
+str_t* compile_file(str_t* in) {
+    str_t* ofname = get_filename(OBJECT, in);
+    return ofname;
 }
+
+#if 0
+str_t* link_files(list_t* in) {
+    str_t* ofname = get_filename(get_output_type(), in);
+    return ofname;
+}
+#endif
 
 /* Driver Modes
  *****************************************************************************/
@@ -236,17 +252,15 @@ static int emit_tree(void) {
 
 static int emit_csource(void) {
     int ret = 0;
-    list_t* files = input_files();
-    size_t  size  = list_size(files);
-    if (0 == size) {
-        ret = translate(NULL, NULL);
+    list_t* files  = input_files();
+    size_t  nfiles = list_size(files);
+    if (0 == nfiles) {
+        (void)translate_file(NULL);
+    } else if (1 == nfiles) {
+        str_t* fname = list_front(files)->contents;
+        mem_release( translate_file(fname) );
     } else {
-        list_node_t* node = NULL;
-        while (NULL != (node = list_pop_front(files))) {
-            str_t* fname = (str_t*)node->contents;
-            ret = translate(fname, get_filename(CSOURCE, fname));
-            mem_release(node);
-        }
+        error_msg("too many files provided for target mode 'csource'");
     }
     mem_release(files);
     return ret;
@@ -271,6 +285,20 @@ static int exec_repl(void) {
 }
 
 static int emit_object(void) {
+    list_t* files  = input_files();
+    size_t  nfiles = list_size(files);
+    if (0 == nfiles) {
+        error_msg("too few files provided for target mode 'object'");
+    } else if (1 == nfiles) {
+        str_t* fname = list_front(files)->contents;
+        str_t* csrc  = translate_file(fname);
+        str_t* obj   = compile_file(fname);
+        mem_release(csrc);
+        mem_release(obj);
+    } else {
+        error_msg("too many files provided for target mode 'object'");
+    }
+    mem_release(files);
     return 0;
 }
 
