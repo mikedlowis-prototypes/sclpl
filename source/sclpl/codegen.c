@@ -79,185 +79,187 @@ static size_t get_fn_id(vec_t* funcs, tree_t* fn) {
 
 /*****************************************************************************/
 
-static void print_indent(int depth) {
+static void print_indent(FILE* file, int depth) {
     for(int i = 0; i < (4 * depth); i++)
-        printf("%c", ' ');
+        fprintf(file, "%c", ' ');
 }
 
-static void print_char(char ch) {
+static void print_char(FILE* file, char ch) {
     switch (ch) {
-        case '\r': printf("__char('\\r')");    break;
-        case '\n': printf("__char('\\n')");    break;
-        case '\t': printf("__char('\\t')");    break;
-        case '\v': printf("__char('\\v')");    break;
-        default:   printf("__char('%c')", ch); break;
+        case '\r': fprintf(file, "__char('\\r')");    break;
+        case '\n': fprintf(file, "__char('\\n')");    break;
+        case '\t': fprintf(file, "__char('\\t')");    break;
+        case '\v': fprintf(file, "__char('\\v')");    break;
+        default:   fprintf(file, "__char('%c')", ch); break;
     }
 }
 
-static void print_string(const char* str) {
-    printf("__string(\"");
+static void print_string(FILE* file, const char* str) {
+    fprintf(file, "__string(\"");
     while('\0' != str[0])
     {
         switch (str[0]) {
-            case '\r': printf("\\r");        break;
-            case '\n': printf("\\n");        break;
-            case '\t': printf("\\t");        break;
-            case '\v': printf("\\v");        break;
-            default:   printf("%c", str[0]); break;
+            case '\r': fprintf(file, "\\r");        break;
+            case '\n': fprintf(file, "\\n");        break;
+            case '\t': fprintf(file, "\\t");        break;
+            case '\v': fprintf(file, "\\v");        break;
+            default:   fprintf(file, "%c", str[0]); break;
         }
         str++;
     }
-    printf("\")");
+    fprintf(file, "\")");
 }
 
 /*****************************************************************************/
 
-static void emit_header(void) {
-    puts("#include <sclpl.h>\n");
+static void emit_header(FILE* file) {
+    fputs("#include <sclpl.h>\n\n", file);
 }
 
-static void emit_fn_signature(char* name, tree_t* fnval) {
-    printf("_Value %s(", name);
+static void emit_fn_signature(FILE* file, char* name, tree_t* fnval) {
+    fprintf(file, "_Value %s(", name);
     vec_t* params = get_child(fnval, 1)->ptr.vec;
     for (size_t i = 0; i < vec_size(params); i++) {
-        printf("_Value %s", (char*)get_val((tree_t*)vec_at(params,i)));
+        fprintf(file, "_Value %s", (char*)get_val((tree_t*)vec_at(params,i)));
         if (i+1 < vec_size(params))
-            printf(", ");
+            fprintf(file, ", ");
     }
-    printf(")");
+    fprintf(file, ")");
 }
 
-static void emit_def_placeholders(vec_t* prgrm) {
+static void emit_def_placeholders(FILE* file, vec_t* prgrm) {
     for (size_t idx = 0; idx < vec_size(prgrm); idx++) {
         tree_t* p_tree = (tree_t*)vec_at(prgrm, idx);
         if (is_formtype(p_tree, "def")) {
-            printf("_Value %s;\n", (char*)get_child_val(p_tree,1));
+            fprintf(file, "_Value %s;\n", (char*)get_child_val(p_tree,1));
         }
     }
-    puts("");
+    fputs("\n", file);
 }
 
-static void emit_expression(vec_t* fnlst, tree_t* p_tree, int depth) {
+static void emit_expression(FILE* file, vec_t* fnlst, tree_t* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: print_string(((char*)tok->value));                        break;
-            case T_CHAR:   print_char(((char)(int)tok->value));                      break;
-            case T_INT:    printf("__int(%ld)",   *((long int*)tok->value));         break;
-            case T_FLOAT:  printf("__float(%f)",  *((double*)tok->value));           break;
-            case T_BOOL:   printf("__bool(%s)",   ((int)tok->value)?"true":"false"); break;
-            case T_VAR:    printf("%s",           ((char*)tok->value));              break;
-            default:                                                                 break;
+            case T_STRING: print_string(file, ((char*)tok->value));                         break;
+            case T_CHAR:   print_char(file, ((char)(int)tok->value));                       break;
+            case T_INT:    fprintf(file, "__int(%ld)",   *((long int*)tok->value));         break;
+            case T_FLOAT:  fprintf(file, "__float(%f)",  *((double*)tok->value));           break;
+            case T_BOOL:   fprintf(file, "__bool(%s)",   ((int)tok->value)?"true":"false"); break;
+            case T_VAR:    fprintf(file, "%s",           ((char*)tok->value));              break;
+            default:                                                                        break;
         }
     } else if (is_formtype(p_tree, "if")) {
-        printf("IF (");
-        emit_expression(fnlst, get_child(p_tree, 1), depth);
-        printf(")\n");
-        print_indent(depth+1);
-        emit_expression(fnlst, get_child(p_tree, 2), depth+1);
-        printf("\n");
-        print_indent(depth);
-        printf("ELSE\n");
-        print_indent(depth+1);
+        fprintf(file, "IF (");
+        emit_expression(file, fnlst, get_child(p_tree, 1), depth);
+        fprintf(file, ")\n");
+        print_indent(file, depth+1);
+        emit_expression(file, fnlst, get_child(p_tree, 2), depth+1);
+        fprintf(file, "\n");
+        print_indent(file, depth);
+        fprintf(file, "ELSE\n");
+        print_indent(file, depth+1);
         if (vec_size(p_tree->ptr.vec) > 3) {
-            emit_expression(fnlst, get_child(p_tree, 4), depth+1);
+            emit_expression(file, fnlst, get_child(p_tree, 4), depth+1);
         } else {
-            printf("NIL");
+            fprintf(file, "__nil");
         }
 
     } else if (is_formtype(p_tree, "fn")) {
-        printf("__func(&fn%d)", (int)get_fn_id(fnlst, p_tree));
+        fprintf(file, "__func(&fn%d)", (int)get_fn_id(fnlst, p_tree));
     } else {
         vec_t* vec   = p_tree->ptr.vec;
         int nargs = vec_size(vec)-1;
         /* Determine the calling convention based on number of args */
         if (0 == nargs)
-            printf("__call0(%s", (char*)get_val(vec_at(vec,0)));
+            fprintf(file, "__call0(%s", (char*)get_val(vec_at(vec,0)));
         else if (nargs < 16)
-            printf("__calln(%s, %d, ", (char*)get_val(vec_at(vec,0)), (int)nargs);
+            fprintf(file, "__calln(%s, %d, ", (char*)get_val(vec_at(vec,0)), (int)nargs);
         else
-            printf("__calln(%s, n, ", (char*)get_val(vec_at(vec,0)));
+            fprintf(file, "__calln(%s, n, ", (char*)get_val(vec_at(vec,0)));
         /* Print out the arguments */
         for (size_t idx = 1; idx < vec_size(vec); idx++) {
-            emit_expression(fnlst, (tree_t*)vec_at(vec,idx), depth);
+            emit_expression(file, fnlst, (tree_t*)vec_at(vec,idx), depth);
             if (idx+1 < vec_size(vec))
-                printf(", ");
+                fprintf(file, ", ");
         }
-        printf(")");
+        fprintf(file, ")");
     }
 }
 
-static void emit_fn_declarations(vec_t* fnlst) {
+static void emit_fn_declarations(FILE* file, vec_t* fnlst) {
     char name[64];
     for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
         sprintf(name,"fn%d", (int)idx);
-        printf("static ");
-        emit_fn_signature(name, (tree_t*)vec_at(fnlst,idx));
-        puts(";");
+        fprintf(file, "static ");
+        emit_fn_signature(file, name, (tree_t*)vec_at(fnlst,idx));
+        fputs(";\n", file);
     }
-    puts("");
+    fputs("\n", file);
 }
 
-static void emit_fn_definitions(vec_t* fnlst) {
+static void emit_fn_definitions(FILE* file, vec_t* fnlst) {
     char name[64];
     for (size_t idx = 0; idx < vec_size(fnlst); idx++) {
         tree_t* func = (tree_t*)vec_at(fnlst,idx);
         sprintf(name,"fn%d", (int)idx);
-        printf("static ");
-        emit_fn_signature(name, func);
-        puts(" {");
+        fprintf(file, "static ");
+        emit_fn_signature(file, name, func);
+        fputs(" {\n", file);
 
         vec_t* body = (vec_t*)func->ptr.vec;
         for (size_t i = 2; i < vec_size(body); i++) {
-            printf("    ");
+            fprintf(file, "    ");
             if (i+1 == vec_size(body))
-                printf("return ");
-            emit_expression(fnlst, (tree_t*)vec_at(body,i), 1);
-            printf(";\n");
+                fprintf(file, "return ");
+            emit_expression(file, fnlst, (tree_t*)vec_at(body,i), 1);
+            fprintf(file, ";\n");
         }
-        puts("}\n");
+        fputs("}\n", file);
     }
+    fputs("\n", file);
 }
 
-static void emit_toplevel(vec_t* fnlst, vec_t* prgrm) {
-    puts("void toplevel(void) {");
+static void emit_toplevel(FILE* file, vec_t* fnlst, vec_t* prgrm) {
+    fputs("void toplevel(void) {\n", file);
     for (size_t idx = 0; idx < vec_size(prgrm); idx++) {
         tree_t* p_tree = (tree_t*)vec_at(prgrm, idx);
         if (is_formtype(p_tree, "require")) {
-            printf("    extern void %s_toplevel(void);\n", (char*)get_child_val(p_tree,1));
-            printf("    %s_toplevel();\n", (char*)get_child_val(p_tree,1));
+            fprintf(file, "    extern void %s_toplevel(void);\n", (char*)get_child_val(p_tree,1));
+            fprintf(file, "    %s_toplevel();\n", (char*)get_child_val(p_tree,1));
         } else if (is_formtype(p_tree, "def")) {
-            printf("    %s = ", (char*)get_child_val(p_tree,1));
-            emit_expression(fnlst, get_child(p_tree, 2), 0);
-            printf(";\n");
+            fprintf(file, "    %s = ", (char*)get_child_val(p_tree,1));
+            emit_expression(file, fnlst, get_child(p_tree, 2), 0);
+            fprintf(file, ";\n");
         } else {
-            printf("    (void)(");
-            emit_expression(fnlst, p_tree, 1);
-            printf(");\n");
+            fprintf(file, "    (void)(");
+            emit_expression(file, fnlst, p_tree, 1);
+            fprintf(file, ");\n");
         }
     }
-    puts("}");
+    fputs("}\n", file);
 }
 
-static void emit_footer(void) {
-    puts(
+static void emit_footer(FILE* file) {
+    fputs(
         "\nint main(int argc, char** argv) {"
         "\n    (void)argc;"
         "\n    (void)argv;"
         "\n    toplevel();"
         "\n    return 0;"
-        "\n}"
+        "\n}\n",
+        file
     );
 }
 
 void codegen_csource(FILE* file, vec_t* program) {
     (void)file;
-    emit_header();
-    emit_def_placeholders(program);
+    emit_header(file);
+    emit_def_placeholders(file, program);
     vec_t* funcs = find_fn_literals(program);
-    emit_fn_declarations(funcs);
-    emit_fn_definitions(funcs);
-    emit_toplevel(funcs, program);
+    emit_fn_declarations(file, funcs);
+    emit_fn_definitions(file, funcs);
+    emit_toplevel(file, funcs, program);
     mem_release(funcs);
-    emit_footer();
+    emit_footer(file);
 }

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "opts.h"
+#include "str.h"
+#include "list.h"
 #include "grammar.h"
 #include "parser.h"
 #include "lexer.h"
@@ -99,6 +101,92 @@ tree_t* convert_to_ast(tree_t* p_tree) {
     return p_newtree;
 }
 
+/* Options Helpers
+ *****************************************************************************/
+bool file_exists(const char* name) {
+    bool  ret  = false;
+    FILE* file = fopen(name,"r");
+    if (NULL != file) {
+        fclose(file);
+        ret = true;
+    }
+    return ret;
+}
+
+list_t* input_files(void) {
+    list_t* infiles = list_new();
+    const char** files = opts_arguments();
+    while (NULL != files[0]) {
+        if (!file_exists(files[0])) {
+            mem_release(infiles);
+            fprintf(stderr, "Error: no such file or directory: %s\n", files[0]);
+            exit(1);
+        }
+        list_push_front(infiles, str_new(files[0]));
+        files++;
+    }
+    mem_release(list_pop_front(infiles));
+    return infiles;
+}
+
+/* Utility Functions
+ *****************************************************************************/
+typedef enum {
+    CSOURCE,
+    OBJECT,
+    PROGRAM,
+    STATICLIB,
+    SHAREDLIB
+} file_type_t;
+
+str_t* get_filename(file_type_t ftype, str_t* infile) {
+    str_t* ext_ind = str_new(".");
+    size_t index   = str_rfind(infile, ext_ind);
+    str_t* rawname = str_substr(infile, 0, str_size(infile)-index);
+    str_t* ext;
+    switch (ftype) {
+        case CSOURCE:   ext = str_new(".c");   break;
+        case OBJECT:    ext = str_new(".o");   break;
+        case PROGRAM:   ext = str_new("");     break;
+        case STATICLIB: ext = str_new(".a");   break;
+        case SHAREDLIB: ext = str_new(".lib"); break;
+    }
+    str_t* fname = str_concat(rawname, ext);
+    mem_release(ext_ind);
+    mem_release(rawname);
+    mem_release(ext);
+    return fname;
+}
+
+int translate(str_t* in, str_t* out) {
+    int ret = 0;
+    FILE* input  = (NULL == in)  ? stdin  : fopen(str_cstr(in), "r");
+    FILE* output = (NULL == out) ? stdout : fopen(str_cstr(out), "w");
+
+    parser_t* p_parser = parser_new(NULL, input);
+    vec_t* p_vec = vec_new(0);
+    while(!parser_eof(p_parser)) {
+        tree_t* p_tree = grammar_toplevel(p_parser);
+        if (NULL != p_tree) {
+            tree_t* p_ast = convert_to_ast(p_tree);
+            mem_release(p_tree);
+            vec_push_back(p_vec, p_ast);
+        } else {
+            parser_resume(p_parser);
+            ret = 1;
+        }
+    }
+    if (0 == ret)
+        codegen_csource(output, p_vec);
+    mem_release(p_vec);
+    mem_release(p_parser);
+
+    fclose(input);
+    fclose(output);
+    mem_release(out);
+    return ret;
+}
+
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
@@ -133,23 +221,19 @@ static int emit_tree(void) {
 
 static int emit_csource(void) {
     int ret = 0;
-    parser_t* p_parser = parser_new(NULL, stdin);
-    vec_t* p_vec = vec_new(0);
-    while(!parser_eof(p_parser)) {
-        tree_t* p_tree = grammar_toplevel(p_parser);
-        if (NULL != p_tree) {
-            tree_t* p_ast = convert_to_ast(p_tree);
-            mem_release(p_tree);
-            vec_push_back(p_vec, p_ast);
-        } else {
-            parser_resume(p_parser);
-            ret = 1;
+    list_t* files = input_files();
+    size_t  size  = list_size(files);
+    if (0 == size) {
+        translate(NULL, NULL);
+    } else {
+        list_node_t* node = NULL;
+        while (NULL != (node = list_pop_front(files))) {
+            str_t* fname = (str_t*)node->contents;
+            ret = translate(fname, get_filename(CSOURCE, fname));
+            mem_release(node);
         }
     }
-    if (0 == ret)
-        codegen_csource(stdout, p_vec);
-    mem_release(p_vec);
-    mem_release(p_parser);
+    mem_release(files);
     return ret;
 }
 
@@ -193,6 +277,8 @@ static int emit_program(void) {
 */
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
+
+    mem_release(input_files());
 
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
