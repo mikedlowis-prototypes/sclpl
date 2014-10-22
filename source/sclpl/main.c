@@ -189,6 +189,18 @@ int translate(str_t* in, str_t* out) {
     return ret;
 }
 
+int compile(str_t* in, str_t* out) {
+    (void)in;
+    (void)out;
+    return 1;
+}
+
+int link_executable(list_t* objects, str_t* out) {
+    (void)objects;
+    (void)out;
+    return 1;
+}
+
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
@@ -226,7 +238,7 @@ static int emit_csource(void) {
     list_t* files = input_files();
     size_t  size  = list_size(files);
     if (0 == size) {
-        translate(NULL, NULL);
+        ret = translate(NULL, NULL);
     } else {
         list_node_t* node = NULL;
         while (NULL != (node = list_pop_front(files))) {
