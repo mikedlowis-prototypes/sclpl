@@ -183,7 +183,8 @@ int translate(str_t* in, str_t* out) {
 
     fclose(input);
     fclose(output);
-    mem_release(out);
+    if (NULL != out)
+        mem_release(out);
     return ret;
 }
 

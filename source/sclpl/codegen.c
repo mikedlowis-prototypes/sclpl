@@ -215,9 +215,8 @@ static void emit_fn_definitions(FILE* file, vec_t* fnlst) {
             emit_expression(file, fnlst, (tree_t*)vec_at(body,i), 1);
             fprintf(file, ";\n");
         }
-        fputs("}\n", file);
+        fputs("}\n\n", file);
     }
-    fputs("\n", file);
 }
 
 static void emit_toplevel(FILE* file, vec_t* fnlst, vec_t* prgrm) {
