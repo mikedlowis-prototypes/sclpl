@@ -149,10 +149,7 @@ typedef enum {
     SHAREDLIB
 } file_type_t;
 
-str_t* get_filename(file_type_t ftype, str_t* infile) {
-    str_t* ext_ind = str_new(".");
-    size_t index   = str_rfind(infile, ext_ind);
-    str_t* rawname = str_substr(infile, 0, str_size(infile)-index);
+str_t* get_extension(file_type_t ftype) {
     str_t* ext = NULL;
     switch (ftype) {
         case CSOURCE:   ext = str_new(".c");   break;
@@ -160,12 +157,20 @@ str_t* get_filename(file_type_t ftype, str_t* infile) {
         case PROGRAM:   ext = str_new("");     break;
         case STATICLIB: ext = str_new(".a");   break;
         case SHAREDLIB: ext = str_new(".lib"); break;
+        default:        ext = str_new("");     break;
     }
+    return ext;
+}
+
+str_t* get_filename(file_type_t ftype, str_t* infile) {
+    str_t* ext_ind = str_new(".");
+    size_t index   = str_rfind(infile, ext_ind);
+    str_t* rawname = str_substr(infile, 0, str_size(infile)-index);
+    str_t* ext = get_extension(ftype);
     str_t* fname = str_concat(rawname, ext);
     mem_release(ext_ind);
     mem_release(rawname);
-    if (NULL != ext)
-        mem_release(ext);
+    mem_release(ext);
     return fname;
 }
 
