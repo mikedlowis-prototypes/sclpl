@@ -113,7 +113,7 @@ static void print_string(FILE* file, const char* str) {
 /*****************************************************************************/
 
 static void emit_header(FILE* file) {
-    fputs("#include <sclpl.h>\n\n", file);
+    fputs("#include \"sclpl.h\"\n\n", file);
 }
 
 static void emit_fn_signature(FILE* file, char* name, tree_t* fnval) {

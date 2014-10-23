@@ -125,7 +125,8 @@ bool file_exists(const char* name) {
 
 list_t* input_files(void) {
     list_t* infiles = list_new();
-    const char** files = opts_arguments();
+    const char** fvec  = opts_arguments();
+    const char** files = fvec;
     while (NULL != files[0]) {
         if (!file_exists(files[0])) {
             mem_release(infiles);
@@ -136,7 +137,28 @@ list_t* input_files(void) {
         files++;
     }
     mem_release(list_pop_front(infiles));
+    free(fvec);
     return infiles;
+}
+
+/* Command Building
+ *****************************************************************************/
+char Object_Cmd[]    = "clang -c -I. -o %s %s";
+char Program_Cmd[]   = "clang -o %s %s";
+char StaticLib_Cmd[] = "ar rcs %s %s";
+char SharedLib_Cmd[] = "clang -shared %s";
+
+str_t* str_join(char* joinstr, vec_t* strs) {
+    str_t* ret = str_new("");
+    str_t* jstr = str_new(joinstr);
+    for (size_t idx = 0; idx < vec_size(strs); idx++) {
+        str_t* str = (str_t*)vec_at(strs, idx);
+        if (str_size(ret) > 0)
+            mem_swap((void**)&ret, str_concat(ret, jstr));
+        mem_swap((void**)&ret, str_concat(ret, str));
+    }
+    mem_release(jstr);
+    return ret;
 }
 
 /* Utility Functions
@@ -165,7 +187,7 @@ str_t* get_extension(file_type_t ftype) {
 str_t* get_filename(file_type_t ftype, str_t* infile) {
     str_t* ext_ind = str_new(".");
     size_t index   = str_rfind(infile, ext_ind);
-    str_t* rawname = str_substr(infile, 0, str_size(infile)-index);
+    str_t* rawname = str_substr(infile, 0, index);
     str_t* ext = get_extension(ftype);
     str_t* fname = str_concat(rawname, ext);
     mem_release(ext_ind);
@@ -212,7 +234,18 @@ str_t* translate_file(str_t* in) {
 }
 
 str_t* compile_file(str_t* in) {
-    str_t* ofname = get_filename(OBJECT, in);
+    str_t* ofname  = get_filename(OBJECT, in);
+    vec_t* parts   = vec_new(3, str_new("clang -c -o"), mem_retain(ofname), mem_retain(in));
+    str_t* command = str_join(" ", parts);
+    if (opts_is_set(NULL, "verbose"))
+        puts(str_cstr(command));
+    if (0 != system(str_cstr(command))) {
+        remove(str_cstr(ofname));
+        mem_swap((void**)&ofname, NULL);
+    }
+    remove(str_cstr(in));
+    mem_release(parts);
+    mem_release(command);
     return ofname;
 }
 
@@ -297,7 +330,7 @@ static int emit_object(void) {
     } else if (1 == nfiles) {
         str_t* fname = list_front(files)->contents;
         str_t* csrc  = translate_file(fname);
-        str_t* obj   = compile_file(fname);
+        str_t* obj   = compile_file(csrc);
         mem_release(csrc);
         mem_release(obj);
     } else {
@@ -329,8 +362,6 @@ static int emit_program(void) {
 */
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
-
-    mem_release(input_files());
 
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
