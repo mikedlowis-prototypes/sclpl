@@ -37,7 +37,7 @@ z(1,2,3)
 eos
 
 ExpectedCode = <<-eos
-#include <sclpl.h>
+#include "sclpl.h"
 
 _Value a;
 _Value b;
