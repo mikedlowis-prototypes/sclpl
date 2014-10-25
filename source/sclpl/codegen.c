@@ -141,13 +141,13 @@ static void emit_expression(FILE* file, vec_t* fnlst, tree_t* p_tree, int depth)
     if (p_tree->tag == ATOM) {
         lex_tok_t* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: print_string(file, ((char*)tok->value));                         break;
-            case T_CHAR:   print_char(file, ((char)(int)tok->value));                       break;
-            case T_INT:    fprintf(file, "__int(%ld)",   *((long int*)tok->value));         break;
-            case T_FLOAT:  fprintf(file, "__float(%f)",  *((double*)tok->value));           break;
-            case T_BOOL:   fprintf(file, "__bool(%s)",   ((int)tok->value)?"true":"false"); break;
-            case T_VAR:    fprintf(file, "%s",           ((char*)tok->value));              break;
-            default:                                                                        break;
+            case T_STRING: print_string(file, ((char*)tok->value));                             break;
+            case T_CHAR:   print_char(file, ((char)(intptr_t)tok->value));                      break;
+            case T_INT:    fprintf(file, "__int(%ld)",  *((long int*)tok->value));              break;
+            case T_FLOAT:  fprintf(file, "__float(%f)", *((double*)tok->value));                break;
+            case T_BOOL:   fprintf(file, "__bool(%s)",  ((intptr_t)tok->value)?"true":"false"); break;
+            case T_VAR:    fprintf(file, "%s",          ((char*)tok->value));                   break;
+            default:                                                                            break;
         }
     } else if (is_formtype(p_tree, "if")) {
         fprintf(file, "IF (");
