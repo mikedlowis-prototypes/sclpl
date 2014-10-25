@@ -63,7 +63,7 @@ ENV['PATH'] = "#{CLANG_BIN_DIR}#{windows? ? ';':':'}#{ENV['PATH']}"
 #------------------------------------------------------------------------------
 # Rscons Build Targets
 #------------------------------------------------------------------------------
-task :default => [:build]
+task :default => [:build, :spec]
 
 desc "Build all targets"
 task :build => [:clang, :sclpl]
