@@ -51,7 +51,7 @@ end
 
 file "#{CLANG_BIN_DIR}/#{CLANG_BIN_NAME}" => ["#{CLANG_BUILD_DIR}/Makefile"] + FileList["#{CLANG_SRC_DIR}/tools/clang/**/*.c"] do
     FileUtils.cd(CLANG_BUILD_DIR) do
-        sh "#{CLANG_MAKE_CMD} clang llvm-ar"
+        sh "#{CLANG_MAKE_CMD}"
     end
 end
 
