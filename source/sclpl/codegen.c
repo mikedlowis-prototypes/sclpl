@@ -34,7 +34,7 @@ static bool is_formtype(tree_t* p_tree, const char* val) {
     tree_t* child = get_child(p_tree, 0);
     if ((NULL != child) && (child->tag == ATOM)) {
         lex_tok_t* token = child->ptr.tok;
-        if ((token->type == T_VAR) &&
+        if ((token->type == T_ID) &&
             (0 == strcmp(val, (char*)token->value))) {
             ret = true;
         }
@@ -146,7 +146,7 @@ static void emit_expression(FILE* file, vec_t* fnlst, tree_t* p_tree, int depth)
             case T_INT:    fprintf(file, "__int(%ld)",  *((long int*)tok->value));              break;
             case T_FLOAT:  fprintf(file, "__float(%f)", *((double*)tok->value));                break;
             case T_BOOL:   fprintf(file, "__bool(%s)",  ((intptr_t)tok->value)?"true":"false"); break;
-            case T_VAR:    fprintf(file, "%s",          ((char*)tok->value));                   break;
+            case T_ID:     fprintf(file, "%s",          ((char*)tok->value));                   break;
             default:                                                                            break;
         }
     } else if (is_formtype(p_tree, "if")) {

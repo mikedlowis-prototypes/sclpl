@@ -12,9 +12,9 @@ tree_t* grammar_toplevel(parser_t* p_parser)
 {
     tree_t* p_tree = NULL;
     try {
-        if (parser_accept_str(p_parser, T_VAR, "require"))
+        if (parser_accept_str(p_parser, T_ID, "require"))
             grammar_require(p_parser);
-        else if (parser_accept_str(p_parser, T_VAR, "def"))
+        else if (parser_accept_str(p_parser, T_ID, "def"))
             grammar_definition(p_parser);
         else
             grammar_expression(p_parser);
@@ -36,9 +36,9 @@ void grammar_require(parser_t* p_parser)
 void grammar_definition(parser_t* p_parser)
 {
     size_t mark = parser_mark(p_parser);
-    parser_expect(p_parser,T_VAR);
+    parser_expect(p_parser,T_ID);
     if (parser_peek(p_parser)->type == T_LPAR) {
-        parser_insert(p_parser, T_VAR, lexer_dup("fn"));
+        parser_insert(p_parser, T_ID, lexer_dup("fn"));
         grammar_fn_stmnt(p_parser);
     } else {
         grammar_expression(p_parser);
@@ -54,12 +54,12 @@ void grammar_expression(parser_t* p_parser)
         grammar_expression(p_parser);
         parser_expect(p_parser, T_RPAR);
         parser_reduce(p_parser, mark);
-    } else if (parser_accept_str(p_parser, T_VAR, "if")) {
+    } else if (parser_accept_str(p_parser, T_ID, "if")) {
         grammar_if_stmnt(p_parser);
-    } else if (parser_accept_str(p_parser, T_VAR, "fn")) {
+    } else if (parser_accept_str(p_parser, T_ID, "fn")) {
         grammar_fn_stmnt(p_parser);
-    } else if (parser_peek(p_parser)->type == T_VAR) {
-        parser_expect(p_parser, T_VAR);
+    } else if (parser_peek(p_parser)->type == T_ID) {
+        parser_expect(p_parser, T_ID);
         if (parser_peek(p_parser)->type == T_LPAR) {
             grammar_arglist(p_parser);
         }
@@ -102,7 +102,7 @@ void grammar_if_stmnt(parser_t* p_parser)
     size_t mark = parser_mark(p_parser);
     grammar_expression(p_parser);
     grammar_expression(p_parser);
-    if (parser_accept_str(p_parser, T_VAR, "else")) {
+    if (parser_accept_str(p_parser, T_ID, "else")) {
         grammar_expression(p_parser);
     }
     parser_expect(p_parser,T_END);
@@ -115,7 +115,7 @@ void grammar_fn_stmnt(parser_t* p_parser)
     parser_expect(p_parser, T_LPAR);
     size_t mark2 = parser_mark(p_parser);
     while(parser_peek(p_parser)->type != T_RPAR) {
-        parser_expect(p_parser, T_VAR);
+        parser_expect(p_parser, T_ID);
         if(parser_peek(p_parser)->type != T_RPAR)
             parser_expect(p_parser, T_COMMA);
     }

@@ -25,7 +25,7 @@ static const char* token_type_to_string(lex_tok_type_t type) {
         case T_LPAR:     return "T_LPAR";
         case T_RPAR:     return "T_RPAR";
         case T_COMMA:    return "T_COMMA";
-        case T_VAR:      return "T_VAR";
+        case T_ID:       return "T_ID";
         case T_END:      return "T_END";
         case T_SQUOTE:   return "T_SQUOTE";
         case T_DQUOTE:   return "T_DQUOTE";
@@ -64,7 +64,7 @@ void pprint_token_value(FILE* file, lex_tok_t* token) {
         case T_INT:    fprintf(file, "%ld",  *((long int*)value));              break;
         case T_FLOAT:  fprintf(file, "%f",   *((double*)value));                break;
         case T_BOOL:   fprintf(file, "%s",   ((intptr_t)value)?"true":"false"); break;
-        case T_VAR:    fprintf(file, "%s",   ((char*)value));                   break;
+        case T_ID:     fprintf(file, "%s",   ((char*)value));                   break;
         default:       fprintf(file, "???");                                    break;
     }
 }

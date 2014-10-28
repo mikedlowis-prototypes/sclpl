@@ -170,7 +170,7 @@ static lex_tok_t* lexer_bool(char* text)
 
 static lex_tok_t* lexer_var(char* text)
 {
-    return lex_tok_new(T_VAR, lexer_dup(text));
+    return lex_tok_new(T_ID, lexer_dup(text));
 }
 
 static bool lexer_oneof(const char* class, char c) {
