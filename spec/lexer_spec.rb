@@ -71,7 +71,7 @@ describe "lexer" do
     end
 
     it "should recognize invalid named characters as identifiers" do
-      expect(lexer('\foobar')).to eq ['T_VAR:\foobar']
+      expect(lexer('\foobar')).to eq ['T_ID:\foobar']
     end
   end
 
@@ -90,7 +90,7 @@ describe "lexer" do
       end
 
       it "should recognize invalid ints as identifiers" do
-        expect(lexer('123a')).to eq ['T_VAR:123a']
+        expect(lexer('123a')).to eq ['T_ID:123a']
       end
     end
 
@@ -112,7 +112,7 @@ describe "lexer" do
       end
 
       it "should recognize invalid radix ints as identifiers" do
-        expect(lexer('0b012')).to eq ['T_VAR:0b012']
+        expect(lexer('0b012')).to eq ['T_ID:0b012']
       end
     end
 
@@ -130,7 +130,7 @@ describe "lexer" do
       end
 
       it "should recognize invalid floats as identifiers" do
-        expect(lexer('123..0')).to eq ['T_VAR:123..0']
+        expect(lexer('123..0')).to eq ['T_ID:123..0']
       end
     end
   end
@@ -147,7 +147,7 @@ describe "lexer" do
 
   context "identifiers" do
     it "should recognize an identifier" do
-      expect(lexer('foo')).to eq ['T_VAR:foo']
+      expect(lexer('foo')).to eq ['T_ID:foo']
     end
   end
 
