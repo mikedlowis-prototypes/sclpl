@@ -27,6 +27,9 @@ describe "sclpl grammar" do
     end
   end
 
+  context "type definitions" do
+  end
+
   context "definitions" do
     it "should parse a value definition" do
       expect(ast('def foo 123;')).to eq([ ['T_ID:def', 'T_ID:foo', 'T_INT:123'] ])
@@ -55,6 +58,19 @@ describe "sclpl grammar" do
     it "should parse a function definition with three arguments" do
       expect(ast('def foo(a,b,c) 123;')).to eq([
         ['T_ID:def', 'T_ID:foo', ['T_ID:fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'], 'T_INT:123']] ])
+    end
+  end
+
+  context "annotations" do
+    it "should parse a type annotation" do
+      pending "Type annotations have not been implemented yet"
+      expect(ast('ann foo int;')).to eq([ ['T_ID:ann', 'T_ID:foo', 'T_ID:int'] ])
+    end
+
+    it "should parse a type annotation with a generic type" do
+      pending "Type annotations have not been implemented yet"
+      expect(ast('ann foo Pair[int,int];')).to eq([
+          ['T_ID:ann', 'T_ID:foo', ['T_ID:Pair', 'T_ID:int', 'T_ID:int']] ])
     end
   end
 
