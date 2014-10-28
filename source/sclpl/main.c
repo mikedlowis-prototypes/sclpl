@@ -163,6 +163,8 @@ str_t* str_join(char* joinstr, vec_t* strs) {
 /* Utility Functions
  *****************************************************************************/
 typedef enum {
+    TOKFILE,
+    ASTFILE,
     CSOURCE,
     OBJECT,
     PROGRAM,
@@ -173,6 +175,8 @@ typedef enum {
 str_t* get_extension(file_type_t ftype) {
     str_t* ext = NULL;
     switch (ftype) {
+        case TOKFILE:   ext = str_new(".tok");   break;
+        case ASTFILE:   ext = str_new(".ast");   break;
         case CSOURCE:   ext = str_new(".c");   break;
         case OBJECT:    ext = str_new(".o");   break;
         case PROGRAM:   ext = str_new("");     break;
@@ -196,10 +200,10 @@ str_t* get_filename(file_type_t ftype, str_t* infile) {
 }
 
 vec_t* parse_file(str_t* in) {
+    bool failed = false;
     FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
     parser_t* p_parser = parser_new(NULL, input);
     vec_t* p_vec = vec_new(0);
-    bool failed = false;
     while(!parser_eof(p_parser)) {
         tree_t* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
@@ -214,6 +218,59 @@ vec_t* parse_file(str_t* in) {
     mem_release(p_parser);
     if (failed) mem_release(p_vec);
     return ((failed) ? NULL : p_vec);
+}
+
+vec_t* program_deps(vec_t* program) {
+    vec_t* deps = vec_new(0);
+    (void)program;
+    return deps;
+}
+
+str_t* token_file(str_t* in) {
+    str_t* ofname = NULL;
+    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
+    FILE* output;
+    if (NULL == in) {
+        output = stdout;
+    } else {
+        ofname = get_filename(TOKFILE, in);
+        output = fopen(str_cstr(ofname), "w");
+    }
+
+    lexer_t* p_lexer = lexer_new(NULL, input);
+    lex_tok_t* token;
+    while(NULL != (token = lexer_read(p_lexer))) {
+        pprint_token(output, token);
+        mem_release(token);
+    }
+    mem_release(p_lexer);
+
+    return ofname;
+}
+
+str_t* syntax_file(str_t* in) {
+    str_t* ofname = NULL;
+    FILE* output;
+    if (NULL == in) {
+        output = stdout;
+    } else {
+        ofname = get_filename(ASTFILE, in);
+        output = fopen(str_cstr(ofname), "w");
+    }
+    vec_t* program = parse_file(in);
+    if (NULL != program) {
+        for (size_t idx = 0; idx < vec_size(program); idx++) {
+            pprint_tree(output, (tree_t*)vec_at(program, idx), 0);
+        }
+        mem_release(program);
+        fclose(output);
+    } else {
+        fclose(output);
+        remove(str_cstr(ofname));
+        mem_release(ofname);
+        ofname = NULL;
+    }
+    return ofname;
 }
 
 str_t* translate_file(str_t* in) {
@@ -258,32 +315,34 @@ str_t* link_files(list_t* in) {
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
-    lexer_t* p_lexer = lexer_new(NULL, stdin);
-    lex_tok_t* token;
-    while(NULL != (token = lexer_read(p_lexer))) {
-        pprint_token(stdout, token);
-        mem_release(token);
+    list_t* files  = input_files();
+    size_t  nfiles = list_size(files);
+    if (0 == nfiles) {
+        (void)token_file(NULL);
+    } else if (1 == nfiles) {
+        str_t* fname = list_front(files)->contents;
+        mem_release( token_file(fname) );
+    } else {
+        error_msg("too many files provided for target mode 'tokens'");
     }
-    mem_release(p_lexer);
+    mem_release(files);
     return 0;
 }
 
 static int emit_tree(void) {
     int ret = 0;
-    parser_t* p_parser = parser_new(NULL, stdin);
-    while(!parser_eof(p_parser)) {
-        tree_t* p_tree = grammar_toplevel(p_parser);
-        if (NULL != p_tree) {
-            tree_t* p_ast = convert_to_ast(p_tree);
-            pprint_tree(stdout, p_ast, 0);
-            mem_release(p_tree);
-            mem_release(p_ast);
-        } else {
-            parser_resume(p_parser);
-            ret = 1;
-        }
+    list_t* files  = input_files();
+    size_t  nfiles = list_size(files);
+    if (0 == nfiles) {
+        (void)syntax_file(NULL);
+    } else if (1 == nfiles) {
+        str_t* fname = list_front(files)->contents;
+        mem_release( syntax_file(fname) );
+    } else {
+        error_msg("too many files provided for target mode 'ast'");
     }
-    mem_release(p_parser);
+    mem_release(files);
+
     return ret;
 }
 

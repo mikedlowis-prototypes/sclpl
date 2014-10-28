@@ -1,10 +1,15 @@
 require 'open3'
 
-def lexer(input)
-  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--tokens', :stdin_data => input)
-  raise "Lexer command returned non-zero status" unless status.success?
+def cli(options, input = "")
+  out, err, status = Open3.capture3(
+      *(['./build/bin/sclpl-test'] + options + [{:stdin_data => input}]))
   raise err unless err == ""
-  out.scan(/^(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
+  raise "Command returned non-zero status" unless status.success?
+  out
+end
+
+def lexer(input)
+  cli(['--tokens'], input).scan(/^(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
 end
 
 def re_structure( token_array, offset = 0 )
@@ -25,9 +30,7 @@ def re_structure( token_array, offset = 0 )
 end
 
 def ast(input)
-  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--ast', :stdin_data => input)
-  raise err unless err == ""
-  raise "Parser command returned non-zero status" unless status.success?
+  out = cli(['--ast'], input)
   # Prep the parens for reading
   out.gsub!(/([()])|tree/,' \1 ')
   # Replace string literals so we can tokenize on spaces
@@ -50,8 +53,5 @@ def ast(input)
 end
 
 def ccode(input)
-  out, err, status = Open3.capture3('./build/bin/sclpl-test', '--csource', :stdin_data => input)
-  raise err unless err == ""
-  raise "Parser command returned non-zero status" unless status.success?
-  out
+  cli(['--csource'], input)
 end
