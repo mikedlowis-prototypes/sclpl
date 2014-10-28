@@ -46,7 +46,7 @@ char* scanner_read(scanner_t* p_scanner) {
 static char* scanner_read_string(scanner_t* p_scanner) {
     size_t capacity = 8;
     size_t index = 0;
-    char*  tok = (char*)malloc(sizeof(capacity));
+    char*  tok = (char*)malloc(capacity);
 
     /* Skip the first " */
     tok[index++] = scanner_current(p_scanner);
@@ -56,8 +56,10 @@ static char* scanner_read_string(scanner_t* p_scanner) {
     /* Read the contents of the string */
     while ('"' != scanner_current(p_scanner)) {
         /* Resize the buffer if necessary */
-        if ((index+2) >= capacity)
+        if ((index+2) >= capacity) {
             capacity = capacity << 1;
+            tok = (char*)realloc(tok, capacity);
+        }
 
         /* EOF results in an assertion (don't do) */
         if (scanner_eof(p_scanner))

@@ -62,7 +62,7 @@ void lexer_skipline(lexer_t* p_lexer) {
 
 static lex_tok_t* lexer_make_token(char* text) {
     lex_tok_t* p_tok = NULL;
-    if ((0 == strcmp(text,"end") || (text[0] == ';'))) {
+    if (0 == strcmp(text,"end")) {
         p_tok = lex_tok_new(T_END, NULL);
     } else if (lexer_oneof("()[]{};,'", text[0])) {
         p_tok = lexer_punc(text);
@@ -119,13 +119,18 @@ static lex_tok_t* lexer_char(char* text)
                 break;
             }
         }
+        if (NULL == p_tok)
+            p_tok = lexer_var(text);
     }
     return p_tok;
 }
 
 static lex_tok_t* lexer_radix_int(char* text)
 {
-    return lexer_integer(&text[2], read_radix(text[1]));
+    lex_tok_t* ret = lexer_integer(&text[2], read_radix(text[1]));
+    if (NULL == ret)
+        ret = lexer_var(text);
+    return ret;
 }
 
 static lex_tok_t* lexer_number(char* text)
@@ -198,11 +203,12 @@ char* lexer_dup(const char* p_old) {
 }
 
 static int read_radix(char ch) {
+    int ret = -1;
     switch(ch) {
-        case 'b': return 2;
-        case 'o': return 8;
-        case 'd': return 10;
-        case 'h': return 16;
-        default:  return 10;
+        case 'b': ret = 2;  break;
+        case 'o': ret = 8;  break;
+        case 'd': ret = 10; break;
+        case 'h': ret = 16; break;
     }
+    return ret;
 }

@@ -69,6 +69,10 @@ describe "lexer" do
     it "should recognize 'c'" do
       expect(lexer('\c')).to eq ['T_CHAR:\c']
     end
+
+    it "should recognize invalid named characters as identifiers" do
+      expect(lexer('\foobar')).to eq ['T_VAR:\foobar']
+    end
   end
 
   context "numbers" do
@@ -83,6 +87,10 @@ describe "lexer" do
 
       it "should recognize negitve integer with sign" do
         expect(lexer('-123')).to eq ['T_INT:-123']
+      end
+
+      it "should recognize invalid ints as identifiers" do
+        expect(lexer('123a')).to eq ['T_VAR:123a']
       end
     end
 
@@ -102,6 +110,10 @@ describe "lexer" do
       it "should recognize decimal integer" do
         expect(lexer('0hf0f')).to eq ['T_INT:3855']
       end
+
+      it "should recognize invalid radix ints as identifiers" do
+        expect(lexer('0b012')).to eq ['T_VAR:0b012']
+      end
     end
 
     context "floating point" do
@@ -113,8 +125,12 @@ describe "lexer" do
         expect(lexer('+123.0')).to eq ['T_FLOAT:123.000000']
       end
 
-      it "should recognize negitve float with sign" do
+      it "should recognize negative float with sign" do
         expect(lexer('-123.0')).to eq ['T_FLOAT:-123.000000']
+      end
+
+      it "should recognize invalid floats as identifiers" do
+        expect(lexer('123..0')).to eq ['T_VAR:123..0']
       end
     end
   end
@@ -154,6 +170,15 @@ describe "lexer" do
 
     it "should recognize a string that spans lines" do
       expect(lexer("\"a\nb\"")).to eq ["T_STRING:\"a\nb\""]
+    end
+
+    it "should recognize larger strings" do
+      expect(lexer("\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\"")).to eq [
+          "T_STRING:\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\""]
+    end
+
+    it "should raise an assertion exception when the file ends before a string terminates" do
+      expect{lexer("\"abc")}.to raise_error(/AssertionException/)
     end
   end
 end
