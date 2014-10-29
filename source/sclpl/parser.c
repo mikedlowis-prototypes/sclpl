@@ -29,20 +29,6 @@ parser_t* parser_new(char* p_prompt, FILE* input)
     return p_parser;
 }
 
-static void parser_tree_free(void* p_obj) {
-    tree_t* p_tree = ((tree_t*)p_obj);
-    if (NULL != p_tree->ptr.tok) {
-        mem_release(p_tree->ptr.tok);
-    }
-}
-
-tree_t* parser_tree_new(tree_tag_t tag, void* p_obj) {
-    tree_t* p_tree = (tree_t*)mem_allocate(sizeof(tree_t), &parser_tree_free);
-    p_tree->tag     = tag;
-    p_tree->ptr.tok = (lex_tok_t*)p_obj;
-    return p_tree;
-}
-
 void parser_fetch(parser_t* p_parser)
 {
     p_parser->p_tok = lexer_read(p_parser->p_lexer);
@@ -80,7 +66,7 @@ bool parser_accept(parser_t* p_parser, lex_tok_type_t type)
 {
     bool ret = false;
     if (parser_peek(p_parser)->type == type) {
-        vec_push_back(p_parser->p_tok_buf, parser_tree_new(ATOM, p_parser->p_tok));
+        vec_push_back(p_parser->p_tok_buf, tree_new(ATOM, p_parser->p_tok));
         p_parser->p_tok = NULL;
         ret = true;
     }
@@ -91,7 +77,7 @@ bool parser_accept_str(parser_t* p_parser, lex_tok_type_t type, const char* p_te
 {
     bool ret = false;
     if ((parser_peek(p_parser)->type == type) && (0 == strcmp((char*)(p_parser->p_tok->value), p_text))) {
-        vec_push_back(p_parser->p_tok_buf, parser_tree_new(ATOM, p_parser->p_tok));
+        vec_push_back(p_parser->p_tok_buf, tree_new(ATOM, p_parser->p_tok));
         p_parser->p_tok = NULL;
         ret = true;
     }
@@ -134,7 +120,7 @@ void parser_reduce(parser_t* p_parser, size_t mark)
         vec_push_back(p_form, p_tree);
     }
     vec_erase(p_buf, mark, vec_size(p_buf)-1);
-    vec_push_back(p_buf, parser_tree_new(TREE, p_form));
+    vec_push_back(p_buf, tree_new(TREE, p_form));
 }
 
 tree_t* parser_get_tree(parser_t* p_parser) {
@@ -143,7 +129,7 @@ tree_t* parser_get_tree(parser_t* p_parser) {
         p_tree = mem_retain(vec_at(p_parser->p_tok_buf, 0));
         vec_clear(p_parser->p_tok_buf);
     } else {
-        p_tree = parser_tree_new(TREE, p_parser->p_tok_buf);
+        p_tree = tree_new(TREE, p_parser->p_tok_buf);
         p_parser->p_tok_buf = vec_new(0);
     }
     return p_tree;
@@ -151,7 +137,7 @@ tree_t* parser_get_tree(parser_t* p_parser) {
 
 void parser_insert(parser_t* p_parser, lex_tok_type_t type, void* value) {
     lex_tok_t* p_tok = lex_tok_new(type, value);
-    tree_t*   p_tree = parser_tree_new(ATOM, p_tok);
+    tree_t*   p_tree = tree_new(ATOM, p_tok);
     vec_push_back(p_parser->p_tok_buf, p_tree);
 }
 

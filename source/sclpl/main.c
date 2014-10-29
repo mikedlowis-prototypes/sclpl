@@ -100,7 +100,7 @@ tree_t* convert_to_ast(tree_t* p_tree) {
     } else {
         vec_t* p_vec = p_tree->ptr.vec;
         vec_t* p_newvec = vec_new(0);
-        p_newtree = parser_tree_new(TREE, p_newvec);
+        p_newtree = tree_new(TREE, p_newvec);
         for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
             tree_t* p_item = convert_to_ast(vec_at(p_vec,idx));
             if (NULL != p_item)

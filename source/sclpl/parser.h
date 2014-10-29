@@ -10,18 +10,9 @@
 #include "lexer.h"
 #include "vec.h"
 #include "exn.h"
+#include "tree.h"
 
 DECLARE_EXCEPTION(ParseException);
-
-typedef enum { ATOM, TREE } tree_tag_t;
-
-typedef struct {
-    tree_tag_t tag;
-    union {
-        lex_tok_t* tok;
-        vec_t* vec;
-    } ptr;
-} tree_t;
 
 typedef struct {
     lexer_t* p_lexer;
@@ -30,8 +21,6 @@ typedef struct {
 } parser_t;
 
 parser_t* parser_new(char* p_prompt, FILE* input);
-
-tree_t* parser_tree_new(tree_tag_t tag, void* p_obj);
 
 void parser_fetch(parser_t* p_parser);
 
