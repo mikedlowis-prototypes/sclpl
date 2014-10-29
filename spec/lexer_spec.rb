@@ -43,6 +43,42 @@ describe "lexer" do
         ["T_LBRACK", "T_RBRACK", "T_LPAR", "T_RPAR", "T_LBRACE", "T_RBRACE",
          "T_SQUOTE", "T_COMMA", "T_END"])
     end
+
+    it "should recognize [ after an identifier" do
+      expect(lexer('foo[')).to eq(['T_ID:foo', 'T_LBRACK'])
+    end
+
+    it "should recognize ] after an identifier" do
+      expect(lexer('foo]')).to eq(['T_ID:foo', 'T_RBRACK'])
+    end
+
+    it "should recognize ( after an identifier" do
+      expect(lexer('foo(')).to eq(['T_ID:foo', 'T_LPAR'])
+    end
+
+    it "should recognize ) after an identifier" do
+      expect(lexer('foo)')).to eq(['T_ID:foo', 'T_RPAR'])
+    end
+
+    it "should recognize { after an identifier" do
+      expect(lexer('foo{')).to eq(['T_ID:foo', 'T_LBRACE'])
+    end
+
+    it "should recognize } after an identifier" do
+      expect(lexer('foo}')).to eq(['T_ID:foo', 'T_RBRACE'])
+    end
+
+    it "should recognize } after an identifier" do
+      expect(lexer('foo\'')).to eq(['T_ID:foo', 'T_SQUOTE'])
+    end
+
+    it "should recognize } after an identifier" do
+      expect(lexer('foo,')).to eq(['T_ID:foo', 'T_COMMA'])
+    end
+
+    it "should recognize } after an identifier" do
+      expect(lexer('foo;')).to eq(['T_ID:foo', 'T_END'])
+    end
   end
 
   context "characters" do

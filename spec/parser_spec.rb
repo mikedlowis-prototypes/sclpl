@@ -29,50 +29,42 @@ describe "sclpl grammar" do
 
   context "type definitions" do
     it "should parse a simple type definition" do
-      pending "Type annotations have not been implemented yet"
-      expect(ast('type foo is int;')).to eq([ ['T_ID:type', 'T_ID:foo', 'T_ID:int'] ])
+      expect(ast('type foo is int;')).to eq([ ['T_ID:type', 'T_ID:foo', 'T_ID:is', 'T_ID:int'] ])
     end
 
     it "should parse a function type definition with no args" do
-      pending "Type annotations have not been implemented yet"
-      expect(ast('type foo is (-> int ());')).to eq([
-          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:->', 'T_ID:int', []]] ])
+      expect(ast('type foo is int();')).to eq([
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', []]] ])
     end
 
     it "should parse a function type definition with one arg" do
-      pending "Type annotations have not been implemented yet"
-      expect(ast('type foo is (-> int (int));')).to eq([
-          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:->', 'T_ID:int', ['T_ID:int']]] ])
+      expect(ast('type foo is int(int);')).to eq([
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int']]] ])
     end
 
     it "should parse a function type definition with two args" do
-      pending "Type annotations have not been implemented yet"
-      expect(ast('type foo is (-> int (int, int));')).to eq([
-          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:->', 'T_ID:int', ['T_ID:int', 'T_ID:int']]] ])
+      expect(ast('type foo is int(int,int);')).to eq([
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int', 'T_ID:int']]] ])
     end
 
     it "should parse a function type definition with three args" do
-      pending "Type annotations have not been implemented yet"
-      expect(ast('type foo is (-> int (int, int, int));')).to eq([
-          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:->', 'T_ID:int', ['T_ID:int', 'T_ID:int', 'T_ID:int']]] ])
+      expect(ast('type foo is int(int,int,int);')).to eq([
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int', 'T_ID:int', 'T_ID:int']]] ])
     end
 
     it "should parse a tuple type definition with one field" do
-      pending "Type annotations have not been implemented yet"
       expect(ast('type foo is {int};')).to eq([
-          ['T_ID:type', 'T_ID:foo', ['T_ID:tuple', 'T_ID:int']] ])
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int']] ])
     end
 
     it "should parse a tuple type definition with two fields" do
-      pending "Type annotations have not been implemented yet"
       expect(ast('type foo is {int,int};')).to eq([
-          ['T_ID:type', 'T_ID:foo', ['T_ID:tuple', 'T_ID:int', 'T_ID:int']] ])
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int', 'T_ID:int']] ])
     end
 
     it "should parse a tuple type definition with three fields" do
-      pending "Type annotations have not been implemented yet"
       expect(ast('type foo is {int,int,int};')).to eq([
-          ['T_ID:type', 'T_ID:foo', ['T_ID:tuple', 'T_ID:int', 'T_ID:int', 'T_ID:int']] ])
+          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int', 'T_ID:int', 'T_ID:int']] ])
     end
 
     it "should parse a record type definition with one field" do
@@ -92,7 +84,6 @@ describe "sclpl grammar" do
       expect(ast('type foo is { int a, int b };')).to eq([
           ['T_ID:type', 'T_ID:foo', ['T_ID:record', ['T_ID:int', 'T_ID:a'], ['T_ID:int', 'T_ID:b'], ['T_ID:int', 'T_ID:c']]] ])
     end
-
   end
 
   context "definitions" do
@@ -127,9 +118,16 @@ describe "sclpl grammar" do
   end
 
   context "annotations" do
-    it "should parse a type annotation" do
-      pending "Type annotations have not been implemented yet"
+    it "should parse a type annotation for a simple type" do
       expect(ast('ann foo int;')).to eq([ ['T_ID:ann', 'T_ID:foo', 'T_ID:int'] ])
+    end
+
+    it "should parse a type annotation for a function type" do
+      expect(ast('ann foo int();')).to eq([ ['T_ID:ann', 'T_ID:foo', ['T_ID:int', []]] ])
+    end
+
+    it "should parse a type annotation for a tuple type" do
+      expect(ast('ann foo {int, int};')).to eq([ ['T_ID:ann', 'T_ID:foo', ['T_ID:tuple', 'T_ID:int', 'T_ID:int']] ])
     end
 
     it "should parse a type annotation with a generic type" do
