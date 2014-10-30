@@ -14,7 +14,7 @@ void pprint_token_type(FILE* file, lex_tok_t* token);
 
 void pprint_token_value(FILE* file, lex_tok_t* token);
 
-void pprint_token(FILE* file, lex_tok_t* token);
+void pprint_token(FILE* file, lex_tok_t* token, bool print_loc);
 
 void pprint_tree(FILE* file, tree_t* tree, int depth);
 

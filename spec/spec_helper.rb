@@ -9,7 +9,7 @@ def cli(options, input = "")
 end
 
 def lexer(input)
-  cli(['--tokens'], input).scan(/^(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
+  cli(['--tokens'], input).scan(/^\d+:\d+:(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
 end
 
 def re_structure( token_array, offset = 0 )

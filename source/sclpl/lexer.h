@@ -25,7 +25,7 @@ typedef struct {
     lex_tok_type_t type;
     const char* file;
     size_t line;
-    size_t column;
+    size_t col;
     void* value;
 } lex_tok_t;
 

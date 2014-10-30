@@ -17,14 +17,17 @@ scanner_t* scanner_new(char* p_prompt, FILE* p_file) {
     scanner_t* p_scanner = (scanner_t*)mem_allocate(sizeof(scanner_t), &scanner_free);
     p_scanner->p_line   = NULL;
     p_scanner->index    = 0;
+    p_scanner->line     = 0;
     p_scanner->p_input  = p_file;
     p_scanner->p_prompt = p_prompt;
     return p_scanner;
 }
 
-char* scanner_read(scanner_t* p_scanner) {
+char* scanner_read(scanner_t* p_scanner, size_t* line, size_t* column) {
     char* p_tok = NULL;
     scanner_skip_ws(p_scanner);
+    *line   = p_scanner->line;
+    *column = p_scanner->index+1;
     if (!scanner_eof(p_scanner)) {
         if (scanner_oneof(p_scanner, "()[]{};,'")) {
             p_tok = scanner_dup(p_scanner, p_scanner->index, 1);
@@ -126,6 +129,8 @@ void scanner_getline(scanner_t* p_scanner) {
         p_scanner->p_line[index++] = (c == EOF) ? '\0' : c;
         p_scanner->p_line[index++] = '\0';
         p_scanner->index = 0;
+        /* Increment line count */
+        p_scanner->line++;
     }
 }
 

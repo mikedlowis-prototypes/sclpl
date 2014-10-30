@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static lex_tok_t* lexer_make_token(char* text);
+static lex_tok_t* lexer_make_token(size_t line, size_t col, char* text);
 static lex_tok_t* lexer_punc(char* text);
 static lex_tok_t* lexer_char(char* text);
 static lex_tok_t* lexer_radix_int(char* text);
@@ -48,9 +48,11 @@ lexer_t* lexer_new(char* p_prompt, FILE* p_input) {
 
 lex_tok_t* lexer_read(lexer_t* p_lexer) {
     lex_tok_t* p_tok = NULL;
-    char* text = scanner_read(p_lexer->scanner);
+    size_t line;
+    size_t col;
+    char* text = scanner_read(p_lexer->scanner, &line, &col);
     if (NULL != text) {
-        p_tok = lexer_make_token(text);
+        p_tok = lexer_make_token(line, col, text);
         free(text);
     }
     return p_tok;
@@ -60,7 +62,7 @@ void lexer_skipline(lexer_t* p_lexer) {
     scanner_getline(p_lexer->scanner);
 }
 
-static lex_tok_t* lexer_make_token(char* text) {
+static lex_tok_t* lexer_make_token(size_t line, size_t col, char* text) {
     lex_tok_t* p_tok = NULL;
     if (0 == strcmp(text,"end")) {
         p_tok = lex_tok_new(T_END, NULL);
@@ -79,6 +81,11 @@ static lex_tok_t* lexer_make_token(char* text) {
         p_tok = lexer_bool(text);
     } else {
         p_tok = lexer_var(text);
+    }
+    /* If we found a valid token then fill in the location details */
+    if (NULL != p_tok) {
+        p_tok->line = line;
+        p_tok->col  = col;
     }
     return p_tok;
 }

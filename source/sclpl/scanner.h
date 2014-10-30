@@ -13,13 +13,14 @@
 typedef struct {
     char* p_line;
     size_t index;
+    size_t line;
     FILE* p_input;
     char* p_prompt;
 } scanner_t;
 
 scanner_t* scanner_new(char* p_prompt, FILE* p_file);
 
-char* scanner_read(scanner_t* p_scanner);
+char* scanner_read(scanner_t* p_scanner, size_t* line, size_t* col);
 
 bool scanner_eof(scanner_t* p_scanner);
 

@@ -69,8 +69,12 @@ void pprint_token_value(FILE* file, lex_tok_t* token) {
     }
 }
 
-void pprint_token(FILE* file, lex_tok_t* token)
+void pprint_token(FILE* file, lex_tok_t* token, bool print_loc)
 {
+    if (print_loc) {
+        fprintf(file, "%zu:", token->line);
+        fprintf(file, "%zu:", token->col);
+    }
     pprint_token_type(file, token);
     if (token->type < T_LBRACE) {
         fprintf(file, ":");
@@ -84,7 +88,7 @@ void pprint_tree(FILE* file, tree_t* tree, int depth)
 {
     print_indent(file, depth);
     if (tree->tag == ATOM) {
-        pprint_token(file, tree->ptr.tok);
+        pprint_token(file, tree->ptr.tok, false);
     } else {
         fputs("(tree", file);
         vec_t* p_vec = tree->ptr.vec;

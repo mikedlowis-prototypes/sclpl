@@ -240,7 +240,7 @@ str_t* token_file(str_t* in) {
     lexer_t* p_lexer = lexer_new(NULL, input);
     lex_tok_t* token;
     while(NULL != (token = lexer_read(p_lexer))) {
-        pprint_token(output, token);
+        pprint_token(output, token, true);
         mem_release(token);
     }
     mem_release(p_lexer);
