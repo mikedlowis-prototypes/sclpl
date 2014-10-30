@@ -11,19 +11,19 @@ describe "sclpl grammar" do
     end
 
     it "should error on missing semicolon" do
-      expect{ast('require "foo"')}.to raise_error /Invalid Syntax/
+      expect{ast('require "foo"')}.to raise_error /Error/
     end
 
     it "should error on missing filename" do
-      expect{ast('require ;')}.to raise_error /Invalid Syntax/
+      expect{ast('require ;')}.to raise_error /Error/
     end
 
     it "should error on invalid filename type" do
-      expect{ast('require 123;')}.to raise_error /Invalid Syntax/
+      expect{ast('require 123;')}.to raise_error /Error/
     end
 
     it "should error on too many parameters" do
-      expect{ast('require foo bar;')}.to raise_error /Invalid Syntax/
+      expect{ast('require foo bar;')}.to raise_error /Error/
     end
   end
 
@@ -216,11 +216,11 @@ describe "sclpl grammar" do
 
   context "corner cases" do
     it "an unexpected terminator should error" do
-      expect{ast(';')}.to raise_error /Invalid Syntax/
+      expect{ast(';')}.to raise_error /Error/
     end
 
     it "an invalid literal should error" do
-      expect{ast('\'')}.to raise_error /Invalid Syntax/
+      expect{ast('\'')}.to raise_error /Error/
     end
   end
 end

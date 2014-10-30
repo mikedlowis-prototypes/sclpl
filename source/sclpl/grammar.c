@@ -24,7 +24,7 @@ tree_t* grammar_toplevel(parser_t* p)
             grammar_expression(p);
         p_tree = parser_get_tree(p);
     } catch(ParseException) {
-        fprintf(stderr, "Invalid Syntax\n");
+        /* Do nothing, the tree is bad */
     }
     return p_tree;
 }
@@ -136,7 +136,7 @@ void grammar_literal(parser_t* p)
             break;
 
         default:
-            parser_error(p, "Not a valid expression");
+            parser_error(p, "Expected a literal");
     }
 }
 

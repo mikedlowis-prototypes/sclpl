@@ -266,7 +266,8 @@ str_t* syntax_file(str_t* in) {
         fclose(output);
     } else {
         fclose(output);
-        remove(str_cstr(ofname));
+        if (NULL != ofname)
+            remove(str_cstr(ofname));
         mem_release(ofname);
         ofname = NULL;
     }

@@ -59,6 +59,8 @@ void parser_resume(parser_t* p_parser) {
 void parser_error(parser_t* p_parser, const char* p_text)
 {
     (void)p_parser;
+    lex_tok_t* tok = parser_peek(p_parser);
+    fprintf(stderr, "<file>:%zu:%zu:Error: %s\n", tok->line, tok->col, p_text);
     throw_msg(ParseException, p_text);
 }
 
