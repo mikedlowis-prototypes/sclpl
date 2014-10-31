@@ -29,37 +29,8 @@ opts_cfg_t Options_Config[] = {
 };
 
 void print_usage(void) {
-    opts_cfg_t* opts = &Options_Config[0];
-    bool opts_have_args = false;
-    size_t sz = 0;
-    /* Figure out the longest option name */
-    while (NULL != opts->name) {
-        size_t name_sz = strlen(opts->name);
-        if (name_sz > sz) {
-            sz = name_sz;
-        }
-        if (opts->has_arg) {
-            opts_have_args = true;
-        }
-        opts++;
-    }
-
-    /* Print the usage and option list */
     puts(Usage);
-    int padding = sz + 4 + ((opts_have_args) ? 4 : 0);
-    char*  buffer  = (char*)malloc(padding+1);
-    opts = &Options_Config[0];
-    while (NULL != opts->name) {
-        if (1 == strlen(opts->name))
-            sprintf(buffer, " -%s", opts->name);
-        else
-            sprintf(buffer, " --%s", opts->name);
-        if (opts->has_arg) sprintf(&buffer[strlen(buffer)], "=ARG ");
-        printf("%-*s%s\n", padding, buffer, opts->desc);
-        opts++;
-    }
-    free(buffer);
-
+    opts_print_help(stdout, Options_Config);
     exit(1);
 }
 
