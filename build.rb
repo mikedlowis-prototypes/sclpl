@@ -1,4 +1,4 @@
-#!/bin/env ruby
+#!/usr/bin/env ruby
 require './build-system/setup'
 
 def windows?
@@ -17,17 +17,34 @@ base_env = BuildEnv.new do |env|
   # Use gcc toolchain
   env.set_toolset(:gcc)
 
-  # Add a builder for creating directories
-  env.add_builder :MakeDir do |target, sources, cache, env, vars|
-    cache.mkdir_p(target)
-    target if Dir.exists?(target)
+  # Add a builder for creating a CMake project
+  env.add_builder :CMake do |target, sources, cache, env, vars|
+    target_dir = File.dirname(target)
+    source_dir = "../" * target_dir.split(/\\|\//).length + File.dirname(sources.first)
+    cmd = env.expand_varref("${CMAKE_CMD}", vars.merge('_SOURCES' => source_dir))
+    unless cache.up_to_date?(target, cmd, sources, env)
+      cache.mkdir_p(target_dir)
+      Dir.chdir(target_dir) { env.execute("CMake #{target}", cmd) }
+      cache.register_build(target, cmd, sources, env)
+    end
+    target if File.exists? target
+  end
+
+  env.add_builder :Make do |target, sources, cache, env, vars|
+    working_dir = File.dirname(sources.first)
+    cmd = env.expand_varref("${MAKE_CMD}", vars)
+    unless cache.up_to_date?(target, cmd, sources, env)
+      Dir.chdir(working_dir) { env.execute("Make #{target}", cmd) }
+      cache.register_build(target, cmd, sources, env)
+    end
+    target if File.exists? target
   end
 
   # CMake Configuration
   env['CMAKE_GENERATOR'] = ENV['CMAKE_GENERATOR'] || "#{windows? ? 'NMake' : 'Unix'} Makefiles"
   env['CMAKE_FLAGS']     = []
-  env['CMAKE_CMD']       = ['cmake', '-G', '${CMAKE_GENERATOR}', '${CMAKE_FLAGS}']
-  env['MAKE_CMD']        = windows? ? 'nmake' : 'make'
+  env['CMAKE_CMD']       = ['cmake', '-G', '${CMAKE_GENERATOR}', '${CMAKE_FLAGS}', '${_SOURCES}']
+  env['MAKE_CMD']        = [windows? ? 'nmake' : 'make']
 
   # Compiler options
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra']#, '-Werror']
@@ -54,14 +71,11 @@ end
 #------------------------------------------------------------------------------
 # Clang Toolchain Targets
 #------------------------------------------------------------------------------
-main_env.MakeDir('build/llvm', [])
-main_env.Command('build/llvm/Makefile',
-                 Dir['source/vendor/llvm-3.4.2/CMakeLists.txt',
-                     'source/vendor/llvm-3.4.2/cmake/**/*/'],
-                 'CMD' => ['cd', 'build/llvm/', '&&', '${CMAKE_CMD}', '../../source/vendor/llvm-3.4.2/'])
-main_env.Command("build/llvm/bin/clang#{windows? ? '.exe':''}",
-                 Dir['source/vendor/llvm-3.4.2/tools/**/*.*'],
-                 'CMD' => ['cd', 'build/llvm', '&&', '${MAKE_CMD}'])
+main_env.CMake('build/llvm/Makefile',
+               Dir['source/vendor/llvm-3.4.2/CMakeLists.txt',
+                   'source/vendor/llvm-3.4.2/cmake/**/*/'])
+main_env.Make("build/llvm/bin/clang#{windows? ? '.exe':''}",
+              ['build/llvm/Makefile'] + Dir['source/vendor/llvm-3.4.2/tools/**/*.*'])
 
 # Register clang with the environment
 ENV['PATH'] = "build/llvm/bin/#{windows? ? ';':':'}#{ENV['PATH']}"
