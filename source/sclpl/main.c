@@ -106,7 +106,6 @@ list_t* input_files(void) {
         list_push_front(infiles, str_new(files[0]));
         files++;
     }
-    mem_release(list_pop_front(infiles));
     free(fvec);
     return infiles;
 }
