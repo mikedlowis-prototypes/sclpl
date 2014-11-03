@@ -14,9 +14,6 @@ base_env = BuildEnv.new do |env|
   env.build_dir('source','build/obj/source')
   env.build_dir('modules','build/obj/modules')
 
-  # Use gcc toolchain
-  env.set_toolset(:gcc)
-
   # Add a builder for creating a CMake project
   env.add_builder :CMake do |target, sources, cache, env, vars|
     target_dir = File.dirname(target)
@@ -30,6 +27,7 @@ base_env = BuildEnv.new do |env|
     target if File.exists? target
   end
 
+  # Add a builder for building a project with Make
   env.add_builder :Make do |target, sources, cache, env, vars|
     working_dir = File.dirname(sources.first)
     cmd = env.expand_varref("${MAKE_CMD}", vars)
@@ -64,21 +62,24 @@ test_env = base_env.clone do |env|
   # Move the object files to the build dir
   env.build_dir('source','build/obj_test/source')
   env.build_dir('modules','build/obj_test/modules')
-  env['CFLAGS'] +=  ['-O0', '--coverage']
-  env['LDFLAGS'] += ['--coverage']
+  env['CFLAGS'] +=  ['-O0']
+  if Opts[:profile].include? "coverage"
+    env['CFLAGS']  << '--coverage'
+    env['LDFLAGS'] << '--coverage'
+  end
 end
 
 #------------------------------------------------------------------------------
 # Clang Toolchain Targets
 #------------------------------------------------------------------------------
-main_env.CMake('build/llvm/Makefile',
-               Dir['source/vendor/llvm-3.4.2/CMakeLists.txt',
-                   'source/vendor/llvm-3.4.2/cmake/**/*/'])
-main_env.Make("build/llvm/bin/clang#{windows? ? '.exe':''}",
-              ['build/llvm/Makefile'] + Dir['source/vendor/llvm-3.4.2/tools/**/*.*'])
+#main_env.CMake('build/llvm/Makefile',
+#               Dir['source/vendor/llvm-3.4.2/CMakeLists.txt',
+#                   'source/vendor/llvm-3.4.2/cmake/**/*/'])
+#main_env.Make("build/llvm/bin/clang#{windows? ? '.exe':''}",
+#              ['build/llvm/Makefile'] + Dir['source/vendor/llvm-3.4.2/tools/**/*.*'])
 
 # Register clang with the environment
-ENV['PATH'] = "build/llvm/bin/#{windows? ? ';':':'}#{ENV['PATH']}"
+#ENV['PATH'] = "build/llvm/bin/#{windows? ? ';':':'}#{ENV['PATH']}"
 
 #------------------------------------------------------------------------------
 # Release Build Targets
@@ -91,8 +92,9 @@ main_env.Program('build/bin/sclpl',
 #------------------------------------------------------------------------------
 # Test Build Targets
 #------------------------------------------------------------------------------
-test_env.Program('build/bin/sclpl-test',
-  FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
-test_env.Command('RSpec', [], 'CMD' => [
-    'rspec', '--pattern', 'spec/**{,/*/**}/*_spec.rb', '--format', 'documentation'])
-
+if Opts[:profile].include? "test"
+  test_env.Program('build/bin/sclpl-test',
+    FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
+  test_env.Command('RSpec', [], 'CMD' => [
+      'rspec', '--pattern', 'spec/**{,/*/**}/*_spec.rb', '--format', 'documentation'])
+end
