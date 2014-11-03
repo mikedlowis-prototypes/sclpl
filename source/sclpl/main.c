@@ -113,10 +113,10 @@ list_t* input_files(void) {
 
 /* Command Building
  *****************************************************************************/
-char Object_Cmd[]    = "clang -c -I. -o %s %s";
-char Program_Cmd[]   = "clang -o %s %s";
+char Object_Cmd[]    = "cc -c -o %s %s";
+char Program_Cmd[]   = "cc -o %s %s";
 char StaticLib_Cmd[] = "ar rcs %s %s";
-char SharedLib_Cmd[] = "clang -shared %s";
+char SharedLib_Cmd[] = "cc -shared %s";
 
 str_t* str_join(char* joinstr, vec_t* strs) {
     str_t* ret = str_new("");
