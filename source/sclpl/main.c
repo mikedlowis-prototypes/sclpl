@@ -295,7 +295,7 @@ str_t* translate_file(str_t* in) {
 
 str_t* compile_file(str_t* in) {
     str_t* ofname  = get_filename(OBJECT, in);
-    vec_t* parts   = vec_new(5, str_new("gcc -c -o"), mem_retain(ofname), str_new("-I"), get_inc_dir(), mem_retain(in));
+    vec_t* parts   = vec_new(5, str_new("cc -c -o"), mem_retain(ofname), str_new("-I"), get_inc_dir(), mem_retain(in));
     str_t* command = str_join(" ", parts);
     if (opts_is_set(NULL, "verbose"))
         puts(str_cstr(command));

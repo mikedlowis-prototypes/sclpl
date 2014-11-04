@@ -89,9 +89,10 @@ static inline _Value __string(char v[]) {
 
 static inline _Value __struct(size_t nflds, ...) {
     void** obj = (void**)allocate(nflds, sizeof(void*) * nflds);
+    size_t i;
     va_list args;
     va_start(args, nflds);
-    for(size_t i = 0; i < nflds; i++)
+    for(i = 0; i < nflds; i++)
         obj[i] = va_arg(args, void*);
     va_end(args);
     return (_Value)obj;
