@@ -47,23 +47,20 @@ describe "cli" do
     end
 
     it "should compile the input file in verbose mode (short flag)" do
-      pending "Can't find the sclpl header"
       expect(cli(['-v', '--object', 'spec/src/sample.scl'])).to eq(
-          "clang -c -o spec/src/sample.o spec/src/sample.c")
+          "cc -c -o spec/src/sample.o -I ./build/bin/../include/ spec/src/sample.c\n")
       expect(File.exists? 'spec/src/sample.o').to be(true)
       FileUtils.rm('spec/src/sample.o')
     end
 
     it "should compile the input file in verbose mode (long flag)" do
-      pending "Can't find the sclpl header"
       expect(cli(['--verbose', '--object', 'spec/src/sample.scl'])).to eq(
-          "clang -c -o spec/src/sample.o spec/src/sample.c")
+          "cc -c -o spec/src/sample.o -I ./build/bin/../include/ spec/src/sample.c\n")
       expect(File.exists? 'spec/src/sample.o').to be(true)
       FileUtils.rm('spec/src/sample.o')
     end
 
     it "should compile the input file" do
-      pending "Can't find the sclpl header"
       expect(cli(['--object', 'spec/src/sample.scl'])).to eq("")
       expect(File.exists? 'spec/src/sample.o').to be(true)
       FileUtils.rm('spec/src/sample.o')

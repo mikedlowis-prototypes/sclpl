@@ -117,21 +117,54 @@ char Program_Cmd[]   = "cc -o %s %s";
 char StaticLib_Cmd[] = "ar rcs %s %s";
 char SharedLib_Cmd[] = "cc -shared %s";
 
-str_t* str_join(char* joinstr, vec_t* strs) {
-    str_t* ret = str_new("");
-    str_t* jstr = str_new(joinstr);
-    for (size_t idx = 0; idx < vec_size(strs); idx++) {
-        str_t* str = (str_t*)vec_at(strs, idx);
-        if (str_size(ret) > 0)
-            mem_swap((void**)&ret, str_concat(ret, jstr));
-        mem_swap((void**)&ret, str_concat(ret, str));
-    }
-    mem_release(jstr);
-    return ret;
-}
-
 /* Utility Functions
  *****************************************************************************/
+str_t* get_bin_dir(void) {
+    str_t* bindir = NULL;
+    str_t* slash = str_new("/");
+    str_t* progname = str_new(opts_prog_name());
+    size_t index = str_rfind(progname, slash);
+    str_t* path = (index == SIZE_MAX) ? NULL : str_substr(progname, 0, index+1);
+    str_t* prog = (index == SIZE_MAX) ? str_new(str_cstr(progname)) : str_substr(progname, index+1, str_size(progname));
+    if (NULL != path) {
+        bindir = mem_retain(path);
+    } else {
+        error_msg("Could not locate the bin directory");
+        exit(1);
+    //    str_t* pathvar = str_new(getenv("PATH"));
+    //    str_t* sep = str_new(":");
+    //    vec_t* paths = str_split(pathvar, sep);
+    //    for (size_t idx = 0u; idx < vec_size(paths); idx++) {
+    //        str_t* currpath = (str_t*)vec_at(paths, idx);
+    //        str_t* binpath = str_concat(str_concat(currpath, slash), prog);
+    //        if (file_exists(str_cstr(binpath))) {
+    //            bindir = binpath;
+    //            mem_release(currpath);
+    //            break;
+    //        }
+    //        mem_release(currpath);
+    //        mem_release(binpath);
+    //    }
+    //    mem_release(sep);
+    //    mem_release(pathvar);
+    //    mem_release(paths);
+    }
+    mem_release(slash);
+    mem_release(progname);
+    mem_release(path);
+    mem_release(prog);
+    return bindir;
+}
+
+str_t* get_inc_dir(void) {
+    str_t* bindir  = get_bin_dir();
+    str_t* pathmod = str_new("../include/");
+    str_t* incdir  = str_concat(bindir, pathmod);
+    mem_release(bindir);
+    mem_release(pathmod);
+    return incdir;
+}
+
 typedef enum {
     TOKFILE,
     ASTFILE,
@@ -262,7 +295,7 @@ str_t* translate_file(str_t* in) {
 
 str_t* compile_file(str_t* in) {
     str_t* ofname  = get_filename(OBJECT, in);
-    vec_t* parts   = vec_new(3, str_new("clang -c -o"), mem_retain(ofname), mem_retain(in));
+    vec_t* parts   = vec_new(5, str_new("cc -c -o"), mem_retain(ofname), str_new("-I"), get_inc_dir(), mem_retain(in));
     str_t* command = str_join(" ", parts);
     if (opts_is_set(NULL, "verbose"))
         puts(str_cstr(command));
@@ -391,6 +424,15 @@ static int emit_program(void) {
 */
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
+
+    //str_t* bindir = get_bin_dir();
+    //str_t* incdir = get_inc_dir();
+    //printf("Bin Dir: %s\n", str_cstr(bindir));
+    //printf("Inc Dir: %s\n", str_cstr(incdir));
+    //mem_release(bindir);
+    //mem_release(incdir);
+    //puts("done");
+    //exit(1);
 
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
