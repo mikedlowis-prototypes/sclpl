@@ -223,4 +223,14 @@ typedef _Value (*__fnptr_n)(_Value env, ...);
 #define __substring(val, start, end) assert(false)
 #define __string_concat(lval, rval)  assert(false)
 
+/* Port Operations */
+_Value __port_read_char(_Value port);
+_Value __port_write_char(_Value port, _Value ch);
+_Value __port_read_byte(_Value port);
+_Value __port_write_byte(_Value port, _Value byte);
+_Value __open_input_file(_Value fname);
+_Value __open_output_file(_Value fname);
+_Value __close_port(_Value port);
+_Value __is_eof(_Value port);
+
 #endif /* SCLPL_H */

@@ -15,14 +15,14 @@ base_env = BuildEnv.new do |env|
   env.build_dir('modules','build/obj/modules')
 
   env.add_builder :Install do |target, sources, cache, env, vars|
-    is_dir = (sources.length > 1) || Dir.exists?(sources.first)
+    is_dir = (sources.length > 1) || Dir.exists?(sources.first) || Dir.exists?(target)
     outdir = is_dir ? target : File.dirname(target)
     # Collect the list of files to copy over
     file_map = {}
     if is_dir
       sources.each do |src|
         if Dir.exists? src
-          Dir["#{src}/**/*"].each do |subfile|
+          Dir.glob("#{src}/**/*", File::FNM_DOTMATCH).each do |subfile|
               subpath = Pathname.new(subfile).relative_path_from(Pathname.new(src)).to_s
               file_map[subfile] = "#{outdir}/#{subpath}"
           end
@@ -38,7 +38,7 @@ base_env = BuildEnv.new do |env|
       puts "INSTALL #{target}"
       file_map.each do |k,v|
         cache.mkdir_p(File.dirname(v))
-        FileUtils.cp(k,v)
+        FileUtils.cp(k, v, :preserve => true)
       end
       cache.register_build(target, :Install, file_map.keys, env)
     end
@@ -79,8 +79,9 @@ end
 #------------------------------------------------------------------------------
 # Release Build Targets
 #------------------------------------------------------------------------------
-main_env.Library('build/lib/libcds.a', FileList['modules/libcds/source/**/*.c'])
+main_env.Library('build/lib/libcds.a',  FileList['modules/libcds/source/**/*.c'])
 main_env.Library('build/lib/libopts.a', FileList['modules/libopts/source/**/*.c'])
+main_env.Library('build/lib/libsrt.a',  FileList['source/runtime/*.c'])
 main_env.Program('build/bin/sclpl',
   FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
 main_env.Install('build/include/sclpl.h', 'source/runtime/sclpl.h')
