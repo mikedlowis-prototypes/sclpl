@@ -20,6 +20,7 @@ typedef struct {
     } ptr;
 } tree_t;
 
+tree_t* tree_convert(tree_t* p_tree);
 tree_t* tree_new(tree_tag_t tag, void* p_obj);
 tree_t* tree_get_child(tree_t* p_tree, size_t idx);
 void* tree_get_val(tree_t* p_tree);

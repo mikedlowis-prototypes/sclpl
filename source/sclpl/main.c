@@ -9,6 +9,10 @@
 #include "lexer.h"
 #include "pprint.h"
 #include "codegen.h"
+#include "sys.h"
+#include "log.h"
+#include "ops.h"
+#include "tree.h"
 
 /* Command Line Options
  *****************************************************************************/
@@ -34,53 +38,6 @@ void print_usage(void) {
     exit(1);
 }
 
-void error_msg(const char msg[], ...) {
-    va_list args;
-    va_start(args, msg);
-    fprintf(stderr, "Error: ");
-    vfprintf(stderr, msg, args);
-    va_end(args);
-    fputs("\n",stderr);
-}
-
-/* Tree Rewriting
- *****************************************************************************/
-bool is_punctuation(lex_tok_t* p_tok) {
-    bool ret = false;
-    switch(p_tok->type) {
-        case T_END:
-        case T_LBRACE:
-        case T_RBRACE:
-        case T_LBRACK:
-        case T_RBRACK:
-        case T_LPAR:
-        case T_RPAR:
-        case T_COMMA:
-            ret = true;
-        default:
-            break;
-    }
-    return ret;
-}
-
-tree_t* convert_to_ast(tree_t* p_tree) {
-    tree_t* p_newtree = NULL;
-    if (p_tree->tag == ATOM) {
-        if (!is_punctuation(p_tree->ptr.tok))
-            p_newtree = mem_retain(p_tree);
-    } else {
-        vec_t* p_vec = p_tree->ptr.vec;
-        vec_t* p_newvec = vec_new(0);
-        p_newtree = tree_new(TREE, p_newvec);
-        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-            tree_t* p_item = convert_to_ast(vec_at(p_vec,idx));
-            if (NULL != p_item)
-                vec_push_back(p_newvec, p_item);
-        }
-    }
-    return p_newtree;
-}
-
 /* Options Helpers
  *****************************************************************************/
 bool file_exists(const char* name) {
@@ -100,7 +57,7 @@ list_t* input_files(void) {
     while (NULL != files[0]) {
         if (!file_exists(files[0])) {
             mem_release(infiles);
-            error_msg("no such file or directory: %s", files[0]);
+            log_error("no such file or directory: %s", files[0]);
             exit(1);
         }
         list_push_front(infiles, str_new(files[0]));
@@ -110,224 +67,18 @@ list_t* input_files(void) {
     return infiles;
 }
 
-/* Command Building
- *****************************************************************************/
-char Object_Cmd[]    = "cc -c -o %s %s";
-char Program_Cmd[]   = "cc -o %s %s";
-char StaticLib_Cmd[] = "ar rcs %s %s";
-char SharedLib_Cmd[] = "cc -shared %s";
-
-/* Utility Functions
- *****************************************************************************/
-str_t* get_bin_dir(void) {
-    str_t* bindir = NULL;
-    str_t* slash = str_new("/");
-    str_t* progname = str_new(opts_prog_name());
-    size_t index = str_rfind(progname, slash);
-    str_t* path = (index == SIZE_MAX) ? NULL : str_substr(progname, 0, index+1);
-    str_t* prog = (index == SIZE_MAX) ? str_new(str_cstr(progname)) : str_substr(progname, index+1, str_size(progname));
-    if (NULL != path) {
-        bindir = mem_retain(path);
-    } else {
-        error_msg("Could not locate the bin directory");
-        exit(1);
-    //    str_t* pathvar = str_new(getenv("PATH"));
-    //    str_t* sep = str_new(":");
-    //    vec_t* paths = str_split(pathvar, sep);
-    //    for (size_t idx = 0u; idx < vec_size(paths); idx++) {
-    //        str_t* currpath = (str_t*)vec_at(paths, idx);
-    //        str_t* binpath = str_concat(str_concat(currpath, slash), prog);
-    //        if (file_exists(str_cstr(binpath))) {
-    //            bindir = binpath;
-    //            mem_release(currpath);
-    //            break;
-    //        }
-    //        mem_release(currpath);
-    //        mem_release(binpath);
-    //    }
-    //    mem_release(sep);
-    //    mem_release(pathvar);
-    //    mem_release(paths);
-    }
-    mem_release(slash);
-    mem_release(progname);
-    mem_release(path);
-    mem_release(prog);
-    return bindir;
-}
-
-str_t* get_inc_dir(void) {
-    str_t* bindir  = get_bin_dir();
-    str_t* pathmod = str_new("../include/");
-    str_t* incdir  = str_concat(bindir, pathmod);
-    mem_release(bindir);
-    mem_release(pathmod);
-    return incdir;
-}
-
-typedef enum {
-    TOKFILE,
-    ASTFILE,
-    CSOURCE,
-    OBJECT,
-    PROGRAM,
-    STATICLIB,
-    SHAREDLIB
-} file_type_t;
-
-str_t* get_extension(file_type_t ftype) {
-    str_t* ext = NULL;
-    switch (ftype) {
-        case TOKFILE:   ext = str_new(".tok");   break;
-        case ASTFILE:   ext = str_new(".ast");   break;
-        case CSOURCE:   ext = str_new(".c");   break;
-        case OBJECT:    ext = str_new(".o");   break;
-        case PROGRAM:   ext = str_new("");     break;
-        case STATICLIB: ext = str_new(".a");   break;
-        case SHAREDLIB: ext = str_new(".lib"); break;
-        default:        ext = str_new("");     break;
-    }
-    return ext;
-}
-
-str_t* get_filename(file_type_t ftype, str_t* infile) {
-    str_t* ext_ind = str_new(".");
-    size_t index   = str_rfind(infile, ext_ind);
-    str_t* rawname = str_substr(infile, 0, index);
-    str_t* ext = get_extension(ftype);
-    str_t* fname = str_concat(rawname, ext);
-    mem_release(ext_ind);
-    mem_release(rawname);
-    mem_release(ext);
-    return fname;
-}
-
-vec_t* parse_file(str_t* in) {
-    bool failed = false;
-    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
-    parser_t* p_parser = parser_new(NULL, input);
-    vec_t* p_vec = vec_new(0);
-    while(!parser_eof(p_parser)) {
-        tree_t* p_tree = grammar_toplevel(p_parser);
-        if (NULL != p_tree) {
-            tree_t* p_ast = convert_to_ast(p_tree);
-            mem_release(p_tree);
-            vec_push_back(p_vec, p_ast);
-        } else {
-            parser_resume(p_parser);
-            failed = true;
-        }
-    }
-    mem_release(p_parser);
-    if (failed) mem_release(p_vec);
-    return ((failed) ? NULL : p_vec);
-}
-
-vec_t* program_deps(vec_t* program) {
-    vec_t* deps = vec_new(0);
-    (void)program;
-    return deps;
-}
-
-str_t* token_file(str_t* in) {
-    str_t* ofname = NULL;
-    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
-    FILE* output;
-    if (NULL == in) {
-        output = stdout;
-    } else {
-        ofname = get_filename(TOKFILE, in);
-        output = fopen(str_cstr(ofname), "w");
-    }
-
-    lexer_t* p_lexer = lexer_new(NULL, input);
-    lex_tok_t* token;
-    while(NULL != (token = lexer_read(p_lexer))) {
-        pprint_token(output, token, true);
-        mem_release(token);
-    }
-    mem_release(p_lexer);
-
-    return ofname;
-}
-
-str_t* syntax_file(str_t* in) {
-    str_t* ofname = NULL;
-    FILE* output;
-    if (NULL == in) {
-        output = stdout;
-    } else {
-        ofname = get_filename(ASTFILE, in);
-        output = fopen(str_cstr(ofname), "w");
-    }
-    vec_t* program = parse_file(in);
-    if (NULL != program) {
-        for (size_t idx = 0; idx < vec_size(program); idx++) {
-            pprint_tree(output, (tree_t*)vec_at(program, idx), 0);
-        }
-        mem_release(program);
-        fclose(output);
-    } else {
-        fclose(output);
-        if (NULL != ofname)
-            remove(str_cstr(ofname));
-        mem_release(ofname);
-        ofname = NULL;
-    }
-    return ofname;
-}
-
-str_t* translate_file(str_t* in) {
-    str_t* ofname = NULL;
-    FILE* output;
-    if (NULL == in) {
-        output = stdout;
-    } else {
-        ofname = get_filename(CSOURCE, in);
-        output = fopen(str_cstr(ofname), "w");
-    }
-    vec_t* program = parse_file(in);
-    codegen_csource(output, program);
-    fclose(output);
-    mem_release(program);
-    return ofname;
-}
-
-str_t* compile_file(str_t* in) {
-    str_t* ofname  = get_filename(OBJECT, in);
-    vec_t* parts   = vec_new(5, str_new("cc -c -o"), mem_retain(ofname), str_new("-I"), get_inc_dir(), mem_retain(in));
-    str_t* command = str_join(" ", parts);
-    if (opts_is_set(NULL, "verbose"))
-        puts(str_cstr(command));
-    if (0 != system(str_cstr(command))) {
-        remove(str_cstr(ofname));
-        mem_swap((void**)&ofname, NULL);
-    }
-    remove(str_cstr(in));
-    mem_release(parts);
-    mem_release(command);
-    return ofname;
-}
-
-#if 0
-str_t* link_files(list_t* in) {
-    str_t* ofname = get_filename(get_output_type(), in);
-    return ofname;
-}
-#endif
-
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
-        (void)token_file(NULL);
+        (void)ops_token_file(NULL);
     } else if (1 == nfiles) {
         str_t* fname = list_front(files)->contents;
-        mem_release( token_file(fname) );
+        mem_release( ops_token_file(fname) );
     } else {
-        error_msg("too many files provided for target mode 'tokens'");
+        log_error("too many files provided for target mode 'tokens'");
     }
     mem_release(files);
     return 0;
@@ -338,12 +89,12 @@ static int emit_tree(void) {
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
-        (void)syntax_file(NULL);
+        (void)ops_syntax_file(NULL);
     } else if (1 == nfiles) {
         str_t* fname = list_front(files)->contents;
-        mem_release( syntax_file(fname) );
+        mem_release( ops_syntax_file(fname) );
     } else {
-        error_msg("too many files provided for target mode 'ast'");
+        log_error("too many files provided for target mode 'ast'");
     }
     mem_release(files);
 
@@ -355,12 +106,12 @@ static int emit_csource(void) {
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
-        (void)translate_file(NULL);
+        (void)ops_translate_file(NULL);
     } else if (1 == nfiles) {
         str_t* fname = list_front(files)->contents;
-        mem_release( translate_file(fname) );
+        mem_release( ops_translate_file(fname) );
     } else {
-        error_msg("too many files provided for target mode 'csource'");
+        log_error("too many files provided for target mode 'csource'");
     }
     mem_release(files);
     return ret;
@@ -371,7 +122,7 @@ static int exec_repl(void) {
     while(!parser_eof(p_parser)) {
         tree_t* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
-            tree_t* p_ast = convert_to_ast(p_tree);
+            tree_t* p_ast = tree_convert(p_tree);
             pprint_tree(stdout, p_ast, 0);
             mem_release(p_tree);
             mem_release(p_ast);
@@ -388,15 +139,15 @@ static int emit_object(void) {
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
-        error_msg("too few files provided for target mode 'object'");
+        log_error("too few files provided for target mode 'object'");
     } else if (1 == nfiles) {
         str_t* fname = list_front(files)->contents;
-        str_t* csrc  = translate_file(fname);
-        str_t* obj   = compile_file(csrc);
+        str_t* csrc  = ops_translate_file(fname);
+        str_t* obj   = ops_compile_file(csrc);
         mem_release(csrc);
         mem_release(obj);
     } else {
-        error_msg("too many files provided for target mode 'object'");
+        log_error("too many files provided for target mode 'object'");
     }
     mem_release(files);
     return 0;
@@ -424,15 +175,6 @@ static int emit_program(void) {
 */
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
-
-    //str_t* bindir = get_bin_dir();
-    //str_t* incdir = get_inc_dir();
-    //printf("Bin Dir: %s\n", str_cstr(bindir));
-    //printf("Inc Dir: %s\n", str_cstr(incdir));
-    //mem_release(bindir);
-    //mem_release(incdir);
-    //puts("done");
-    //exit(1);
 
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
