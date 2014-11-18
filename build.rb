@@ -53,7 +53,10 @@ base_env = BuildEnv.new do |env|
 
   # Compiler options
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra']#, '-Werror']
-  env["CPPPATH"] += ['modules/libopts/source'] + Dir['modules/libcds/source/**/']
+  env["CPPPATH"] += Dir['modules/libcds/source/**/'] + [
+    'modules/libopts/source',
+    'source/libparse/',
+  ]
 end
 
 # Define the release environment
@@ -79,19 +82,27 @@ end
 #------------------------------------------------------------------------------
 # Release Build Targets
 #------------------------------------------------------------------------------
-main_env.Library('build/lib/libcds.a',  FileList['modules/libcds/source/**/*.c'])
-main_env.Library('build/lib/libopts.a', FileList['modules/libopts/source/**/*.c'])
-main_env.Library('build/lib/libsrt.a',  FileList['source/runtime/*.c'])
-main_env.Program('build/bin/sclpl',
-  FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
+# Build options parsing and data structures library
+main_env.Library('build/lib/libcds.a',   FileList['modules/libcds/source/**/*.c'])
+main_env.Library('build/lib/libopts.a',  FileList['modules/libopts/source/**/*.c'])
+runtime_libs = ['build/lib/libopts.a', 'build/lib/libcds.a']
+
+# Build the parser as a library
+compiler_libs = ['build/lib/libparse.a'] + runtime_libs
+main_env.Library('build/lib/libparse.a', FileList['source/libparse/*.c'])
+main_env.Program('build/bin/sclpl', FileList['source/sclpl/*.c'] + compiler_libs)
+
+# Build the sclpl runtime library
+main_env.Library('build/lib/libsrt.a',   FileList['source/runtime/*.c'])
 main_env.Install('build/include/sclpl.h', 'source/runtime/sclpl.h')
 
 #------------------------------------------------------------------------------
 # Test Build Targets
 #------------------------------------------------------------------------------
 if Opts[:profile].include? "test"
-  test_env.Program('build/bin/sclpl-test',
-    FileList['source/sclpl/*.c', 'build/lib/libopts.a', 'build/lib/libcds.a'])
+  compiler_libs = ['build/lib/libparse-test.a'] + runtime_libs
+  test_env.Library('build/lib/libparse-test.a', FileList['source/libparse/*.c'])
+  test_env.Program('build/bin/sclpl-test', FileList['source/sclpl/*.c'] + compiler_libs)
   test_env.Command('RSpec', [], 'CMD' => [
       'rspec', '--pattern', 'spec/**{,/*/**}/*_spec.rb', '--format', 'documentation'])
 end
