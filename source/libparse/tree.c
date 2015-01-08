@@ -96,3 +96,33 @@ bool tree_is_formtype(tree_t* p_tree, const char* val) {
     return ret;
 }
 
+
+tree_t* tree_walk(tree_t* tree, tree_walker_t* walker)
+{
+    size_t idx;
+    tree_t* new_node;
+    new_node = walker->fn(walker->env, tree, PRE_NODE);
+    if (tree->tag == TREE) {
+        walker->fn(walker->env, tree, PRE_CHILDREN);
+        for (idx = 0; idx < vec_size(tree->ptr.vec); idx++) {
+            tree_t* child = vec_at(tree->ptr.vec, idx);
+            walker->fn(walker->env, tree, PRE_CHILD);
+            tree_t* new_child = tree_walk( child, walker );
+            walker->fn(walker->env, tree, POST_CHILD);
+            if ((NULL != new_node) && (new_node->tag == TREE) && (NULL != new_child)) {
+                vec_push_back(new_node->ptr.vec, new_child);
+            }
+        }
+        walker->fn(walker->env, tree, POST_CHILDREN);
+    }
+    return new_node;
+}
+
+tree_walker_t* tree_walker(void* env, tree_walk_fn_t fn)
+{
+    tree_walker_t* p_walker = (tree_walker_t*)mem_allocate(sizeof(tree_walker_t),NULL);
+    p_walker->env = env;
+    p_walker->fn  = fn;
+    return p_walker;
+}
+
