@@ -220,3 +220,4 @@ void codegen_csource(FILE* file, vec_t* program) {
     mem_release(funcs);
     emit_footer(file);
 }
+

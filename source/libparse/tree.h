@@ -10,7 +10,10 @@
 #include "vec.h"
 #include "lexer.h"
 
-typedef enum { ATOM, TREE } tree_tag_t;
+typedef enum {
+    ATOM,
+    TREE
+} tree_tag_t;
 
 typedef struct {
     tree_tag_t tag;
@@ -42,7 +45,7 @@ tree_t* tree_get_child(tree_t* p_tree, size_t idx);
 void* tree_get_val(tree_t* p_tree);
 void* tree_get_child_val(tree_t* p_tree, size_t idx);
 bool tree_is_formtype(tree_t* p_tree, const char* val);
-tree_t* tree_walk(tree_t* tree, tree_walker_t* walker);
+void tree_walk(tree_t* tree, tree_walker_t* walker);
 tree_walker_t* tree_walker(void* env, tree_walk_fn_t fn);
 
 #endif /* TREE_H */
