@@ -137,7 +137,7 @@ AST* get_tree(Parser* p_parser) {
 }
 
 void insert(Parser* p_parser, TokenType type, void* value) {
-    Token* p_tok = lex_tok_new(type, value);
+    Token* p_tok = token(type, value);
     AST*   p_tree = tree_new(ATOM, p_tok);
     vec_push_back(p_parser->p_tok_buf, p_tree);
 }

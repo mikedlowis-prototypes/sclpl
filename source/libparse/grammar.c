@@ -6,20 +6,33 @@
 */
 #include <libparse.h>
 
-AST* grammar_toplevel(Parser* p)
+static void require(Parser* p);
+static void type_annotation(Parser* p);
+static void type_definition(Parser* p);
+static void type(Parser* p);
+static void tuple(Parser* p);
+static void function(Parser* p);
+static void definition(Parser* p);
+static void expression(Parser* p);
+static void literal(Parser* p);
+static void arglist(Parser* p);
+static void if_stmnt(Parser* p);
+static void fn_stmnt(Parser* p);
+
+AST* toplevel(Parser* p)
 {
     AST* p_tree = NULL;
     try {
         if (accept_str(p, T_ID, "require"))
-            grammar_require(p);
+            require(p);
         else if (accept_str(p, T_ID, "type"))
-            grammar_type_definition(p);
+            type_definition(p);
         else if (accept_str(p, T_ID, "ann"))
-            grammar_type_annotation(p);
+            type_annotation(p);
         else if (accept_str(p, T_ID, "def"))
-            grammar_definition(p);
+            definition(p);
         else
-            grammar_expression(p);
+            expression(p);
         p_tree = get_tree(p);
     } catch(ParseException) {
         /* Do nothing, the tree is bad */
@@ -27,7 +40,7 @@ AST* grammar_toplevel(Parser* p)
     return p_tree;
 }
 
-void grammar_require(Parser* p)
+static void require(Parser* p)
 {
     size_t mrk = mark(p);
     expect(p, T_STRING);
@@ -35,51 +48,51 @@ void grammar_require(Parser* p)
     reduce(p, mrk);
 }
 
-void grammar_type_annotation(Parser* p)
+static void type_annotation(Parser* p)
 {
     size_t mrk = mark(p);
     expect(p, T_ID);
-    grammar_type(p);
+    type(p);
     expect(p, T_END);
     reduce(p, mrk);
 }
 
-void grammar_type_definition(Parser* p)
+static void type_definition(Parser* p)
 {
     size_t mrk = mark(p);
     expect(p, T_ID);
     expect_str(p, T_ID, "is");
-    grammar_type(p);
+    type(p);
     expect(p, T_END);
     reduce(p, mrk);
 }
 
-void grammar_type(Parser* p) {
+static void type(Parser* p) {
     if (accept(p, T_LBRACE)) {
-        grammar_tuple(p);
+        tuple(p);
     } else {
         expect(p, T_ID);
         if (accept(p, T_LPAR)) {
-            grammar_function(p);
+            function(p);
         }
     }
 }
 
-void grammar_tuple(Parser* p) {
+static void tuple(Parser* p) {
     size_t mrk = mark(p);
     insert(p, T_ID, lexer_dup("tuple"));
     do {
-        grammar_type(p);
+        type(p);
     } while (accept(p, T_COMMA));
     expect(p, T_RBRACE);
     reduce(p, mrk);
 }
 
-void grammar_function(Parser* p) {
+static void function(Parser* p) {
     size_t mark1 = mark(p) - 1;
     size_t mark2 = mark(p);
     while (!accept(p, T_RPAR)) {
-        grammar_type(p);
+        type(p);
         if (T_RPAR != peek(p)->type)
             expect(p, T_COMMA);
     }
@@ -87,42 +100,42 @@ void grammar_function(Parser* p) {
     reduce(p, mark1);
 }
 
-void grammar_definition(Parser* p)
+static void definition(Parser* p)
 {
     size_t mrk = mark(p);
     expect(p,T_ID);
     if (peek(p)->type == T_LPAR) {
         insert(p, T_ID, lexer_dup("fn"));
-        grammar_fn_stmnt(p);
+        fn_stmnt(p);
     } else {
-        grammar_expression(p);
+        expression(p);
         expect(p,T_END);
     }
     reduce(p, mrk);
 }
 
-void grammar_expression(Parser* p)
+static void expression(Parser* p)
 {
     if (accept(p, T_LPAR)) {
         size_t mrk = mark(p);
-        grammar_expression(p);
+        expression(p);
         expect(p, T_RPAR);
         reduce(p, mrk);
     } else if (accept_str(p, T_ID, "if")) {
-        grammar_if_stmnt(p);
+        if_stmnt(p);
     } else if (accept_str(p, T_ID, "fn")) {
-        grammar_fn_stmnt(p);
+        fn_stmnt(p);
     } else if (peek(p)->type == T_ID) {
         expect(p, T_ID);
         if (peek(p)->type == T_LPAR) {
-            grammar_arglist(p);
+            arglist(p);
         }
     } else {
-        grammar_literal(p);
+        literal(p);
     }
 }
 
-void grammar_literal(Parser* p)
+static void literal(Parser* p)
 {
     switch (peek(p)->type) {
         case T_BOOL:
@@ -138,12 +151,12 @@ void grammar_literal(Parser* p)
     }
 }
 
-void grammar_arglist(Parser* p)
+static void arglist(Parser* p)
 {
     size_t mrk = mark(p);
     expect(p, T_LPAR);
     while(peek(p)->type != T_RPAR) {
-        grammar_expression(p);
+        expression(p);
         if(peek(p)->type != T_RPAR)
             expect(p, T_COMMA);
     }
@@ -151,19 +164,19 @@ void grammar_arglist(Parser* p)
     reduce(p, mrk);
 }
 
-void grammar_if_stmnt(Parser* p)
+static void if_stmnt(Parser* p)
 {
     size_t mrk = mark(p);
-    grammar_expression(p);
-    grammar_expression(p);
+    expression(p);
+    expression(p);
     if (accept_str(p, T_ID, "else")) {
-        grammar_expression(p);
+        expression(p);
     }
     expect(p,T_END);
     reduce(p, mrk);
 }
 
-void grammar_fn_stmnt(Parser* p)
+static void fn_stmnt(Parser* p)
 {
     size_t mark1 = mark(p);
     expect(p, T_LPAR);
@@ -176,7 +189,7 @@ void grammar_fn_stmnt(Parser* p)
     expect(p, T_RPAR);
     reduce(p, mark2);
     while(peek(p)->type != T_END) {
-        grammar_expression(p);
+        expression(p);
     }
     expect(p, T_END);
     reduce(p, mark1);

@@ -60,7 +60,7 @@ typedef struct {
 
 // Lexer routines
 Lexer* lexer_new(char* p_prompt, FILE* p_input);
-Token* lex_tok_new(TokenType type, void* val);
+Token* token(TokenType type, void* val);
 Token* lexer_read(Lexer* p_lexer);
 void lexer_skipline(Lexer* p_lexer);
 char* lexer_dup(const char* p_old);
@@ -90,18 +90,6 @@ void* tree_get_child_val(AST* p_tree, size_t idx);
 bool tree_is_formtype(AST* p_tree, const char* val);
 
 // Grammar Routines
-AST* grammar_toplevel(Parser* p);
-void grammar_require(Parser* p);
-void grammar_type_annotation(Parser* p);
-void grammar_type_definition(Parser* p);
-void grammar_type(Parser* p);
-void grammar_tuple(Parser* p);
-void grammar_function(Parser* p);
-void grammar_definition(Parser* p);
-void grammar_expression(Parser* p);
-void grammar_literal(Parser* p);
-void grammar_arglist(Parser* p);
-void grammar_if_stmnt(Parser* p);
-void grammar_fn_stmnt(Parser* p);
+AST* toplevel(Parser* p);
 
 #endif /* LIBPARSE_H */

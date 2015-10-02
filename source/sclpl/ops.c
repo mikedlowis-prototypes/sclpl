@@ -17,7 +17,7 @@ vec_t* ops_parse_file(str_t* in) {
     Parser* p_parser = parser_new(NULL, input);
     vec_t* p_vec = vec_new(0);
     while(!parser_eof(p_parser)) {
-        AST* p_tree = grammar_toplevel(p_parser);
+        AST* p_tree = toplevel(p_parser);
         if (NULL != p_tree) {
             AST* p_ast = tree_convert(p_tree);
             mem_release(p_tree);

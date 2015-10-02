@@ -118,7 +118,7 @@ static int emit_csource(void) {
 static int exec_repl(void) {
     Parser* p_parser = parser_new(":> ", stdin);
     while(!parser_eof(p_parser)) {
-        AST* p_tree = grammar_toplevel(p_parser);
+        AST* p_tree = toplevel(p_parser);
         if (NULL != p_tree) {
             AST* p_ast = tree_convert(p_tree);
             pprint_tree(stdout, p_ast, 0);
