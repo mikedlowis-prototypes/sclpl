@@ -16,12 +16,12 @@
 vec_t* ops_parse_file(str_t* in) {
     bool failed = false;
     FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
-    parser_t* p_parser = parser_new(NULL, input);
+    Parser* p_parser = parser_new(NULL, input);
     vec_t* p_vec = vec_new(0);
     while(!parser_eof(p_parser)) {
-        tree_t* p_tree = grammar_toplevel(p_parser);
+        AST* p_tree = grammar_toplevel(p_parser);
         if (NULL != p_tree) {
-            tree_t* p_ast = tree_convert(p_tree);
+            AST* p_ast = tree_convert(p_tree);
             mem_release(p_tree);
             vec_push_back(p_vec, p_ast);
         } else {
@@ -51,8 +51,8 @@ str_t* ops_token_file(str_t* in) {
         output = fopen(str_cstr(ofname), "w");
     }
 
-    lexer_t* p_lexer = lexer_new(NULL, input);
-    lex_tok_t* token;
+    Lexer* p_lexer = lexer_new(NULL, input);
+    Token* token;
     while(NULL != (token = lexer_read(p_lexer))) {
         pprint_token(output, token, true);
         mem_release(token);
@@ -74,7 +74,7 @@ str_t* ops_syntax_file(str_t* in) {
     vec_t* program = ops_parse_file(in);
     if (NULL != program) {
         for (size_t idx = 0; idx < vec_size(program); idx++) {
-            pprint_tree(output, (tree_t*)vec_at(program, idx), 0);
+            pprint_tree(output, (AST*)vec_at(program, idx), 0);
         }
         mem_release(program);
         fclose(output);

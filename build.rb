@@ -45,12 +45,6 @@ base_env = BuildEnv.new do |env|
     target if (is_dir ? Dir.exists?(target) : File.exists?(target))
   end
 
-  # CMake Configuration
-  env['CMAKE_GENERATOR'] = ENV['CMAKE_GENERATOR'] || "#{windows? ? 'NMake' : 'Unix'} Makefiles"
-  env['CMAKE_FLAGS']     = []
-  env['CMAKE_CMD']       = ['cmake', '-G', '${CMAKE_GENERATOR}', '${CMAKE_FLAGS}', '${_SOURCES}']
-  env['MAKE_CMD']        = [windows? ? 'nmake' : 'make']
-
   # Compiler options
   env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra']#, '-Werror']
   env["CPPPATH"] += Dir['modules/libcds/source/**/'] + [

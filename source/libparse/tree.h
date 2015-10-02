@@ -13,15 +13,15 @@
 typedef enum {
     ATOM,
     TREE
-} tree_tag_t;
+} ASTTag;
 
 typedef struct {
-    tree_tag_t tag;
+    ASTTag tag;
     union {
-        lex_tok_t* tok;
+        Token* tok;
         vec_t* vec;
     } ptr;
-} tree_t;
+} AST;
 
 typedef enum {
     PRE_NODE,
@@ -32,20 +32,20 @@ typedef enum {
     POST_CHILD,
 } tree_walk_pos_t;
 
-typedef tree_t* (*tree_walk_fn_t)(void* env, tree_t* node, tree_walk_pos_t pos);
+typedef AST* (*tree_walk_fn_t)(void* env, AST* node, tree_walk_pos_t pos);
 
 typedef struct {
     void* env;
     tree_walk_fn_t fn;
 } tree_walker_t;
 
-tree_t* tree_convert(tree_t* p_tree);
-tree_t* tree_new(tree_tag_t tag, void* p_obj);
-tree_t* tree_get_child(tree_t* p_tree, size_t idx);
-void* tree_get_val(tree_t* p_tree);
-void* tree_get_child_val(tree_t* p_tree, size_t idx);
-bool tree_is_formtype(tree_t* p_tree, const char* val);
-void tree_walk(tree_t* tree, tree_walker_t* walker);
+AST* tree_convert(AST* p_tree);
+AST* tree_new(ASTTag tag, void* p_obj);
+AST* tree_get_child(AST* p_tree, size_t idx);
+void* tree_get_val(AST* p_tree);
+void* tree_get_child_val(AST* p_tree, size_t idx);
+bool tree_is_formtype(AST* p_tree, const char* val);
+void tree_walk(AST* tree, tree_walker_t* walker);
 tree_walker_t* tree_walker(void* env, tree_walk_fn_t fn);
 
 #endif /* TREE_H */

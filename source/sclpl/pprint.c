@@ -11,7 +11,7 @@ static void print_indent(FILE* file, int depth) {
         fprintf(file, "%c", ' ');
 }
 
-static const char* token_type_to_string(lex_tok_type_t type) {
+static const char* token_type_to_string(TokenType type) {
     switch(type) {
         case T_STRING:   return "T_STRING";
         case T_CHAR:     return "T_CHAR";
@@ -52,11 +52,11 @@ static void print_char(FILE* file, char ch) {
     if (i == 5) fprintf(file, "\\%c", ch);
 }
 
-void pprint_token_type(FILE* file, lex_tok_t* token) {
+void pprint_token_type(FILE* file, Token* token) {
     fprintf(file, "%s", token_type_to_string(token->type));
 }
 
-void pprint_token_value(FILE* file, lex_tok_t* token) {
+void pprint_token_value(FILE* file, Token* token) {
     void* value = token->value;
     switch(token->type) {
         case T_STRING: fprintf(file, "\"%s\"", ((char*)value));                 break;
@@ -69,7 +69,7 @@ void pprint_token_value(FILE* file, lex_tok_t* token) {
     }
 }
 
-void pprint_token(FILE* file, lex_tok_t* token, bool print_loc)
+void pprint_token(FILE* file, Token* token, bool print_loc)
 {
     if (print_loc) {
         fprintf(file, "%zu:", token->line);
@@ -84,7 +84,7 @@ void pprint_token(FILE* file, lex_tok_t* token, bool print_loc)
 }
 
 
-void pprint_tree(FILE* file, tree_t* tree, int depth)
+void pprint_tree(FILE* file, AST* tree, int depth)
 {
     print_indent(file, depth);
     if (tree->tag == ATOM) {
@@ -93,7 +93,7 @@ void pprint_tree(FILE* file, tree_t* tree, int depth)
         fputs("(tree", file);
         vec_t* p_vec = tree->ptr.vec;
         for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-            pprint_tree(file, (tree_t*)vec_at(p_vec, idx), depth+1);
+            pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
         }
         print_indent(file, depth);
         fputs(")\n", file);

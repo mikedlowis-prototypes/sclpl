@@ -7,35 +7,39 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "scanner.h"
+#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
 typedef struct {
-    scanner_t* scanner;
-} lexer_t;
+    char* p_line;
+    size_t index;
+    size_t lineno;
+    FILE* p_input;
+    char* p_prompt;
+} Lexer;
 
 typedef enum {
     T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE, T_LBRACK,
     T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_END_FILE
-} lex_tok_type_t;
+} TokenType;
 
 typedef struct {
-    lex_tok_type_t type;
+    TokenType type;
     const char* file;
     size_t line;
     size_t col;
     void* value;
-} lex_tok_t;
+} Token;
 
-lexer_t* lexer_new(char* p_prompt, FILE* p_input);
+Lexer* lexer_new(char* p_prompt, FILE* p_input);
 
-lex_tok_t* lex_tok_new(lex_tok_type_t type, void* val);
+Token* lex_tok_new(TokenType type, void* val);
 
-lex_tok_t* lexer_read(lexer_t* p_lexer);
+Token* lexer_read(Lexer* p_lexer);
 
-void lexer_skipline(lexer_t* p_lexer);
+void lexer_skipline(Lexer* p_lexer);
 
 char* lexer_dup(const char* p_old);
 

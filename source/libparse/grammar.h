@@ -7,18 +7,18 @@
 
 #include "parser.h"
 
-tree_t* grammar_toplevel(parser_t* p);
-void grammar_require(parser_t* p);
-void grammar_type_annotation(parser_t* p);
-void grammar_type_definition(parser_t* p);
-void grammar_type(parser_t* p);
-void grammar_tuple(parser_t* p);
-void grammar_function(parser_t* p);
-void grammar_definition(parser_t* p);
-void grammar_expression(parser_t* p);
-void grammar_literal(parser_t* p);
-void grammar_arglist(parser_t* p);
-void grammar_if_stmnt(parser_t* p);
-void grammar_fn_stmnt(parser_t* p);
+AST* grammar_toplevel(Parser* p);
+void grammar_require(Parser* p);
+void grammar_type_annotation(Parser* p);
+void grammar_type_definition(Parser* p);
+void grammar_type(Parser* p);
+void grammar_tuple(Parser* p);
+void grammar_function(Parser* p);
+void grammar_definition(Parser* p);
+void grammar_expression(Parser* p);
+void grammar_literal(Parser* p);
+void grammar_arglist(Parser* p);
+void grammar_if_stmnt(Parser* p);
+void grammar_fn_stmnt(Parser* p);
 
 #endif /* GRAMMAR_H */
