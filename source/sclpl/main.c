@@ -4,15 +4,13 @@
 #include "opts.h"
 #include "str.h"
 #include "list.h"
-#include "grammar.h"
-#include "parser.h"
-#include "lexer.h"
 #include "pprint.h"
 #include "codegen.h"
 #include "sys.h"
 #include "log.h"
 #include "ops.h"
-#include "tree.h"
+#include <libparse.h>
+
 
 /* Command Line Options
  *****************************************************************************/

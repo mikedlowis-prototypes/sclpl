@@ -4,9 +4,7 @@
   $Revision$
   $HeadURL$
 */
-#include "grammar.h"
-#include "lexer.h"
-#include "exn.h"
+#include <libparse.h>
 
 AST* grammar_toplevel(Parser* p)
 {

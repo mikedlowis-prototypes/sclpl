@@ -5,13 +5,11 @@
   $HeadURL$
   */
 #include "opts.h"
-#include "parser.h"
 #include "str.h"
 #include "sys.h"
-#include "tree.h"
-#include "grammar.h"
 #include "pprint.h"
 #include "codegen.h"
+#include <libparse.h>
 
 vec_t* ops_parse_file(str_t* in) {
     bool failed = false;

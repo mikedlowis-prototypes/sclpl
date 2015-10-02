@@ -4,8 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include "parser.h"
-#include "vec.h"
+#include <libparse.h>
 
 DEFINE_EXCEPTION(ParseException, &RuntimeException);
 

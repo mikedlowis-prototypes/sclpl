@@ -4,11 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include "lexer.h"
-#include "mem.h"
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+#include <libparse.h>
 
 static char* read(Lexer* ctx, size_t* line, size_t* col);
 static bool eof(Lexer* ctx);

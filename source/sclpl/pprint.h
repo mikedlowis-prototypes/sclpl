@@ -7,8 +7,7 @@
 #ifndef PPRINT_H
 #define PPRINT_H
 
-#include "parser.h"
-#include "lexer.h"
+#include <libparse.h>
 
 void pprint_token_type(FILE* file, Token* token);
 

@@ -4,7 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include "tree.h"
+#include <libparse.h>
 
 static void tree_free(void* p_obj) {
     AST* p_tree = ((AST*)p_obj);
@@ -94,30 +94,5 @@ bool tree_is_formtype(AST* p_tree, const char* val) {
         }
     }
     return ret;
-}
-
-void tree_walk(AST* tree, tree_walker_t* walker)
-{
-    size_t idx;
-    walker->fn(walker->env, tree, PRE_NODE);
-    if (tree->tag == TREE) {
-        walker->fn(walker->env, tree, PRE_CHILDREN);
-        for (idx = 0; idx < vec_size(tree->ptr.vec); idx++) {
-            AST* child = (AST*)vec_at(tree->ptr.vec, idx);
-            walker->fn(walker->env, tree, PRE_CHILD);
-            tree_walk( child, walker );
-            walker->fn(walker->env, tree, POST_CHILD);
-        }
-        walker->fn(walker->env, tree, POST_CHILDREN);
-    }
-    walker->fn(walker->env, tree, POST_NODE);
-}
-
-tree_walker_t* tree_walker(void* env, tree_walk_fn_t fn)
-{
-    tree_walker_t* p_walker = (tree_walker_t*)mem_allocate(sizeof(tree_walker_t),NULL);
-    p_walker->env = env;
-    p_walker->fn  = fn;
-    return p_walker;
 }
 
