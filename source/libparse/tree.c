@@ -13,7 +13,7 @@ static void tree_free(void* p_obj) {
     }
 }
 
-static bool is_punctuation(Token* p_tok) {
+static bool is_punctuation(Tok* p_tok) {
     bool ret = false;
     switch(p_tok->type) {
         case T_END:
@@ -52,7 +52,7 @@ AST* tree_convert(AST* p_tree) {
 AST* tree_new(ASTTag tag, void* p_obj) {
     AST* p_tree = (AST*)mem_allocate(sizeof(AST), &tree_free);
     p_tree->tag     = tag;
-    p_tree->ptr.tok = (Token*)p_obj;
+    p_tree->ptr.tok = (Tok*)p_obj;
     return p_tree;
 }
 
@@ -69,7 +69,7 @@ AST* tree_get_child(AST* p_tree, size_t idx) {
 void* tree_get_val(AST* p_tree) {
     void* ret = NULL;
     if (p_tree->tag == ATOM) {
-        ret = p_tree->ptr.tok->value;
+        ret = p_tree->ptr.tok->value.text;
     }
     return ret;
 }
@@ -87,9 +87,9 @@ bool tree_is_formtype(AST* p_tree, const char* val) {
     bool ret = false;
     AST* child = tree_get_child(p_tree, 0);
     if ((NULL != child) && (child->tag == ATOM)) {
-        Token* token = child->ptr.tok;
+        Tok* token = child->ptr.tok;
         if ((token->type == T_ID) &&
-            (0 == strcmp(val, (char*)token->value))) {
+            (0 == strcmp(val, token->value.text))) {
             ret = true;
         }
     }

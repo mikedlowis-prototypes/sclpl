@@ -97,15 +97,15 @@ static void emit_def_placeholders(FILE* file, vec_t* prgrm) {
 
 static void emit_expression(FILE* file, vec_t* fnlst, AST* p_tree, int depth) {
     if (p_tree->tag == ATOM) {
-        Token* tok = p_tree->ptr.tok;
+        Tok* tok = p_tree->ptr.tok;
         switch (tok->type) {
-            case T_STRING: print_string(file, ((char*)tok->value));                             break;
-            case T_CHAR:   print_char(file, ((char)(intptr_t)tok->value));                      break;
-            case T_INT:    fprintf(file, "__int(%ld)",  *((long int*)tok->value));              break;
-            case T_FLOAT:  fprintf(file, "__float(%f)", *((double*)tok->value));                break;
-            case T_BOOL:   fprintf(file, "__bool(%s)",  ((intptr_t)tok->value)?"true":"false"); break;
-            case T_ID:     fprintf(file, "%s",          ((char*)tok->value));                   break;
-            default:                                                                            break;
+            case T_STRING: print_string(file, ((char*)tok->value.text));                                break;
+            case T_CHAR:   print_char(file, ((char)(intptr_t)tok->value.character));                    break;
+            case T_INT:    fprintf(file, "__int(%ld)",  *((long int*)tok->value.integer));              break;
+            case T_FLOAT:  fprintf(file, "__float(%f)", ((double)tok->value.floating));                 break;
+            case T_BOOL:   fprintf(file, "__bool(%s)",  ((intptr_t)tok->value.boolean)?"true":"false"); break;
+            case T_ID:     fprintf(file, "%s",          ((char*)tok->value.text));                      break;
+            default:                                                                                    break;
         }
     } else if (tree_is_formtype(p_tree, "if")) {
         fprintf(file, "IF (");

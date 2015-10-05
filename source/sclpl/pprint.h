@@ -9,11 +9,11 @@
 
 #include <libparse.h>
 
-void pprint_token_type(FILE* file, Token* token);
+void pprint_token_type(FILE* file, Tok* token);
 
-void pprint_token_value(FILE* file, Token* token);
+void pprint_token_value(FILE* file, Tok* token);
 
-void pprint_token(FILE* file, Token* token, bool print_loc);
+void pprint_token(FILE* file, Tok* token, bool print_loc);
 
 void pprint_tree(FILE* file, AST* tree, int depth);
 

@@ -33,7 +33,7 @@ AST* toplevel(Parser* p)
             definition(p);
         else
             expression(p);
-        p_tree = get_tree(p);
+        //p_tree = get_tree(p);
     } catch(ParseException) {
         /* Do nothing, the tree is bad */
     }
@@ -42,29 +42,29 @@ AST* toplevel(Parser* p)
 
 static void require(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expect(p, T_STRING);
     expect(p, T_END);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void type_annotation(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expect(p, T_ID);
     type(p);
     expect(p, T_END);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void type_definition(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expect(p, T_ID);
     expect_str(p, T_ID, "is");
     type(p);
     expect(p, T_END);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void type(Parser* p) {
@@ -79,48 +79,48 @@ static void type(Parser* p) {
 }
 
 static void tuple(Parser* p) {
-    size_t mrk = mark(p);
-    insert(p, T_ID, lexer_dup("tuple"));
+    //size_t mrk = mark(p);
+    //insert(p, T_ID, lexer_dup("tuple"));
     do {
         type(p);
     } while (accept(p, T_COMMA));
     expect(p, T_RBRACE);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void function(Parser* p) {
-    size_t mark1 = mark(p) - 1;
-    size_t mark2 = mark(p);
+    //size_t mark1 = mark(p) - 1;
+    //size_t mark2 = mark(p);
     while (!accept(p, T_RPAR)) {
         type(p);
         if (T_RPAR != peek(p)->type)
             expect(p, T_COMMA);
     }
-    reduce(p, mark2);
-    reduce(p, mark1);
+    //reduce(p, mark2);
+    //reduce(p, mark1);
 }
 
 static void definition(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expect(p,T_ID);
     if (peek(p)->type == T_LPAR) {
-        insert(p, T_ID, lexer_dup("fn"));
+        //insert(p, T_ID, lexer_dup("fn"));
         fn_stmnt(p);
     } else {
         expression(p);
         expect(p,T_END);
     }
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void expression(Parser* p)
 {
     if (accept(p, T_LPAR)) {
-        size_t mrk = mark(p);
+        //size_t mrk = mark(p);
         expression(p);
         expect(p, T_RPAR);
-        reduce(p, mrk);
+        //reduce(p, mrk);
     } else if (accept_str(p, T_ID, "if")) {
         if_stmnt(p);
     } else if (accept_str(p, T_ID, "fn")) {
@@ -153,7 +153,7 @@ static void literal(Parser* p)
 
 static void arglist(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expect(p, T_LPAR);
     while(peek(p)->type != T_RPAR) {
         expression(p);
@@ -161,37 +161,37 @@ static void arglist(Parser* p)
             expect(p, T_COMMA);
     }
     expect(p, T_RPAR);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void if_stmnt(Parser* p)
 {
-    size_t mrk = mark(p);
+    //size_t mrk = mark(p);
     expression(p);
     expression(p);
     if (accept_str(p, T_ID, "else")) {
         expression(p);
     }
     expect(p,T_END);
-    reduce(p, mrk);
+    //reduce(p, mrk);
 }
 
 static void fn_stmnt(Parser* p)
 {
-    size_t mark1 = mark(p);
+    //size_t mark1 = mark(p);
     expect(p, T_LPAR);
-    size_t mark2 = mark(p);
+    //size_t mark2 = mark(p);
     while(peek(p)->type != T_RPAR) {
         expect(p, T_ID);
         if(peek(p)->type != T_RPAR)
             expect(p, T_COMMA);
     }
     expect(p, T_RPAR);
-    reduce(p, mark2);
+    //reduce(p, mark2);
     while(peek(p)->type != T_END) {
         expression(p);
     }
     expect(p, T_END);
-    reduce(p, mark1);
+    //reduce(p, mark1);
 }
 

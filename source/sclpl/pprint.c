@@ -11,7 +11,7 @@ static void print_indent(FILE* file, int depth) {
         fprintf(file, "%c", ' ');
 }
 
-static const char* token_type_to_string(TokenType type) {
+static const char* token_type_to_string(TokType type) {
     switch(type) {
         case T_STRING:   return "T_STRING";
         case T_CHAR:     return "T_CHAR";
@@ -52,12 +52,12 @@ static void print_char(FILE* file, char ch) {
     if (i == 5) fprintf(file, "\\%c", ch);
 }
 
-void pprint_token_type(FILE* file, Token* token) {
+void pprint_token_type(FILE* file, Tok* token) {
     fprintf(file, "%s", token_type_to_string(token->type));
 }
 
-void pprint_token_value(FILE* file, Token* token) {
-    void* value = token->value;
+void pprint_token_value(FILE* file, Tok* token) {
+    void* value = NULL;//token->value;
     switch(token->type) {
         case T_STRING: fprintf(file, "\"%s\"", ((char*)value));                 break;
         case T_CHAR:   print_char(file, ((char)(intptr_t)value));               break;
@@ -69,7 +69,7 @@ void pprint_token_value(FILE* file, Token* token) {
     }
 }
 
-void pprint_token(FILE* file, Token* token, bool print_loc)
+void pprint_token(FILE* file, Tok* token, bool print_loc)
 {
     if (print_loc) {
         fprintf(file, "%zu:", token->line);
