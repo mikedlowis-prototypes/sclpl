@@ -88,12 +88,7 @@ typedef struct {
 
 // Lexer routines
 Tok* gettoken(Parser* ctx);
-
-//Lexer* lexer_new(char* p_prompt, FILE* p_input);
-//Token* token(TokenType type, void* val);
-//Token* lexer_read(Lexer* p_lexer);
-//void lexer_skipline(Lexer* p_lexer);
-//char* lexer_dup(const char* p_old);
+void skipline(Parser* ctx);
 
 // Parser routines
 Parser* parser_new(char* p_prompt, FILE* input);
