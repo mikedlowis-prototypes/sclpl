@@ -39,8 +39,6 @@ typedef struct {
     } value;
 } Tok;
 
-Tok* Token(const char* file, size_t line, size_t col, char* text);
-
 #endif
 
 /* AST Types

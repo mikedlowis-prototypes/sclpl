@@ -40,22 +40,22 @@ vec_t* ops_deps_file(vec_t* program) {
 
 str_t* ops_token_file(str_t* in) {
     str_t* ofname = NULL;
-    //FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
-    //FILE* output;
-    //if (NULL == in) {
-    //    output = stdout;
-    //} else {
-    //    ofname = sys_filename(TOKFILE, in);
-    //    output = fopen(str_cstr(ofname), "w");
-    //}
+    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
+    FILE* output;
+    if (NULL == in) {
+        output = stdout;
+    } else {
+        ofname = sys_filename(TOKFILE, in);
+        output = fopen(str_cstr(ofname), "w");
+    }
 
-    //Lexer* p_lexer = lexer_new(NULL, input);
-    //Token* token;
-    //while(NULL != (token = lexer_read(p_lexer))) {
-    //    pprint_token(output, token, true);
-    //    mem_release(token);
-    //}
-    //mem_release(p_lexer);
+    Parser* ctx = parser_new(NULL, input);
+    Tok* token;
+    while(NULL != (token = gettoken(ctx))) {
+        pprint_token(output, token, true);
+        mem_release(token);
+    }
+    mem_release(ctx);
 
     return ofname;
 }

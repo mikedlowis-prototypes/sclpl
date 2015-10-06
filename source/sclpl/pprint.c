@@ -57,15 +57,14 @@ void pprint_token_type(FILE* file, Tok* token) {
 }
 
 void pprint_token_value(FILE* file, Tok* token) {
-    void* value = NULL;//token->value;
     switch(token->type) {
-        case T_STRING: fprintf(file, "\"%s\"", ((char*)value));                 break;
-        case T_CHAR:   print_char(file, ((char)(intptr_t)value));               break;
-        case T_INT:    fprintf(file, "%ld",  *((long int*)value));              break;
-        case T_FLOAT:  fprintf(file, "%f",   *((double*)value));                break;
-        case T_BOOL:   fprintf(file, "%s",   ((intptr_t)value)?"true":"false"); break;
-        case T_ID:     fprintf(file, "%s",   ((char*)value));                   break;
-        default:       fprintf(file, "???");                                    break;
+        case T_STRING: fprintf(file, "\"%s\"", token->value.text);                 break;
+        case T_ID:     fprintf(file, "%s", token->value.text);                     break;
+        case T_CHAR:   print_char(file, token->value.character);                   break;
+        case T_INT:    fprintf(file, "%ld", token->value.integer);                 break;
+        case T_FLOAT:  fprintf(file, "%f", token->value.floating);                 break;
+        case T_BOOL:   fprintf(file, "%s", (token->value.boolean)?"true":"false"); break;
+        default:       fprintf(file, "???");                                       break;
     }
 }
 

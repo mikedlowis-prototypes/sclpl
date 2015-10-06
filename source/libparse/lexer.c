@@ -6,6 +6,69 @@
   */
 #include <libparse.h>
 
+static char* dupstring(const char* old) {
+    size_t length = strlen(old);
+    char* str = (char*)mem_allocate(length+1, NULL);
+    memcpy(str, old, length);
+    str[length] = '\0';
+    return str;
+}
+
+/* Token Constructors
+ *****************************************************************************/
+static void token_free(void* obj)
+{
+    Tok* tok = (Tok*)obj;
+    if ((tok->type != T_BOOL) &&
+        (tok->type != T_CHAR) &&
+        (tok->type != T_INT) &&
+        (tok->type != T_FLOAT) &&
+        (NULL != tok->value.text))
+        mem_release(tok->value.text);
+}
+
+static Tok* Token(TokType type)
+{
+    Tok* tok = (Tok*)mem_allocate(sizeof(Tok), &token_free);
+    tok->type = type;
+    return tok;
+}
+
+Tok* TextTok(TokType type, char* text)
+{
+    Tok* tok = Token(type);
+    tok->value.text = dupstring(text);
+    return tok;
+}
+
+Tok* CharTok(uint32_t val)
+{
+    Tok* tok = Token(T_CHAR);
+    tok->value.character = val;
+    return tok;
+}
+
+Tok* IntTok(intptr_t val)
+{
+    Tok* tok = Token(T_INT);
+    tok->value.integer = val;
+    return tok;
+}
+
+Tok* FloatTok(double val)
+{
+    Tok* tok = Token(T_FLOAT);
+    tok->value.floating = val;
+    return tok;
+}
+
+Tok* BoolTok(bool val)
+{
+    Tok* tok = Token(T_BOOL);
+    tok->value.boolean = val;
+    return tok;
+}
+
 /* Token Scanning
  *****************************************************************************/
 static char current(Parser* ctx) {
@@ -164,14 +227,6 @@ static char* scan(Parser* ctx, size_t* line, size_t* column) {
 
 /* Lexical Analysis
  *****************************************************************************/
-static char* dupstring(const char* old) {
-    size_t length = strlen(old);
-    char* str = (char*)mem_allocate(length+1, NULL);
-    memcpy(str, old, length);
-    str[length] = '\0';
-    return str;
-}
-
 static bool char_oneof(const char* class, char c) {
     bool ret = false;
     size_t sz = strlen(class);
@@ -184,34 +239,19 @@ static bool char_oneof(const char* class, char c) {
     return ret;
 }
 
-static void token_free(void* obj)
-{
-    Tok* tok = (Tok*)obj;
-    if ((tok->type != T_BOOL) && (tok->type != T_CHAR) && (NULL != tok->value.text))
-        mem_release(tok->value.text);
-}
-
-static Tok* token(TokType type, char* text)
-{
-    Tok* tok = (Tok*)mem_allocate(sizeof(Tok), &token_free);
-    tok->type = type;
-    tok->value.text = text;
-    return tok;
-}
-
 static Tok* punctuation(char* text)
 {
     Tok* tok = NULL;
     switch (text[0]) {
-        case '(':  tok = token(T_LPAR, NULL);   break;
-        case ')':  tok = token(T_RPAR, NULL);   break;
-        case '{':  tok = token(T_LBRACE, NULL); break;
-        case '}':  tok = token(T_RBRACE, NULL); break;
-        case '[':  tok = token(T_LBRACK, NULL); break;
-        case ']':  tok = token(T_RBRACK, NULL); break;
-        case ';':  tok = token(T_END, NULL);    break;
-        case ',':  tok = token(T_COMMA, NULL);  break;
-        case '\'': tok = token(T_SQUOTE, NULL); break;
+        case '(':  tok = Token(T_LPAR);   break;
+        case ')':  tok = Token(T_RPAR);   break;
+        case '{':  tok = Token(T_LBRACE); break;
+        case '}':  tok = Token(T_RBRACE); break;
+        case '[':  tok = Token(T_LBRACK); break;
+        case ']':  tok = Token(T_RBRACK); break;
+        case ';':  tok = Token(T_END);    break;
+        case ',':  tok = Token(T_COMMA);  break;
+        case '\'': tok = Token(T_SQUOTE); break;
     }
     return tok;
 }
@@ -227,16 +267,16 @@ static Tok* character(char* text)
         "\v\0vtab"
     };
     if (strlen(text) == 2) {
-        tok = token(T_CHAR, (void*)((intptr_t)text[1]));
+        tok = CharTok((uint32_t)text[1]);
     } else {
         for(int i = 0; i < 5; i++) {
             if (0 == strcmp(&text[1], &(lookuptable[i][2]))) {
-                tok = token(T_CHAR, (void*)((intptr_t)lookuptable[i][0]));
+                tok = CharTok((uint32_t)lookuptable[i][0]);
                 break;
             }
         }
         if (NULL == tok)
-            tok = token(T_ID, text);
+            tok = TextTok(T_ID, text);
     }
     return tok;
 }
@@ -244,12 +284,11 @@ static Tok* character(char* text)
 static Tok* integer(char* text, int base)
 {
     char* end;
-    long* integer = (long*)mem_allocate(sizeof(long), NULL);
+    long integer;
     errno = 0;
-    *integer = strtol(text, &end, base);
+    integer = strtol(text, &end, base);
     assert(errno == 0);
-    return NULL;
-    //return (end[0] == '\0') ? token(T_INT, integer) : NULL;
+    return (end[0] == '\0') ? IntTok(integer) : NULL;
 }
 
 static int getradix(char ch) {
@@ -267,7 +306,7 @@ static Tok* radixint(char* text)
 {
     Tok* ret = integer(&text[2], getradix(text[1]));
     if (NULL == ret)
-        ret = token(T_ID, text);
+        ret = TextTok(T_ID, text);
     return ret;
 }
 
@@ -283,12 +322,11 @@ static bool is_float(char* text) {
 static Tok* floating(char* text)
 {
     char* end;
-    double* dbl = (double*)mem_allocate(sizeof(double), NULL);
+    double dbl;
     errno = 0;
-    *dbl = strtod(text, &end);
+    dbl = strtod(text, &end);
     assert(errno == 0);
-    //return (end[0] == '\0') ? token(T_FLOAT, dbl) : NULL;
-    return NULL;
+    return (end[0] == '\0') ? FloatTok(dbl) : NULL;
 }
 
 static Tok* number(char* text)
@@ -298,25 +336,24 @@ static Tok* number(char* text)
         tok = floating(text);
     else
         tok = integer(text, 10);
-    return (NULL == tok) ? token(T_ID, text) : tok;
+    return (NULL == tok) ? TextTok(T_ID, text) : tok;
 }
 
 static Tok* boolean(char* text)
 {
-    //return token(T_BOOL, (void*)((intptr_t)((0 == strcmp(text,"true")) ? true : false)));
-    return NULL;
+    return BoolTok(0 == strcmp(text,"true"));
 }
 
 static Tok* classify(const char* file, size_t line, size_t col, char* text)
 {
     Tok* tok = NULL;
     if (0 == strcmp(text,"end")) {
-        tok = token(T_END, NULL);
+        tok = Token(T_END);
     } else if (char_oneof("()[]{};,'", text[0])) {
         tok = punctuation(text);
     } else if ('"' == text[0]) {
         text[strlen(text)-1] = '\0';
-        tok = token(T_STRING, dupstring(&text[1]));
+        tok = TextTok(T_STRING, dupstring(&text[1]));
     } else if (text[0] == '\\') {
         tok = character(text);
     } else if ((text[0] == '0') && char_oneof("bodh",text[1])) {
@@ -326,7 +363,7 @@ static Tok* classify(const char* file, size_t line, size_t col, char* text)
     } else if ((0 == strcmp(text,"true")) || (0 == strcmp(text,"false"))) {
         tok = boolean(text);
     } else {
-        tok = token(T_ID, text);
+        tok = TextTok(T_ID, text);
     }
     /* If we found a valid token then fill in the location details */
     if (NULL != tok) {
@@ -341,7 +378,8 @@ Tok* gettoken(Parser* ctx)
     Tok* tok = NULL;
     size_t line, col;
     char* text = scan(ctx, &line, &col);
-    tok = classify(NULL, line, col, text);
+    if (text != NULL)
+        tok = classify(NULL, line, col, text);
     return tok;
 }
 
