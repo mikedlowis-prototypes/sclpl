@@ -2,6 +2,7 @@
 #include "codegen.h"
 #include "pprint.h"
 
+#if 0
 static void lift_funcs(vec_t* fnlst, AST* tree) {
     if (tree_is_formtype(tree, "fn"))
         vec_push_back(fnlst, mem_retain(tree));
@@ -208,16 +209,16 @@ static void emit_footer(FILE* file) {
         file
     );
 }
-
+#endif
 void codegen_csource(FILE* file, vec_t* program) {
     (void)file;
-    emit_header(file);
-    emit_def_placeholders(file, program);
-    vec_t* funcs = find_fn_literals(program);
-    emit_fn_declarations(file, funcs);
-    emit_fn_definitions(file, funcs);
-    emit_toplevel(file, funcs, program);
-    mem_release(funcs);
-    emit_footer(file);
+    //emit_header(file);
+    //emit_def_placeholders(file, program);
+    //vec_t* funcs = find_fn_literals(program);
+    //emit_fn_declarations(file, funcs);
+    //emit_fn_definitions(file, funcs);
+    //emit_toplevel(file, funcs, program);
+    //mem_release(funcs);
+    //emit_footer(file);
 }
 

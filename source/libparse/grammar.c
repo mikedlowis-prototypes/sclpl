@@ -21,7 +21,7 @@ static void fn_stmnt(Parser* p);
 
 AST* toplevel(Parser* p)
 {
-    AST* p_tree = NULL;
+    AST* tree = NULL;
     try {
         if (accept_str(p, T_ID, "require"))
             require(p);
@@ -33,38 +33,36 @@ AST* toplevel(Parser* p)
             definition(p);
         else
             expression(p);
-        //p_tree = get_tree(p);
+        //tree = get_tree(p);
     } catch(ParseException) {
         /* Do nothing, the tree is bad */
     }
-    return p_tree;
+    return tree;
 }
 
 static void require(Parser* p)
 {
-    //size_t mrk = mark(p);
-    expect(p, T_STRING);
+    shifttok(p, T_STRING);
     expect(p, T_END);
-    //reduce(p, mrk);
+    //reduce(Require);
 }
 
 static void type_annotation(Parser* p)
 {
-    //size_t mrk = mark(p);
-    expect(p, T_ID);
+    shifttok(p, T_ID);
     type(p);
     expect(p, T_END);
-    //reduce(p, mrk);
+    //reduce(Annotation);
 }
+
+/*****************************************************************************/
 
 static void type_definition(Parser* p)
 {
-    //size_t mrk = mark(p);
     expect(p, T_ID);
     expect_str(p, T_ID, "is");
     type(p);
     expect(p, T_END);
-    //reduce(p, mrk);
 }
 
 static void type(Parser* p) {

@@ -120,10 +120,10 @@ static int exec_repl(void) {
     while(!parser_eof(p_parser)) {
         AST* p_tree = toplevel(p_parser);
         if (NULL != p_tree) {
-            AST* p_ast = tree_convert(p_tree);
-            pprint_tree(stdout, p_ast, 0);
+            //AST* p_ast = tree_convert(p_tree);
+            //pprint_tree(stdout, p_ast, 0);
             mem_release(p_tree);
-            mem_release(p_ast);
+            //mem_release(p_ast);
             puts("OK.");
         } else {
             parser_resume(p_parser);

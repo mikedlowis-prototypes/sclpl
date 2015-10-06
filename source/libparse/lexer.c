@@ -34,35 +34,35 @@ static Tok* Token(TokType type)
     return tok;
 }
 
-Tok* TextTok(TokType type, char* text)
+static Tok* TextTok(TokType type, char* text)
 {
     Tok* tok = Token(type);
     tok->value.text = dupstring(text);
     return tok;
 }
 
-Tok* CharTok(uint32_t val)
+static Tok* CharTok(uint32_t val)
 {
     Tok* tok = Token(T_CHAR);
     tok->value.character = val;
     return tok;
 }
 
-Tok* IntTok(intptr_t val)
+static Tok* IntTok(intptr_t val)
 {
     Tok* tok = Token(T_INT);
     tok->value.integer = val;
     return tok;
 }
 
-Tok* FloatTok(double val)
+static Tok* FloatTok(double val)
 {
     Tok* tok = Token(T_FLOAT);
     tok->value.floating = val;
     return tok;
 }
 
-Tok* BoolTok(bool val)
+static Tok* BoolTok(bool val)
 {
     Tok* tok = Token(T_BOOL);
     tok->value.boolean = val;
@@ -114,7 +114,7 @@ static char* dup(Parser* ctx, size_t start_idx, size_t len) {
     return str;
 }
 
-static void fetchline(Parser* ctx) {
+void fetchline(Parser* ctx) {
     int c;
     size_t capacity = 8;
     size_t index    = 0;
@@ -140,11 +140,6 @@ static void fetchline(Parser* ctx) {
         /* Increment line count */
         ctx->lineno++;
     }
-}
-
-void skipline(Parser* ctx)
-{
-    fetchline(ctx);
 }
 
 static char* read_string(Parser* ctx) {

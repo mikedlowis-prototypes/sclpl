@@ -15,7 +15,7 @@ static void parser_free(void* obj) {
     if ((NULL != parser->tok) && (&tok_eof != parser->tok)) {
         mem_release(parser->tok);
     }
-    mem_release(parser->tokbuf);
+    mem_release(parser->stack);
 }
 
 Parser* parser_new(char* prompt, FILE* input)
@@ -27,7 +27,7 @@ Parser* parser_new(char* prompt, FILE* input)
     parser->input   = input;
     parser->prompt  = prompt;
     parser->tok     = NULL;
-    parser->tokbuf = vec_new(0);
+    parser->stack = vec_new(0);
     return parser;
 }
 
@@ -54,8 +54,10 @@ void parser_resume(Parser* parser) {
         mem_release(parser->tok);
         parser->tok = NULL;
     }
-    vec_clear(parser->tokbuf);
-    skipline(parser);
+    vec_clear(parser->stack);
+    /* We ignore the rest of the current line and attempt to start parsing
+     * again on the next line */
+    fetchline(parser);
 }
 
 void error(Parser* parser, const char* text)
@@ -66,12 +68,23 @@ void error(Parser* parser, const char* text)
     throw_msg(ParseException, text);
 }
 
+Tok* shifttok(Parser* parser, TokType type)
+{
+    Tok* tok = NULL;
+    if (peek(parser)->type == type) {
+        vec_push_back(parser->stack, parser->tok);
+        parser->tok = NULL;
+    } else {
+        error(parser, "Unexpected token");
+    }
+    return tok;
+}
+
 bool accept(Parser* parser, TokType type)
 {
     bool ret = false;
     if (peek(parser)->type == type) {
-        vec_push_back(parser->tokbuf, tree_new(ATOM, parser->tok));
-        parser->tok = NULL;
+        mem_swap((void**)&(parser->tok), NULL);
         ret = true;
     }
     return ret;
@@ -81,8 +94,7 @@ bool accept_str(Parser* parser, TokType type, const char* text)
 {
     bool ret = false;
     if ((peek(parser)->type == type) && (0 == strcmp((char*)(parser->tok->value.text), text))) {
-        vec_push_back(parser->tokbuf, tree_new(ATOM, parser->tok));
-        parser->tok = NULL;
+        mem_swap((void**)&(parser->tok), NULL);
         ret = true;
     }
     return ret;
@@ -110,38 +122,20 @@ bool expect_str(Parser* parser, TokType type, const char* text)
     return ret;
 }
 
-size_t mark(Parser* parser)
+size_t stack_push(Parser* ctx, AST* node)
 {
-    return (vec_size(parser->tokbuf) - 1);
+    vec_push_back(ctx->stack, node);
+    return vec_size(ctx->stack)-1;
 }
 
-void reduce(Parser* parser, size_t mark)
+AST* stack_pop(Parser* ctx)
 {
-    vec_t* buf  = parser->tokbuf;
-    vec_t* form = vec_new(0);
-    for(size_t idx = mark; idx < vec_size(buf); idx++) {
-        AST* tree = mem_retain(vec_at(buf, idx));
-        vec_push_back(form, tree);
-    }
-    vec_erase(buf, mark, vec_size(buf)-1);
-    vec_push_back(buf, tree_new(TREE, form));
+    return (AST*)vec_pop_back(ctx->stack);
 }
 
-AST* get_tree(Parser* parser) {
-    AST* tree = NULL;
-    if (1 == vec_size(parser->tokbuf)) {
-        tree = mem_retain(vec_at(parser->tokbuf, 0));
-        vec_clear(parser->tokbuf);
-    } else {
-        tree = tree_new(TREE, parser->tokbuf);
-        parser->tokbuf = vec_new(0);
-    }
-    return tree;
+AST* stack_get(Parser* ctx, int index)
+{
+    index = (index < 0) ? (vec_size(ctx->stack)+index) : index;
+    return (AST*)vec_at(ctx->stack, (size_t)index);
 }
-
-//void insert(Parser* parser, TokType type, char* value) {
-//    Tok* tok = token(type, strdup(value));
-//    AST*   tree = tree_new(ATOM, tok);
-//    vec_push_back(parser->tokbuf, tree);
-//}
 

@@ -6,6 +6,7 @@
   */
 #include <libparse.h>
 
+#if 0
 static void tree_free(void* p_obj) {
     AST* p_tree = ((AST*)p_obj);
     if (NULL != p_tree->ptr.tok) {
@@ -49,10 +50,10 @@ AST* tree_convert(AST* p_tree) {
     return p_newtree;
 }
 
-AST* tree_new(ASTTag tag, void* p_obj) {
+AST* tree_new(ASTType tag, void* p_obj) {
     AST* p_tree = (AST*)mem_allocate(sizeof(AST), &tree_free);
-    p_tree->tag     = tag;
-    p_tree->ptr.tok = (Tok*)p_obj;
+    //p_tree->tag     = tag;
+    //p_tree->ptr.tok = (Tok*)p_obj;
     return p_tree;
 }
 
@@ -95,4 +96,4 @@ bool tree_is_formtype(AST* p_tree, const char* val) {
     }
     return ret;
 }
-
+#endif

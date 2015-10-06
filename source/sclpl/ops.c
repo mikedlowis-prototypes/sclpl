@@ -12,24 +12,25 @@
 #include <libparse.h>
 
 vec_t* ops_parse_file(str_t* in) {
-    bool failed = false;
-    FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
-    Parser* p_parser = parser_new(NULL, input);
-    vec_t* p_vec = vec_new(0);
-    while(!parser_eof(p_parser)) {
-        AST* p_tree = toplevel(p_parser);
-        if (NULL != p_tree) {
-            AST* p_ast = tree_convert(p_tree);
-            mem_release(p_tree);
-            vec_push_back(p_vec, p_ast);
-        } else {
-            parser_resume(p_parser);
-            failed = true;
-        }
-    }
-    mem_release(p_parser);
-    if (failed) mem_release(p_vec);
-    return ((failed) ? NULL : p_vec);
+    //bool failed = false;
+    //FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
+    //Parser* p_parser = parser_new(NULL, input);
+    //vec_t* p_vec = vec_new(0);
+    //while(!parser_eof(p_parser)) {
+    //    AST* p_tree = toplevel(p_parser);
+    //    if (NULL != p_tree) {
+    //        AST* p_ast = tree_convert(p_tree);
+    //        mem_release(p_tree);
+    //        vec_push_back(p_vec, p_ast);
+    //    } else {
+    //        parser_resume(p_parser);
+    //        failed = true;
+    //    }
+    //}
+    //mem_release(p_parser);
+    //if (failed) mem_release(p_vec);
+    //return ((failed) ? NULL : p_vec);
+    return NULL;
 }
 
 vec_t* ops_deps_file(vec_t* program) {
@@ -72,7 +73,7 @@ str_t* ops_syntax_file(str_t* in) {
     vec_t* program = ops_parse_file(in);
     if (NULL != program) {
         for (size_t idx = 0; idx < vec_size(program); idx++) {
-            pprint_tree(output, (AST*)vec_at(program, idx), 0);
+            //pprint_tree(output, (AST*)vec_at(program, idx), 0);
         }
         mem_release(program);
         fclose(output);

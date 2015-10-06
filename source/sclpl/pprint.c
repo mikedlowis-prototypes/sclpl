@@ -83,19 +83,19 @@ void pprint_token(FILE* file, Tok* token, bool print_loc)
 }
 
 
-void pprint_tree(FILE* file, AST* tree, int depth)
-{
-    print_indent(file, depth);
-    if (tree->tag == ATOM) {
-        pprint_token(file, tree->ptr.tok, false);
-    } else {
-        fputs("(tree", file);
-        vec_t* p_vec = tree->ptr.vec;
-        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-            pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
-        }
-        print_indent(file, depth);
-        fputs(")\n", file);
-    }
-}
+//void pprint_tree(FILE* file, AST* tree, int depth)
+//{
+//    print_indent(file, depth);
+//    if (tree->tag == ATOM) {
+//        pprint_token(file, tree->ptr.tok, false);
+//    } else {
+//        fputs("(tree", file);
+//        vec_t* p_vec = tree->ptr.vec;
+//        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
+//            pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
+//        }
+//        print_indent(file, depth);
+//        fputs(")\n", file);
+//    }
+//}
 
