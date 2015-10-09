@@ -4,8 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include "log.h"
-#include <stdio.h>
+#include <sclpl.h>
 
 void log_error(const char msg[], ...) {
     va_list args;

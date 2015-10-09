@@ -50,6 +50,7 @@ base_env = BuildEnv.new do |env|
   env["CPPPATH"] += Dir['modules/libcds/source/**/'] + [
     'modules/libopts/source',
     'source/libparse/',
+    'source/sclpl/',
   ]
 end
 

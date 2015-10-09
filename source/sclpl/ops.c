@@ -4,13 +4,9 @@
   $Revision$
   $HeadURL$
   */
-#include "opts.h"
-#include "str.h"
-#include "sys.h"
-#include "pprint.h"
-#include "codegen.h"
-#include <libparse.h>
+#include <sclpl.h>
 
+#if 0
 vec_t* ops_parse_file(str_t* in) {
     //bool failed = false;
     //FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
@@ -38,9 +34,9 @@ vec_t* ops_deps_file(vec_t* program) {
     (void)program;
     return deps;
 }
+#endif
 
-str_t* ops_token_file(str_t* in) {
-    str_t* ofname = NULL;
+char* ops_token_file(str_t* in) {
     FILE* input = (NULL == in) ? stdin : fopen(str_cstr(in), "r");
     FILE* output;
     if (NULL == in) {
@@ -58,9 +54,10 @@ str_t* ops_token_file(str_t* in) {
     }
     mem_release(ctx);
 
-    return ofname;
+    return NULL;
 }
 
+#if 0
 str_t* ops_syntax_file(str_t* in) {
     str_t* ofname = NULL;
     FILE* output;
@@ -118,4 +115,4 @@ str_t* ops_compile_file(str_t* in) {
     mem_release(command);
     return ofname;
 }
-
+#endif

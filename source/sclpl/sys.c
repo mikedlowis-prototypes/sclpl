@@ -4,10 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include <stdlib.h>
-#include "sys.h"
-#include "opts.h"
-#include "log.h"
+#include <sclpl.h>
 
 str_t* sys_bin_dir(void) {
     str_t* bindir = NULL;

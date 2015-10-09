@@ -1,6 +1,4 @@
-#include <libparse.h>
-#include "codegen.h"
-#include "pprint.h"
+#include <sclpl.h>
 
 #if 0
 static void lift_funcs(vec_t* fnlst, AST* tree) {

@@ -1,16 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include "opts.h"
-#include "str.h"
-#include "list.h"
-#include "pprint.h"
-#include "codegen.h"
-#include "sys.h"
-#include "log.h"
-#include "ops.h"
-#include <libparse.h>
-
+#include <sclpl.h>
 
 /* Command Line Options
  *****************************************************************************/
@@ -36,54 +24,16 @@ void print_usage(void) {
     exit(1);
 }
 
-/* Options Helpers
- *****************************************************************************/
-bool file_exists(const char* name) {
-    bool  ret  = false;
-    FILE* file = fopen(name,"r");
-    if (NULL != file) {
-        fclose(file);
-        ret = true;
-    }
-    return ret;
-}
-
-list_t* input_files(void) {
-    list_t* infiles = list_new();
-    const char** fvec  = opts_arguments();
-    const char** files = fvec;
-    while (NULL != files[0]) {
-        if (!file_exists(files[0])) {
-            mem_release(infiles);
-            log_error("no such file or directory: %s", files[0]);
-            exit(1);
-        }
-        list_push_front(infiles, str_new(files[0]));
-        files++;
-    }
-    free(fvec);
-    return infiles;
-}
-
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
-    list_t* files  = input_files();
-    size_t  nfiles = list_size(files);
-    if (0 == nfiles) {
-        (void)ops_token_file(NULL);
-    } else if (1 == nfiles) {
-        str_t* fname = list_front(files)->contents;
-        mem_release( ops_token_file(fname) );
-    } else {
-        log_error("too many files provided for target mode 'tokens'");
-    }
-    mem_release(files);
+    (void)ops_token_file(NULL);
     return 0;
 }
 
 static int emit_tree(void) {
     int ret = 0;
+#if 0
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
@@ -95,12 +45,13 @@ static int emit_tree(void) {
         log_error("too many files provided for target mode 'ast'");
     }
     mem_release(files);
-
+#endif
     return ret;
 }
 
 static int emit_csource(void) {
     int ret = 0;
+#if 0
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
@@ -112,10 +63,12 @@ static int emit_csource(void) {
         log_error("too many files provided for target mode 'csource'");
     }
     mem_release(files);
+#endif
     return ret;
 }
 
 static int exec_repl(void) {
+#if 0
     Parser* p_parser = parser_new(":> ", stdin);
     while(!parser_eof(p_parser)) {
         AST* p_tree = toplevel(p_parser);
@@ -130,10 +83,12 @@ static int exec_repl(void) {
         }
     }
     mem_release(p_parser);
+#endif
     return 0;
 }
 
 static int emit_object(void) {
+#if 0
     list_t* files  = input_files();
     size_t  nfiles = list_size(files);
     if (0 == nfiles) {
@@ -148,6 +103,7 @@ static int emit_object(void) {
         log_error("too many files provided for target mode 'object'");
     }
     mem_release(files);
+#endif
     return 0;
 }
 

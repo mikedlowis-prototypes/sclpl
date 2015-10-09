@@ -4,12 +4,14 @@
   $Revision$
   $HeadURL$
   */
-#include "pprint.h"
+#include <sclpl.h>
 
+#if 0
 static void print_indent(FILE* file, int depth) {
     for(int i = 0; i < (2 * depth); i++)
         fprintf(file, "%c", ' ');
 }
+#endif
 
 static const char* token_type_to_string(TokType type) {
     switch(type) {
