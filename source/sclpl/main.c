@@ -27,83 +27,26 @@ void print_usage(void) {
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
-    (void)ops_token_file(NULL);
+    Tok* token;
+    Parser* ctx = parser_new(NULL, stdin);
+    while(NULL != (token = gettoken(ctx)))
+        pprint_token(stdout, token, true);
     return 0;
 }
 
 static int emit_tree(void) {
-    int ret = 0;
-#if 0
-    list_t* files  = input_files();
-    size_t  nfiles = list_size(files);
-    if (0 == nfiles) {
-        (void)ops_syntax_file(NULL);
-    } else if (1 == nfiles) {
-        str_t* fname = list_front(files)->contents;
-        mem_release( ops_syntax_file(fname) );
-    } else {
-        log_error("too many files provided for target mode 'ast'");
-    }
-    mem_release(files);
-#endif
-    return ret;
+    return 0;
 }
 
 static int emit_csource(void) {
-    int ret = 0;
-#if 0
-    list_t* files  = input_files();
-    size_t  nfiles = list_size(files);
-    if (0 == nfiles) {
-        (void)ops_translate_file(NULL);
-    } else if (1 == nfiles) {
-        str_t* fname = list_front(files)->contents;
-        mem_release( ops_translate_file(fname) );
-    } else {
-        log_error("too many files provided for target mode 'csource'");
-    }
-    mem_release(files);
-#endif
-    return ret;
+    return 0;
 }
 
 static int exec_repl(void) {
-#if 0
-    Parser* p_parser = parser_new(":> ", stdin);
-    while(!parser_eof(p_parser)) {
-        AST* p_tree = toplevel(p_parser);
-        if (NULL != p_tree) {
-            //AST* p_ast = tree_convert(p_tree);
-            //pprint_tree(stdout, p_ast, 0);
-            mem_release(p_tree);
-            //mem_release(p_ast);
-            puts("OK.");
-        } else {
-            parser_resume(p_parser);
-        }
-    }
-    mem_release(p_parser);
-#endif
     return 0;
 }
 
 static int emit_object(void) {
-#if 0
-    list_t* files  = input_files();
-    size_t  nfiles = list_size(files);
-    if (0 == nfiles) {
-        log_error("too few files provided for target mode 'object'");
-    } else if (1 == nfiles) {
-        str_t* fname = list_front(files)->contents;
-        str_t* csrc  = ops_translate_file(fname);
-        str_t* obj   = ops_compile_file(csrc);
-        mem_release(csrc);
-        mem_release(obj);
-    } else {
-        log_error("too many files provided for target mode 'object'");
-    }
-    mem_release(files);
-#endif
     return 0;
 }
 
@@ -129,13 +72,12 @@ static int emit_program(void) {
 */
 int main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
-
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
-    } else if(opts_equal(NULL, "mode", "repl")) {
-        return exec_repl();
     } else if (opts_equal(NULL, "mode", "tokens")) {
         return emit_tokens();
+    } else if(opts_equal(NULL, "mode", "repl")) {
+        return exec_repl();
     } else if (opts_equal(NULL, "mode", "ast")) {
         return emit_tree();
     } else if (opts_equal(NULL, "mode", "csource")) {
@@ -151,7 +93,6 @@ int main(int argc, char **argv) {
     } else {
         print_usage();
     }
-
     opts_reset();
     return 1;
 }
