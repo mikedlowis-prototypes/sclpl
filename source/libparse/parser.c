@@ -15,7 +15,7 @@ static void parser_free(void* obj) {
     if ((NULL != parser->tok) && (&tok_eof != parser->tok)) {
         mem_release(parser->tok);
     }
-    mem_release(parser->stack);
+    //mem_release(parser->stack);
 }
 
 Parser* parser_new(char* prompt, FILE* input)
@@ -27,7 +27,7 @@ Parser* parser_new(char* prompt, FILE* input)
     parser->input   = input;
     parser->prompt  = prompt;
     parser->tok     = NULL;
-    parser->stack = vec_new(0);
+    //parser->stack = vec_new(0);
     return parser;
 }
 
@@ -54,7 +54,7 @@ void parser_resume(Parser* parser) {
         mem_release(parser->tok);
         parser->tok = NULL;
     }
-    vec_clear(parser->stack);
+    //vec_clear(parser->stack);
     /* We ignore the rest of the current line and attempt to start parsing
      * again on the next line */
     fetchline(parser);
@@ -72,7 +72,7 @@ Tok* shifttok(Parser* parser, TokType type)
 {
     Tok* tok = NULL;
     if (peek(parser)->type == type) {
-        vec_push_back(parser->stack, parser->tok);
+        //vec_push_back(parser->stack, parser->tok);
         parser->tok = NULL;
     } else {
         error(parser, "Unexpected token");
@@ -120,22 +120,5 @@ bool expect_str(Parser* parser, TokType type, const char* text)
         error(parser, "Unexpected token");
     }
     return ret;
-}
-
-size_t stack_push(Parser* ctx, AST* node)
-{
-    vec_push_back(ctx->stack, node);
-    return vec_size(ctx->stack)-1;
-}
-
-AST* stack_pop(Parser* ctx)
-{
-    return (AST*)vec_pop_back(ctx->stack);
-}
-
-AST* stack_get(Parser* ctx, int index)
-{
-    index = (index < 0) ? (vec_size(ctx->stack)+index) : index;
-    return (AST*)vec_at(ctx->stack, (size_t)index);
 }
 

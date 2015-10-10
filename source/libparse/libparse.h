@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include "mem.h"
-#include "vec.h"
 #include "exn.h"
 
 /* Token Types
@@ -73,7 +72,7 @@ typedef struct AST {
             struct AST* body;
         } func;
         /* Code Block */
-        vec_t block;
+        //vec_t block;
         /* String */
         char* stringval;
         /* Symbol */
@@ -161,7 +160,6 @@ typedef struct {
     FILE* input;
     char* prompt;
     Tok* tok;
-    vec_t* stack;
 } Parser;
 
 // Lexer routines
@@ -179,28 +177,6 @@ bool accept(Parser* p_parser, TokType type);
 bool accept_str(Parser* p_parser, TokType type, const char* p_text);
 bool expect(Parser* p_parser, TokType type);
 bool expect_str(Parser* p_parser, TokType type, const char* p_text);
-Tok* shifttok(Parser* parser, TokType type);
-
-//size_t stack_push(Parser* ctx, AST* node);
-//AST* stack_pop(Parser* ctx);
-//AST* stack_get(Parser* ctx, int index);
-
-
-
-//size_t mark(Parser* p_parser);
-//void reduce(Parser* p_parser, size_t mark);
-//AST* get_tree(Parser* p_parser);
-//void insert(Parser* p_parser, TokType type, char* value);
-
-#if 0
-// AST Routines
-AST* tree_convert(AST* p_tree);
-AST* tree_new(ASTType tag, void* p_obj);
-AST* tree_get_child(AST* p_tree, size_t idx);
-void* tree_get_val(AST* p_tree);
-void* tree_get_child_val(AST* p_tree, size_t idx);
-bool tree_is_formtype(AST* p_tree, const char* val);
-#endif
 
 // Grammar Routines
 AST* toplevel(Parser* p);
