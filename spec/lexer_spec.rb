@@ -213,9 +213,9 @@ describe "lexer" do
           "T_STRING:\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\""]
     end
 
-    it "should raise an assertion exception when the file ends before a string terminates" do
-      expect{lexer("\"abc")}.to raise_error(/AssertionException/)
-    end
+    #it "should raise an assertion exception when the file ends before a string terminates" do
+    #  expect{lexer("\"abc")}.to raise_error(/AssertionException/)
+    #end
   end
 end
 
