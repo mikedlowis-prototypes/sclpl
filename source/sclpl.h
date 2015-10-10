@@ -1,18 +1,19 @@
 /**
-  @file libparse.h
+  @file sclpl.h
 */
-#ifndef LIBPARSE_H
-#define LIBPARSE_H
+#ifndef SCLPL_H
+#define SCLPL_H
 
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <setjmp.h>
+#include <opts.h>
 
 /* Garbage Collection
  *****************************************************************************/
@@ -193,4 +194,11 @@ bool expect_str(Parser* p_parser, TokType type, const char* p_text);
 // Grammar Routines
 AST* toplevel(Parser* p);
 
-#endif /* LIBPARSE_H */
+/* Pretty Printing
+ *****************************************************************************/
+void pprint_token_type(FILE* file, Tok* token);
+void pprint_token_value(FILE* file, Tok* token);
+void pprint_token(FILE* file, Tok* token, bool print_loc);
+//void pprint_tree(FILE* file, AST* tree, int depth);
+
+#endif /* SCLPL_H */

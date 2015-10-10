@@ -4,7 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include <libparse.h>
+#include <sclpl.h>
 
 Tok tok_eof = { NULL, 0, 0, T_END_FILE, {0} };
 

@@ -4,7 +4,7 @@
   $Revision$
   $HeadURL$
 */
-#include <libparse.h>
+#include <sclpl.h>
 
 static AST* require(Parser* p);
 static AST* type_annotation(Parser* p);

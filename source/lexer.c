@@ -4,7 +4,7 @@
   $Revision$
   $HeadURL$
   */
-#include <libparse.h>
+#include <sclpl.h>
 
 static char* dupstring(const char* old) {
     size_t length = strlen(old);
