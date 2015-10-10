@@ -1,9 +1,6 @@
 /**
   @file libparse.h
-  @brief TODO: Describe this file
-  $Revision$
-  $HeadURL$
-  */
+*/
 #ifndef LIBPARSE_H
 #define LIBPARSE_H
 
@@ -11,9 +8,26 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
-#include "mem.h"
-#include "exn.h"
+#include <assert.h>
+#include <setjmp.h>
+
+/* Garbage Collection
+ *****************************************************************************/
+typedef void (*destructor_t)(void*);
+
+void gc_init(void** stack_bottom);
+void gc_deinit(void);
+void gc_collect(void);
+void* gc_alloc(size_t size, destructor_t destructor);
+void* gc_addref(void* ptr);
+void gc_delref(void* ptr);
+void gc_swapref(void** dest, void* newref);
+
+// Redfine main
+extern int user_main(int argc, char** argv);
 
 /* Token Types
  *****************************************************************************/
@@ -151,8 +165,6 @@ char ident_value(AST* val);
 
 /* Lexer and Parser Types
  *****************************************************************************/
-DECLARE_EXCEPTION(ParseException);
-
 typedef struct {
     char* line;
     size_t index;

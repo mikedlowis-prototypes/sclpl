@@ -8,7 +8,7 @@
 
 static char* dupstring(const char* old) {
     size_t length = strlen(old);
-    char* str = (char*)mem_allocate(length+1, NULL);
+    char* str = (char*)gc_alloc(length+1, NULL);
     memcpy(str, old, length);
     str[length] = '\0';
     return str;
@@ -24,12 +24,12 @@ static void token_free(void* obj)
         (tok->type != T_INT) &&
         (tok->type != T_FLOAT) &&
         (NULL != tok->value.text))
-        mem_release(tok->value.text);
+        gc_delref(tok->value.text);
 }
 
 static Tok* Token(TokType type)
 {
-    Tok* tok = (Tok*)mem_allocate(sizeof(Tok), &token_free);
+    Tok* tok = (Tok*)gc_alloc(sizeof(Tok), &token_free);
     tok->type = type;
     return tok;
 }
@@ -342,6 +342,7 @@ static Tok* boolean(char* text)
 static Tok* classify(const char* file, size_t line, size_t col, char* text)
 {
     Tok* tok = NULL;
+    (void)file;
     if (0 == strcmp(text,"end")) {
         tok = Token(T_END);
     } else if (char_oneof("()[]{};,'", text[0])) {

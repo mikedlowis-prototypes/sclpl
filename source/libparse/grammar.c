@@ -6,66 +6,62 @@
 */
 #include <libparse.h>
 
-static void require(Parser* p);
-static void type_annotation(Parser* p);
-static void type_definition(Parser* p);
-static void type(Parser* p);
-static void tuple(Parser* p);
-static void function(Parser* p);
-static void definition(Parser* p);
-static void expression(Parser* p);
-static void literal(Parser* p);
-static void arglist(Parser* p);
-static void if_stmnt(Parser* p);
-static void fn_stmnt(Parser* p);
+static AST* require(Parser* p);
+static AST* type_annotation(Parser* p);
+static AST* type_definition(Parser* p);
+static AST* type(Parser* p);
+static AST* tuple(Parser* p);
+static AST* function(Parser* p);
+static AST* definition(Parser* p);
+static AST* expression(Parser* p);
+static AST* literal(Parser* p);
+static AST* arglist(Parser* p);
+static AST* if_stmnt(Parser* p);
+static AST* fn_stmnt(Parser* p);
 
 AST* toplevel(Parser* p)
 {
-    AST* tree = NULL;
-    try {
-        if (accept_str(p, T_ID, "require"))
-            require(p);
-        else if (accept_str(p, T_ID, "type"))
-            type_definition(p);
-        else if (accept_str(p, T_ID, "ann"))
-            type_annotation(p);
-        else if (accept_str(p, T_ID, "def"))
-            definition(p);
-        else
-            expression(p);
-        //tree = get_tree(p);
-    } catch(ParseException) {
-        /* Do nothing, the tree is bad */
-    }
-    return tree;
+    if (accept_str(p, T_ID, "require"))
+        return require(p);
+    else if (accept_str(p, T_ID, "type"))
+        return type_definition(p);
+    else if (accept_str(p, T_ID, "ann"))
+        return type_annotation(p);
+    else if (accept_str(p, T_ID, "def"))
+        return definition(p);
+    else
+        return expression(p);
 }
 
-static void require(Parser* p)
+static AST* require(Parser* p)
 {
-    shifttok(p, T_STRING);
+    //shifttok(p, T_STRING);
     expect(p, T_END);
     //reduce(Require);
+    return NULL;
 }
 
-static void type_annotation(Parser* p)
+static AST* type_annotation(Parser* p)
 {
-    shifttok(p, T_ID);
+    //shifttok(p, T_ID);
     type(p);
     expect(p, T_END);
     //reduce(Annotation);
+    return NULL;
 }
 
 /*****************************************************************************/
 
-static void type_definition(Parser* p)
+static AST* type_definition(Parser* p)
 {
     expect(p, T_ID);
     expect_str(p, T_ID, "is");
     type(p);
     expect(p, T_END);
+    return NULL;
 }
 
-static void type(Parser* p) {
+static AST* type(Parser* p) {
     if (accept(p, T_LBRACE)) {
         tuple(p);
     } else {
@@ -74,9 +70,10 @@ static void type(Parser* p) {
             function(p);
         }
     }
+    return NULL;
 }
 
-static void tuple(Parser* p) {
+static AST* tuple(Parser* p) {
     //size_t mrk = mark(p);
     //insert(p, T_ID, lexer_dup("tuple"));
     do {
@@ -84,9 +81,10 @@ static void tuple(Parser* p) {
     } while (accept(p, T_COMMA));
     expect(p, T_RBRACE);
     //reduce(p, mrk);
+    return NULL;
 }
 
-static void function(Parser* p) {
+static AST* function(Parser* p) {
     //size_t mark1 = mark(p) - 1;
     //size_t mark2 = mark(p);
     while (!accept(p, T_RPAR)) {
@@ -96,9 +94,10 @@ static void function(Parser* p) {
     }
     //reduce(p, mark2);
     //reduce(p, mark1);
+    return NULL;
 }
 
-static void definition(Parser* p)
+static AST* definition(Parser* p)
 {
     //size_t mrk = mark(p);
     expect(p,T_ID);
@@ -110,9 +109,10 @@ static void definition(Parser* p)
         expect(p,T_END);
     }
     //reduce(p, mrk);
+    return NULL;
 }
 
-static void expression(Parser* p)
+static AST* expression(Parser* p)
 {
     if (accept(p, T_LPAR)) {
         //size_t mrk = mark(p);
@@ -131,9 +131,10 @@ static void expression(Parser* p)
     } else {
         literal(p);
     }
+    return NULL;
 }
 
-static void literal(Parser* p)
+static AST* literal(Parser* p)
 {
     switch (peek(p)->type) {
         case T_BOOL:
@@ -147,9 +148,10 @@ static void literal(Parser* p)
         default:
             error(p, "Expected a literal");
     }
+    return NULL;
 }
 
-static void arglist(Parser* p)
+static AST* arglist(Parser* p)
 {
     //size_t mrk = mark(p);
     expect(p, T_LPAR);
@@ -160,9 +162,10 @@ static void arglist(Parser* p)
     }
     expect(p, T_RPAR);
     //reduce(p, mrk);
+    return NULL;
 }
 
-static void if_stmnt(Parser* p)
+static AST* if_stmnt(Parser* p)
 {
     //size_t mrk = mark(p);
     expression(p);
@@ -172,9 +175,10 @@ static void if_stmnt(Parser* p)
     }
     expect(p,T_END);
     //reduce(p, mrk);
+    return NULL;
 }
 
-static void fn_stmnt(Parser* p)
+static AST* fn_stmnt(Parser* p)
 {
     //size_t mark1 = mark(p);
     expect(p, T_LPAR);
@@ -191,5 +195,6 @@ static void fn_stmnt(Parser* p)
     }
     expect(p, T_END);
     //reduce(p, mark1);
+    return NULL;
 }
 

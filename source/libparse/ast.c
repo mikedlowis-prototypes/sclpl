@@ -108,7 +108,7 @@ void block_append(AST* expr)
 size_t block_size(AST* block)
 {
     (void)block;
-    return NULL;
+    return 0;
 }
 
 AST* block_get(size_t index)

@@ -1,3 +1,4 @@
+#include <libparse.h>
 #include <sclpl.h>
 
 /* Command Line Options
@@ -70,7 +71,7 @@ static int emit_program(void) {
     * Implement name mangling algorithm for files and identifiers
 
 */
-int main(int argc, char **argv) {
+int user_main(int argc, char **argv) {
     opts_parse( Options_Config, argc, argv );
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
