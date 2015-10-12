@@ -103,40 +103,41 @@ char* ident_value(AST* val)
     return val->value.text;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AST* Require(char* name)
 {
-    (void)name;
-    return NULL;
+    AST* node = ast(AST_REQ);
+    node->value.text = name;
+    return node;
 }
 
 char* require_name(AST* req)
 {
-    (void)req;
-    return NULL;
+    assert(req->type == AST_REQ);
+    return req->value.text;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 AST* Def(char* name, AST* value)
 {

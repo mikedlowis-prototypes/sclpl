@@ -129,15 +129,15 @@ bool bool_value(AST* val);
 AST* Ident(char* val);
 char* ident_value(AST* val);
 
+/* Require */
+AST* Require(char* name);
+char* require_name(AST* req);
 
 
 
 
 
 
-///* Require */
-//AST* Require(char* name);
-//char* require_name(AST* req);
 //
 ///* Definition */
 //AST* Def(char* name, AST* value);

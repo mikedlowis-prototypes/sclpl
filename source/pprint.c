@@ -119,6 +119,8 @@ void pprint_tree(FILE* file, AST* tree, int depth)
     print_indent(file, depth);
     if (tree->type <= AST_IDENT) {
         pprint_literal(file, tree, depth);
+    } else if (tree->type == AST_REQ) {
+        printf("(require \"%s\")", require_name(tree));
     } else {
         //fputs("(tree", file);
         //vec_t* p_vec = tree->ptr.vec;

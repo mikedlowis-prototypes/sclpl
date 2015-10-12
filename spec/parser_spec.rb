@@ -27,31 +27,31 @@ describe "sclpl grammar" do
     end
   end
 
-#  context "requires" do
-#    it "should parse a require statement" do
-#      expect(ast('require "foo";')).to eq([ ['T_ID:require', 'T_STRING:"foo"'] ])
-#    end
-#
-#    it "should parse a require statement using end keyword" do
-#        expect(ast('require "foo" end')).to eq([ ['T_ID:require', 'T_STRING:"foo"'] ])
-#    end
-#
-#    it "should error on missing semicolon" do
-#      expect{ast('require "foo"')}.to raise_error /Error/
-#    end
-#
-#    it "should error on missing filename" do
-#      expect{ast('require ;')}.to raise_error /Error/
-#    end
-#
-#    it "should error on invalid filename type" do
-#      expect{ast('require 123;')}.to raise_error /Error/
-#    end
-#
-#    it "should error on too many parameters" do
-#      expect{ast('require foo bar;')}.to raise_error /Error/
-#    end
-#  end
+  context "requires" do
+    it "should parse a require statement" do
+      expect(ast('require "foo";')).to eq([ ['require', '"foo"'] ])
+    end
+
+    it "should parse a require statement using end keyword" do
+        expect(ast('require "foo" end')).to eq([ ['require', '"foo"'] ])
+    end
+
+    it "should error on missing semicolon" do
+      expect{ast('require "foo"')}.to raise_error /Error/
+    end
+
+    it "should error on missing filename" do
+      expect{ast('require ;')}.to raise_error /Error/
+    end
+
+    it "should error on invalid filename type" do
+      expect{ast('require 123;')}.to raise_error /Error/
+    end
+
+    it "should error on too many parameters" do
+      expect{ast('require foo bar;')}.to raise_error /Error/
+    end
+  end
 #
 #  context "type definitions" do
 #    it "should parse a simple type definition" do
