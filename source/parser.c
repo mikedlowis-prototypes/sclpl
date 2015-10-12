@@ -66,18 +66,6 @@ void error(Parser* parser, const char* text)
     exit(1);
 }
 
-Tok* shifttok(Parser* parser, TokType type)
-{
-    Tok* tok = NULL;
-    if (peek(parser)->type == type) {
-        //vec_push_back(parser->stack, parser->tok);
-        parser->tok = NULL;
-    } else {
-        error(parser, "Unexpected token");
-    }
-    return tok;
-}
-
 bool accept(Parser* parser, TokType type)
 {
     bool ret = false;

@@ -27,7 +27,7 @@ void print_usage(void) {
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
-    Tok* token;
+    Tok* token = NULL;
     Parser* ctx = parser_new(NULL, stdin);
     while(NULL != (token = gettoken(ctx)))
         pprint_token(stdout, token, true);
@@ -35,6 +35,10 @@ static int emit_tokens(void) {
 }
 
 static int emit_tree(void) {
+    AST* tree = NULL;
+    Parser* ctx = parser_new(NULL, stdin);
+    while(NULL != (tree = toplevel(ctx)))
+        pprint_tree(stdout, tree, 0);
     return 0;
 }
 

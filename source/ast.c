@@ -1,5 +1,131 @@
 #include <sclpl.h>
 
+static void ast_free(void* ptr)
+{
+}
+
+static AST* ast(ASTType type)
+{
+    AST* tree = gc_alloc(sizeof(AST), &ast_free);
+    memset(tree, 0, sizeof(AST));
+    tree->type = type;
+    return tree;
+}
+
+AST* String(char* val)
+{
+    AST* node = ast(AST_STRING);
+    node->value.text = val;
+    return node;
+}
+
+char* string_value(AST* val)
+{
+    assert(val->type == AST_STRING);
+    return val->value.text;
+}
+
+AST* Symbol(char* val)
+{
+    AST* node = ast(AST_SYMBOL);
+    node->value.text = val;
+    return node;
+}
+
+char* symbol_value(AST* val)
+{
+    assert(val->type == AST_SYMBOL);
+    return val->value.text;
+}
+
+AST* Char(uint32_t val)
+{
+    AST* node = ast(AST_CHAR);
+    node->value.character = val;
+    return node;
+}
+
+uint32_t char_value(AST* val)
+{
+    assert(val->type == AST_CHAR);
+    return val->value.character;
+}
+
+AST* Integer(intptr_t val)
+{
+    AST* node = ast(AST_INT);
+    node->value.integer = val;
+    return node;
+}
+
+intptr_t integer_value(AST* val)
+{
+    assert(val->type == AST_INT);
+    return val->value.integer;
+}
+
+AST* Float(double val)
+{
+    AST* node = ast(AST_FLOAT);
+    node->value.floating = val;
+    return node;
+}
+
+double float_value(AST* val)
+{
+    assert(val->type == AST_FLOAT);
+    return val->value.floating;
+}
+
+AST* Bool(bool val)
+{
+    AST* node = ast(AST_BOOL);
+    node->value.boolean = val;
+    return node;
+}
+
+bool bool_value(AST* val)
+{
+    assert(val->type == AST_BOOL);
+    return val->value.boolean;
+}
+
+AST* Ident(char* val)
+{
+    AST* node = ast(AST_IDENT);
+    node->value.text = val;
+    return node;
+}
+
+char* ident_value(AST* val)
+{
+    assert(val->type == AST_IDENT);
+    return val->value.text;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 AST* Require(char* name)
 {
     (void)name;
@@ -115,89 +241,5 @@ AST* block_get(size_t index)
 {
     (void)index;
     return NULL;
-}
-
-AST* String(char* val)
-{
-    (void)val;
-    return NULL;
-}
-
-char* string_value(AST* val)
-{
-    (void)val;
-    return NULL;
-}
-
-AST* Symbol(char* val)
-{
-    (void)val;
-    return NULL;
-}
-
-char* symbol_value(AST* val)
-{
-    (void)val;
-    return NULL;
-}
-
-AST* Char(uint32_t val)
-{
-    (void)val;
-    return NULL;
-}
-
-uint32_t char_value(AST* val)
-{
-    (void)val;
-    return 0;
-}
-
-AST* Integer(intptr_t val)
-{
-    (void)val;
-    return NULL;
-}
-
-intptr_t integer_value(AST* val)
-{
-    (void)val;
-    return 0;
-}
-
-AST* Float(double val)
-{
-    (void)val;
-    return NULL;
-}
-
-double float_value(AST* val)
-{
-    (void)val;
-    return 0.0;
-}
-
-AST* Bool(bool val)
-{
-    (void)val;
-    return NULL;
-}
-
-bool bool_value(AST* val)
-{
-    (void)val;
-    return false;
-}
-
-AST* Ident(char* val)
-{
-    (void)val;
-    return NULL;
-}
-
-char ident_value(AST* val)
-{
-    (void)val;
-    return 0;
 }
 

@@ -1,6 +1,32 @@
 require 'open3'
 
-#describe "sclpl grammar" do
+describe "sclpl grammar" do
+  context "literals" do
+    it "should parse a string" do
+      expect(ast('"foo"')).to eq(['T_STRING:"foo"'])
+    end
+
+    it "should parse a character" do
+      expect(ast('\\c')).to eq(['T_CHAR:c'])
+    end
+
+    it "should parse an integer" do
+      expect(ast('123')).to eq(['T_INT:123'])
+    end
+
+    it "should parse a float" do
+      expect(ast('123.0')).to eq(['T_FLOAT:123.000000'])
+    end
+
+    it "should parse boolean" do
+      expect(ast('true')).to eq(['T_BOOL:true'])
+    end
+
+    it "should parse an identifier" do
+      expect(ast('foo')).to eq(['T_IDENT:foo'])
+    end
+  end
+
 #  context "requires" do
 #    it "should parse a require statement" do
 #      expect(ast('require "foo";')).to eq([ ['T_ID:require', 'T_STRING:"foo"'] ])
@@ -188,32 +214,6 @@ require 'open3'
 #    end
 #  end
 #
-#  context "literals" do
-#    it "should parse a string" do
-#      expect(ast('"foo"')).to eq(['T_STRING:"foo"'])
-#    end
-#
-#    it "should parse a character" do
-#      expect(ast('\\c')).to eq(['T_CHAR:\\c'])
-#    end
-#
-#    it "should parse an integer" do
-#      expect(ast('123')).to eq(['T_INT:123'])
-#    end
-#
-#    it "should parse a float" do
-#      expect(ast('123.0')).to eq(['T_FLOAT:123.000000'])
-#    end
-#
-#    it "should parse boolean" do
-#      expect(ast('true')).to eq(['T_BOOL:true'])
-#    end
-#
-#    it "should parse an identifier" do
-#      expect(ast('foo')).to eq(['T_ID:foo'])
-#    end
-#  end
-#
 #  context "corner cases" do
 #    it "an unexpected terminator should error" do
 #      expect{ast(';')}.to raise_error /Error/
@@ -223,4 +223,4 @@ require 'open3'
 #      expect{ast('\'')}.to raise_error /Error/
 #    end
 #  end
-#end
+end

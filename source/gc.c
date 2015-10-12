@@ -246,12 +246,14 @@ void* gc_addref(void* ptr)
     hash_entry_t lookup = {0, 0, 0};
     hash_entry_t* entry;
     obj_t* obj = ((obj_t*)ptr-1);
-    obj->refs++;
-    if (obj->refs == 1) {
-        lookup.object = obj;
-        entry = hash_del(&Zero_Count_Table, &lookup);
-        assert(entry != NULL);
-        hash_set(&Multi_Ref_Table, entry);
+    if (ptr != NULL) {
+        obj->refs++;
+        if (obj->refs == 1) {
+            lookup.object = obj;
+            entry = hash_del(&Zero_Count_Table, &lookup);
+            assert(entry != NULL);
+            hash_set(&Multi_Ref_Table, entry);
+        }
     }
     return ptr;
 }
@@ -261,12 +263,14 @@ void gc_delref(void* ptr)
     hash_entry_t lookup = {0, 0, 0};
     hash_entry_t* entry;
     obj_t* obj = ((obj_t*)ptr-1);
-    obj->refs--;
-    if (obj->refs == 0) {
-        lookup.object = obj;
-        entry = hash_del(&Multi_Ref_Table, &lookup);
-        assert(entry != NULL);
-        hash_set(&Zero_Count_Table, entry);
+    if (ptr != NULL) {
+        obj->refs--;
+        if (obj->refs == 0) {
+            lookup.object = obj;
+            entry = hash_del(&Multi_Ref_Table, &lookup);
+            assert(entry != NULL);
+            hash_set(&Zero_Count_Table, entry);
+        }
     }
 }
 

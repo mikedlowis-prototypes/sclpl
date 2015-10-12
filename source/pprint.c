@@ -6,12 +6,10 @@
   */
 #include <sclpl.h>
 
-#if 0
 static void print_indent(FILE* file, int depth) {
     for(int i = 0; i < (2 * depth); i++)
         fprintf(file, "%c", ' ');
 }
-#endif
 
 static const char* token_type_to_string(TokType type) {
     switch(type) {
@@ -84,20 +82,51 @@ void pprint_token(FILE* file, Tok* token, bool print_loc)
     fprintf(file, "\n");
 }
 
+/*****************************************************************************/
 
-//void pprint_tree(FILE* file, AST* tree, int depth)
-//{
-//    print_indent(file, depth);
-//    if (tree->tag == ATOM) {
-//        pprint_token(file, tree->ptr.tok, false);
-//    } else {
-//        fputs("(tree", file);
-//        vec_t* p_vec = tree->ptr.vec;
-//        for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-//            pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
-//        }
-//        print_indent(file, depth);
-//        fputs(")\n", file);
-//    }
-//}
+static const char* tree_type_to_string(ASTType type) {
+    switch(type) {
+        case AST_STRING: return "T_STRING";
+        case AST_SYMBOL: return "T_SYMBOL";
+        case AST_IDENT:  return "T_IDENT";
+        case AST_CHAR:   return "T_CHAR";
+        case AST_INT:    return "T_INT";
+        case AST_FLOAT:  return "T_FLOAT";
+        case AST_BOOL:   return "T_BOOL";
+        default:         return "???";
+    }
+}
+
+static void pprint_literal(FILE* file, AST* tree, int depth)
+{
+    printf("%s:", tree_type_to_string(tree->type));
+    switch(tree->type) {
+        case AST_STRING: printf("\"%s\"", string_value(tree)); break;
+        case AST_SYMBOL: printf("%s", symbol_value(tree));     break;
+        case AST_IDENT:  printf("%s", ident_value(tree));      break;
+        case AST_CHAR:   printf("%c", char_value(tree));       break;
+        case AST_INT:    printf("%ld", integer_value(tree));   break;
+        case AST_FLOAT:  printf("%lf", float_value(tree));     break;
+        case AST_BOOL:
+            printf("%s", bool_value(tree) ? "true" : "false");
+            break;
+        default: printf("???");
+    }
+}
+
+void pprint_tree(FILE* file, AST* tree, int depth)
+{
+    print_indent(file, depth);
+    if (tree->type <= AST_IDENT) {
+        pprint_literal(file, tree, depth);
+    } else {
+        //fputs("(tree", file);
+        //vec_t* p_vec = tree->ptr.vec;
+        //for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
+        //    pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
+        //}
+        //print_indent(file, depth);
+        //fputs(")\n", file);
+    }
+}
 

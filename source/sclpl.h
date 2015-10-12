@@ -33,8 +33,10 @@ extern int user_main(int argc, char** argv);
 /* Token Types
  *****************************************************************************/
 typedef enum {
-    T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE, T_LBRACK,
-    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_END_FILE
+    T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING,
+    T_LBRACE, T_RBRACE, T_LBRACK,
+    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END,
+    T_END_FILE
 } TokType;
 
 typedef struct {
@@ -54,8 +56,8 @@ typedef struct {
 /* AST Types
  *****************************************************************************/
 typedef enum ASTType {
-    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC, AST_STRING, AST_SYMBOL,
-    AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT
+    AST_STRING = 0, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
+    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC,
 } ASTType;
 
 typedef struct AST {
@@ -86,55 +88,18 @@ typedef struct AST {
             struct AST* args;
             struct AST* body;
         } func;
-        /* Code Block */
-        //vec_t block;
-        /* String */
-        char* stringval;
-        /* Symbol */
-        char* symbolval;
+        /* String, Symbol, Identifier */
+        char* text;
         /* Character */
-        uint32_t charval;
+        uint32_t character;
         /* Integer */
-        intptr_t intval;
+        intptr_t integer;
         /* Float */
-        double floatval;
+        double floating;
         /* Bool */
-        bool boolval;
-        /* Ident */
-        char* idval;
-    } data;
+        bool boolean;
+    } value;
 } AST;
-
-/* Require */
-AST* Require(char* name);
-char* require_name(AST* req);
-
-/* Definition */
-AST* Def(char* name, AST* value);
-char* def_name(AST* def);
-AST* def_value(AST* def);
-
-/* Annotation */
-AST* Ann(char* name, AST* value);
-char* ann_name(AST* def);
-AST* ann_value(AST* def);
-
-/* If Expression */
-AST* IfExpr(AST* cond, AST* bthen, AST* belse);
-AST* ifexpr_condition(AST* ifexpr);
-AST* ifexpr_branch_then(AST* ifexpr);
-AST* ifexpr_branch_else(AST* ifexpr);
-
-/* Function */
-AST* Func(AST* args, AST* body);
-AST* func_args(AST* func);
-AST* func_body(AST* func);
-
-/* Code Block */
-AST* Block(void);
-void block_append(AST* expr);
-size_t block_size(AST* block);
-AST* block_get(size_t index);
 
 /* String */
 AST* String(char* val);
@@ -162,8 +127,45 @@ bool bool_value(AST* val);
 
 /* Ident */
 AST* Ident(char* val);
-char ident_value(AST* val);
+char* ident_value(AST* val);
 
+
+
+
+
+
+
+///* Require */
+//AST* Require(char* name);
+//char* require_name(AST* req);
+//
+///* Definition */
+//AST* Def(char* name, AST* value);
+//char* def_name(AST* def);
+//AST* def_value(AST* def);
+//
+///* Annotation */
+//AST* Ann(char* name, AST* value);
+//char* ann_name(AST* def);
+//AST* ann_value(AST* def);
+//
+///* If Expression */
+//AST* IfExpr(AST* cond, AST* bthen, AST* belse);
+//AST* ifexpr_condition(AST* ifexpr);
+//AST* ifexpr_branch_then(AST* ifexpr);
+//AST* ifexpr_branch_else(AST* ifexpr);
+//
+///* Function */
+//AST* Func(AST* args, AST* body);
+//AST* func_args(AST* func);
+//AST* func_body(AST* func);
+//
+///* Code Block */
+//AST* Block(void);
+//void block_append(AST* expr);
+//size_t block_size(AST* block);
+//AST* block_get(size_t index);
+//
 /* Lexer and Parser Types
  *****************************************************************************/
 typedef struct {
@@ -199,6 +201,6 @@ AST* toplevel(Parser* p);
 void pprint_token_type(FILE* file, Tok* token);
 void pprint_token_value(FILE* file, Tok* token);
 void pprint_token(FILE* file, Tok* token, bool print_loc);
-//void pprint_tree(FILE* file, AST* tree, int depth);
+void pprint_tree(FILE* file, AST* tree, int depth);
 
 #endif /* SCLPL_H */
