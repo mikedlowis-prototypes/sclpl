@@ -2,6 +2,41 @@
 
 static void ast_free(void* ptr)
 {
+    AST* ast = (AST*)ptr;
+    switch(ast->type) {
+        case AST_IDENT:
+        case AST_STRING:
+            gc_delref(ast->value.text);
+            break;
+
+        case AST_REQ:
+            gc_delref(ast->value.req.name);
+            break;
+
+        case AST_DEF:
+            gc_delref(ast->value.def.name);
+            gc_delref(ast->value.def.value);
+            break;
+
+        case AST_ANN:
+            gc_delref(ast->value.ann.name);
+            gc_delref(ast->value.ann.value);
+            break;
+
+        case AST_IF:
+            gc_delref(ast->value.ifexpr.cond);
+            gc_delref(ast->value.ifexpr.bthen);
+            gc_delref(ast->value.ifexpr.belse);
+            break;
+
+        case AST_FUNC:
+            gc_delref(ast->value.func.args);
+            gc_delref(ast->value.func.body);
+            break;
+
+        default:
+            break;
+    }
 }
 
 static AST* ast(ASTType type)

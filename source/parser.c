@@ -13,7 +13,8 @@ static void parser_free(void* obj) {
     if ((NULL != parser->tok) && (&tok_eof != parser->tok)) {
         gc_delref(parser->tok);
     }
-    //gc_delref(parser->stack);
+    if (parser->line != NULL)
+        free(parser->line);
 }
 
 Parser* parser_new(char* prompt, FILE* input)
@@ -25,7 +26,6 @@ Parser* parser_new(char* prompt, FILE* input)
     parser->input   = input;
     parser->prompt  = prompt;
     parser->tok     = NULL;
-    //parser->stack = vec_new(0);
     return parser;
 }
 
@@ -52,7 +52,6 @@ void parser_resume(Parser* parser) {
         gc_delref(parser->tok);
         parser->tok = NULL;
     }
-    //vec_clear(parser->stack);
     /* We ignore the rest of the current line and attempt to start parsing
      * again on the next line */
     fetchline(parser);
@@ -60,7 +59,6 @@ void parser_resume(Parser* parser) {
 
 void error(Parser* parser, const char* text)
 {
-    (void)parser;
     Tok* tok = peek(parser);
     fprintf(stderr, "<file>:%zu:%zu:Error: %s\n", tok->line, tok->col, text);
     exit(1);

@@ -14,7 +14,7 @@ base_env = BuildEnv.new do |env|
   env.build_dir('source','build/obj/source')
   env.build_dir('modules','build/obj/modules')
   # Compiler options
-  env["CFLAGS"] += ['-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra']#, '-Werror']
+  env["CFLAGS"] += ['-g', '-DLEAK_DETECT_LEVEL=1', '--std=c99', '-Wall', '-Wextra']#, '-Werror']
   env["CPPPATH"] += Dir['modules/libcds/source/**/'] + [
     'modules/libopts/source',
     'source/',

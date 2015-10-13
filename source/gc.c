@@ -151,6 +151,7 @@ static hash_entry_t* hash_del(hash_t* hash, hash_entry_t* entry)
 
 /*****************************************************************************/
 
+static bool Shutdown;
 static void** Stack_Bottom;
 static hash_t Zero_Count_Table;
 static hash_t Multi_Ref_Table;
@@ -191,22 +192,22 @@ static void gc_mark(void) {
     (noinline ? gc_mark_stack : NULL)();
 }
 
-static void gc_sweep(void) {
+static void gc_sweep_table(hash_t* table) {
     unsigned int i;
     /* Delete all the entries in the hash */
-    for (i = 0; i < num_buckets(Working_Table.bkt_count); i++) {
-        hash_entry_t* node = Working_Table.buckets[i];
-        Working_Table.buckets[i] = NULL;
+    for (i = 0; i < num_buckets(table->bkt_count); i++) {
+        hash_entry_t* node = table->buckets[i];
+      table->buckets[i] = NULL;
         while (node != NULL) {
             hash_entry_t* deadite = node;
+            node = node->next;
             obj_t* obj = ((obj_t*)(deadite->object)-1);
             if (obj->destructor != NULL)
                 obj->destructor(deadite->object);
             free(deadite);
-            node = node->next;
         }
     }
-    free(Working_Table.buckets);
+    free(table->buckets);
 }
 
 void gc_init(void** stack_bottom)
@@ -214,17 +215,34 @@ void gc_init(void** stack_bottom)
     Stack_Bottom = stack_bottom;
     hash_init(&Zero_Count_Table);
     hash_init(&Multi_Ref_Table);
+    atexit(gc_deinit);
+    Shutdown = false;
 }
 
 void gc_deinit(void)
 {
+    Shutdown = true;
+    gc_sweep_table(&Zero_Count_Table);
+    gc_sweep_table(&Multi_Ref_Table);
 }
 
 void gc_collect(void) {
+#ifdef GC_DEBUG_MSGS
+    printf("BEFORE - ZCT: %ld MRT: %ld TOT: %ld\n",
+        hash_size(&Zero_Count_Table),
+        hash_size(&Multi_Ref_Table),
+        hash_size(&Zero_Count_Table) + hash_size(&Multi_Ref_Table));
+#endif
     Working_Table = Zero_Count_Table;
     hash_init(&Zero_Count_Table);
     gc_mark();
-    gc_sweep();
+    gc_sweep_table(&Working_Table);
+#ifdef GC_DEBUG_MSGS
+    printf("AFTER - ZCT: %ld MRT: %ld TOT: %ld\n\n",
+        hash_size(&Zero_Count_Table),
+        hash_size(&Multi_Ref_Table),
+        hash_size(&Zero_Count_Table) + hash_size(&Multi_Ref_Table));
+#endif
 }
 
 void* gc_alloc(size_t size, destructor_t destructor)
@@ -246,7 +264,7 @@ void* gc_addref(void* ptr)
     hash_entry_t lookup = {0, 0, 0};
     hash_entry_t* entry;
     obj_t* obj = ((obj_t*)ptr-1);
-    if (ptr != NULL) {
+    if ((ptr != NULL) && !Shutdown) {
         obj->refs++;
         if (obj->refs == 1) {
             lookup.object = ptr;
@@ -263,7 +281,7 @@ void gc_delref(void* ptr)
     hash_entry_t lookup = {0, 0, 0};
     hash_entry_t* entry;
     obj_t* obj = ((obj_t*)ptr-1);
-    if (ptr != NULL) {
+    if ((ptr != NULL) && !Shutdown) {
         obj->refs--;
         if (obj->refs == 0) {
             lookup.object = ptr;
@@ -287,28 +305,6 @@ int main(int argc, char** argv)
 {
     void* stack_bottom = NULL;
     gc_init(&stack_bottom);
-    atexit(gc_deinit);
     return user_main(argc, argv);
 }
-
-///int user_main(int argc, char** argv) {
-///    uint8_t* foo;
-///    (void)argc;
-///    (void)argv;
-///    foo = (uint8_t*)gc_alloc(42,NULL);
-///    printf("refs: %lu\n", hash_size(&Zero_Count_Table));
-///    gc_collect();
-///    *foo = 42;
-///    printf("data: %d\n", (int)*foo);
-///    (void)foo;
-///    printf("refs: %lu\n", hash_size(&Zero_Count_Table));
-///    printf("ref: %p\n", foo);
-///    foo = NULL;
-///    gc_collect();
-///    printf("refs: %lu\n", hash_size(&Zero_Count_Table));
-///    printf("ref: %p\n", foo);
-///    gc_collect();
-///    printf("refs: %lu\n", hash_size(&Zero_Count_Table));
-///    return 0;
-///}
 

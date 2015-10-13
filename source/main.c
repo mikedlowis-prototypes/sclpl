@@ -75,7 +75,8 @@ static int emit_program(void) {
 
 */
 int user_main(int argc, char **argv) {
-    opts_parse( Options_Config, argc, argv );
+    opts_parse( Options_Config, NULL, argc, argv );
+    atexit(&opts_reset);
     if (!opts_is_set(NULL,"mode")) {
         print_usage();
     } else if (opts_equal(NULL, "mode", "tokens")) {
@@ -97,6 +98,5 @@ int user_main(int argc, char **argv) {
     } else {
         print_usage();
     }
-    opts_reset();
     return 1;
 }
