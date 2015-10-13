@@ -9,7 +9,9 @@
 static AST* require(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
+static AST* if_stmnt(Parser* p);
 static AST* literal(Parser* p);
+static AST* expr_block(Parser* p);
 static AST* token_to_tree(Tok* tok);
 
 AST* toplevel(Parser* p)
@@ -28,10 +30,6 @@ AST* toplevel(Parser* p)
     //    return type_definition(p);
     //else if (accept_str(p, T_ID, "ann"))
     //    return type_annotation(p);
-    //else if (accept_str(p, T_ID, "def"))
-    //    return definition(p);
-    //else
-    //    return expression(p);
     return ret;
 }
 
@@ -58,10 +56,12 @@ static AST* require(Parser* p)
 static AST* expression(Parser* p)
 {
     if (peek(p)->type == T_ID) {
-        return Ident(expect(p,T_ID)); //expect_lit(p, T_ID);
+        return Ident(expect(p,T_ID));
         //if (peek(p)->type == T_LPAR) {
         //    arglist(p);
         //}
+    } else if (accept_str(p, T_ID, "if")) {
+        return if_stmnt(p);
     } else {
         return literal(p);
     }
@@ -71,8 +71,6 @@ static AST* expression(Parser* p)
     //    expression(p);
     //    expect(p, T_RPAR);
     //    //reduce(p, mrk);
-    //} else if (accept_str(p, T_ID, "if")) {
-    //    if_stmnt(p);
     //} else if (accept_str(p, T_ID, "fn")) {
     //    fn_stmnt(p);
     //} else if (peek(p)->type == T_ID) {
@@ -80,9 +78,16 @@ static AST* expression(Parser* p)
     //    if (peek(p)->type == T_LPAR) {
     //        arglist(p);
     //    }
-    //} else {
-    //    return literal(p);
-    //}
+}
+
+static AST* if_stmnt(Parser* p)
+{
+    //AST* ifexpr = IfExpr();
+    //ifexpr_set_condition( expression(p) );
+    //ifexpr_set_branch_then( expr_block(p) );
+    //expect(p,T_END);
+    //return ifexpr;
+    return NULL;
 }
 
 static AST* literal(Parser* p)
@@ -101,6 +106,15 @@ static AST* literal(Parser* p)
             error(p, "Expected a literal");
     }
     return ret;
+}
+
+static AST* expr_block(Parser* p)
+{
+    AST* block = Block();
+    do {
+        block_append(block, expression(p));
+    } while(!accept_str(p, T_ID, "else") && !accept(p, T_END));
+    return block;
 }
 
 static AST* token_to_tree(Tok* tok)
@@ -204,18 +218,6 @@ static AST* arglist(Parser* p)
     return NULL;
 }
 
-static AST* if_stmnt(Parser* p)
-{
-    ////size_t mrk = mark(p);
-    //expression(p);
-    //expression(p);
-    //if (accept_str(p, T_ID, "else")) {
-    //    expression(p);
-    //}
-    //expect(p,T_END);
-    ////reduce(p, mrk);
-    return NULL;
-}
 
 static AST* fn_stmnt(Parser* p)
 {

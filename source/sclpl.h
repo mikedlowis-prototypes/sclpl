@@ -30,6 +30,22 @@ void gc_swapref(void** dest, void* newref);
 // Redfine main
 extern int user_main(int argc, char** argv);
 
+/* Vector Implementation
+ *****************************************************************************/
+typedef struct {
+    size_t count;
+    size_t size;
+    size_t capacity;
+    void** buffer;
+} vec_t;
+
+void vec_init(vec_t* vec);
+void vec_deinit(vec_t* vec);
+void vec_clear(vec_t* vec);
+size_t vec_size(vec_t* vec);
+void* vec_at(vec_t* vec, size_t index);
+void vec_push_back(vec_t* vec, void* data);
+
 /* Token Types
  *****************************************************************************/
 typedef enum {
@@ -138,8 +154,17 @@ AST* Def(Tok* name, AST* value);
 char* def_name(AST* def);
 AST* def_value(AST* def);
 
+/* If Expression */
+AST* IfExpr(AST* cond, AST* bthen, AST* belse);
+AST* ifexpr_condition(AST* ifexpr);
+AST* ifexpr_branch_then(AST* ifexpr);
+AST* ifexpr_branch_else(AST* ifexpr);
 
-
+/* Code Block */
+AST* Block(void);
+void block_append(AST* block, AST* expr);
+size_t block_size(AST* block);
+AST* block_get(size_t index);
 
 
 
@@ -148,22 +173,12 @@ AST* def_value(AST* def);
 //char* ann_name(AST* def);
 //AST* ann_value(AST* def);
 //
-///* If Expression */
-//AST* IfExpr(AST* cond, AST* bthen, AST* belse);
-//AST* ifexpr_condition(AST* ifexpr);
-//AST* ifexpr_branch_then(AST* ifexpr);
-//AST* ifexpr_branch_else(AST* ifexpr);
 //
 ///* Function */
 //AST* Func(AST* args, AST* body);
 //AST* func_args(AST* func);
 //AST* func_body(AST* func);
 //
-///* Code Block */
-//AST* Block(void);
-//void block_append(AST* expr);
-//size_t block_size(AST* block);
-//AST* block_get(size_t index);
 //
 /* Lexer and Parser Types
  *****************************************************************************/

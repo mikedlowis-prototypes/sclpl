@@ -181,6 +181,30 @@ AST* def_value(AST* def)
     return def->value.def.value;
 }
 
+AST* Block(void)
+{
+    return NULL;
+}
+
+void block_append(AST* block, AST* expr)
+{
+
+}
+
+size_t block_size(AST* block)
+{
+    return 0;
+}
+
+AST* block_get(size_t index)
+{
+    return NULL;
+}
+
+
+
+
+
 //AST* Ann(char* name, AST* value)
 //{
 //    (void)name;
