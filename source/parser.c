@@ -66,45 +66,41 @@ void error(Parser* parser, const char* text)
     exit(1);
 }
 
-bool accept(Parser* parser, TokType type)
+Tok* accept(Parser* parser, TokType type)
 {
-    bool ret = false;
-    if (peek(parser)->type == type) {
+    Tok* tok = peek(parser);
+    if (tok->type == type) {
         gc_swapref((void**)&(parser->tok), NULL);
-        ret = true;
+        return tok;
     }
-    return ret;
+    return NULL;
 }
 
-bool accept_str(Parser* parser, TokType type, const char* text)
+Tok* accept_str(Parser* parser, TokType type, const char* text)
 {
-    bool ret = false;
-    if ((peek(parser)->type == type) && (0 == strcmp((char*)(parser->tok->value.text), text))) {
+    Tok* tok = peek(parser);
+    if ((tok->type == type) && (0 == strcmp((char*)(tok->value.text), text))) {
         gc_swapref((void**)&(parser->tok), NULL);
-        ret = true;
+        return tok;
     }
-    return ret;
+    return NULL;
 }
 
-bool expect(Parser* parser, TokType type)
+Tok* expect(Parser* parser, TokType type)
 {
-    bool ret = false;
-    if (accept(parser, type)) {
-        ret = true;
-    } else {
+    Tok* tok = accept(parser, type);
+    if (tok == NULL) {
         error(parser, "Unexpected token");
     }
-    return ret;
+    return tok;
 }
 
-bool expect_str(Parser* parser, TokType type, const char* text)
+Tok* expect_str(Parser* parser, TokType type, const char* text)
 {
-    bool ret = false;
-    if (accept_str(parser, type, text)) {
-        ret = true;
-    } else {
+    Tok* tok = accept_str(parser, type, text);
+    if (tok == NULL) {
         error(parser, "Unexpected token");
     }
-    return ret;
+    return tok;
 }
 

@@ -102,48 +102,47 @@ typedef struct AST {
 } AST;
 
 /* String */
-AST* String(char* val);
+AST* String(Tok* val);
 char* string_value(AST* val);
 
 /* Symbol */
-AST* Symbol(char* val);
+AST* Symbol(Tok* val);
 char* symbol_value(AST* val);
 
 /* Character */
-AST* Char(uint32_t val);
+AST* Char(Tok* val);
 uint32_t char_value(AST* val);
 
 /* Integer */
-AST* Integer(intptr_t val);
+AST* Integer(Tok* val);
 intptr_t integer_value(AST* val);
 
 /* Float */
-AST* Float(double val);
+AST* Float(Tok* val);
 double float_value(AST* val);
 
 /* Bool */
-AST* Bool(bool val);
+AST* Bool(Tok* val);
 bool bool_value(AST* val);
 
 /* Ident */
-AST* Ident(char* val);
+AST* Ident(Tok* val);
 char* ident_value(AST* val);
 
 /* Require */
-AST* Require(char* name);
+AST* Require(Tok* name);
 char* require_name(AST* req);
 
+/* Definition */
+AST* Def(Tok* name, AST* value);
+char* def_name(AST* def);
+AST* def_value(AST* def);
 
 
 
 
 
-//
-///* Definition */
-//AST* Def(char* name, AST* value);
-//char* def_name(AST* def);
-//AST* def_value(AST* def);
-//
+
 ///* Annotation */
 //AST* Ann(char* name, AST* value);
 //char* ann_name(AST* def);
@@ -188,10 +187,10 @@ Tok* peek(Parser* p_parser);
 bool parser_eof(Parser* p_parser);
 void parser_resume(Parser* p_parser);
 void error(Parser* p_parser, const char* p_text);
-bool accept(Parser* p_parser, TokType type);
-bool accept_str(Parser* p_parser, TokType type, const char* p_text);
-bool expect(Parser* p_parser, TokType type);
-bool expect_str(Parser* p_parser, TokType type, const char* p_text);
+Tok* accept(Parser* p_parser, TokType type);
+Tok* accept_str(Parser* p_parser, TokType type, const char* p_text);
+Tok* expect(Parser* p_parser, TokType type);
+Tok* expect_str(Parser* p_parser, TokType type, const char* p_text);
 
 // Grammar Routines
 AST* toplevel(Parser* p);

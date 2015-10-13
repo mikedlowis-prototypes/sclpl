@@ -121,6 +121,10 @@ void pprint_tree(FILE* file, AST* tree, int depth)
         pprint_literal(file, tree, depth);
     } else if (tree->type == AST_REQ) {
         printf("(require \"%s\")", require_name(tree));
+    } else if (tree->type == AST_DEF) {
+        printf("(def %s ", def_name(tree));
+        pprint_tree(file, def_value(tree), depth);
+        printf(")");
     } else {
         //fputs("(tree", file);
         //vec_t* p_vec = tree->ptr.vec;

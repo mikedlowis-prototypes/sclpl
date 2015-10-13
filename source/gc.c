@@ -249,7 +249,7 @@ void* gc_addref(void* ptr)
     if (ptr != NULL) {
         obj->refs++;
         if (obj->refs == 1) {
-            lookup.object = obj;
+            lookup.object = ptr;
             entry = hash_del(&Zero_Count_Table, &lookup);
             assert(entry != NULL);
             hash_set(&Multi_Ref_Table, entry);
@@ -266,7 +266,7 @@ void gc_delref(void* ptr)
     if (ptr != NULL) {
         obj->refs--;
         if (obj->refs == 0) {
-            lookup.object = obj;
+            lookup.object = ptr;
             entry = hash_del(&Multi_Ref_Table, &lookup);
             assert(entry != NULL);
             hash_set(&Zero_Count_Table, entry);

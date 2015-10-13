@@ -37,7 +37,7 @@ static Tok* Token(TokType type)
 static Tok* TextTok(TokType type, char* text)
 {
     Tok* tok = Token(type);
-    tok->value.text = dupstring(text);
+    tok->value.text = (char*)gc_addref(dupstring(text));
     return tok;
 }
 
@@ -349,7 +349,7 @@ static Tok* classify(const char* file, size_t line, size_t col, char* text)
         tok = punctuation(text);
     } else if ('"' == text[0]) {
         text[strlen(text)-1] = '\0';
-        tok = TextTok(T_STRING, dupstring(&text[1]));
+        tok = TextTok(T_STRING, &text[1]);
     } else if (text[0] == '\\') {
         tok = character(text);
     } else if ((text[0] == '0') && char_oneof("bodh",text[1])) {
@@ -374,8 +374,10 @@ Tok* gettoken(Parser* ctx)
     Tok* tok = NULL;
     size_t line, col;
     char* text = scan(ctx, &line, &col);
-    if (text != NULL)
+    if (text != NULL) {
         tok = classify(NULL, line, col, text);
+        free(text);
+    }
     return tok;
 }
 

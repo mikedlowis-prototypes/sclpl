@@ -7,9 +7,9 @@
 #include <sclpl.h>
 
 static AST* require(Parser* p);
+static AST* definition(Parser* p);
 static AST* expression(Parser* p);
 static AST* literal(Parser* p);
-static AST* expect_lit(Parser* p, TokType);
 static AST* token_to_tree(Tok* tok);
 
 AST* toplevel(Parser* p)
@@ -18,6 +18,8 @@ AST* toplevel(Parser* p)
     if (peek(p)->type != T_END_FILE) {
         if (accept_str(p, T_ID, "require"))
             ret = require(p);
+        else if (accept_str(p, T_ID, "def"))
+            ret = definition(p);
         else
             ret = expression(p);
     }
@@ -33,10 +35,30 @@ AST* toplevel(Parser* p)
     return ret;
 }
 
+static AST* definition(Parser* p)
+{
+    Tok* id = expect(p, T_ID);//expect_lit(p, T_ID);
+    AST* expr;
+    //if (peek(p)->type == T_LPAR)
+    //    expr = function(p);
+    //else
+        expr = expression(p);
+    expect(p, T_END);
+    return Def(id, expr);
+}
+
+static AST* require(Parser* p)
+{
+    Tok* tok = expect(p, T_STRING);
+    AST* ast = Require(tok);
+    expect(p, T_END);
+    return ast;
+}
+
 static AST* expression(Parser* p)
 {
     if (peek(p)->type == T_ID) {
-        return expect_lit(p, T_ID);
+        return Ident(expect(p,T_ID)); //expect_lit(p, T_ID);
         //if (peek(p)->type == T_LPAR) {
         //    arglist(p);
         //}
@@ -63,15 +85,6 @@ static AST* expression(Parser* p)
     //}
 }
 
-static AST* require(Parser* p)
-{
-    AST* ret = expect_lit(p, T_STRING);
-    if (ret != NULL)
-        ret = Require(string_value(ret));
-    expect(p, T_END);
-    return ret;
-}
-
 static AST* literal(Parser* p)
 {
     AST* ret = NULL;
@@ -82,8 +95,7 @@ static AST* literal(Parser* p)
         case T_STRING:
         case T_INT:
         case T_FLOAT:
-            ret = token_to_tree(tok);
-            expect(p, tok->type);
+            ret = token_to_tree(expect(p, tok->type));
             break;
         default:
             error(p, "Expected a literal");
@@ -94,21 +106,14 @@ static AST* literal(Parser* p)
 static AST* token_to_tree(Tok* tok)
 {
     switch (tok->type) {
-        case T_BOOL:   return Bool(tok->value.boolean);
-        case T_CHAR:   return Char(tok->value.character);
-        case T_STRING: return String(tok->value.text);
-        case T_INT:    return Integer(tok->value.integer);
-        case T_FLOAT:  return Float(tok->value.floating);
-        case T_ID:     return Ident(tok->value.text);
+        case T_BOOL:   return Bool(tok);
+        case T_CHAR:   return Char(tok);
+        case T_STRING: return String(tok);
+        case T_INT:    return Integer(tok);
+        case T_FLOAT:  return Float(tok);
+        case T_ID:     return Ident(tok);
         default:       return NULL;
     }
-}
-
-static AST* expect_lit(Parser* p, TokType type)
-{
-    Tok* tok = peek(p);
-    expect(p, type);
-    return token_to_tree(tok);
 }
 
 
@@ -182,21 +187,6 @@ static AST* function(Parser* p) {
     //}
     ////reduce(p, mark2);
     ////reduce(p, mark1);
-    return NULL;
-}
-
-static AST* definition(Parser* p)
-{
-    ////size_t mrk = mark(p);
-    //expect(p,T_ID);
-    //if (peek(p)->type == T_LPAR) {
-    //    //insert(p, T_ID, lexer_dup("fn"));
-    //    fn_stmnt(p);
-    //} else {
-    //    expression(p);
-    //    expect(p,T_END);
-    //}
-    ////reduce(p, mrk);
     return NULL;
 }
 
