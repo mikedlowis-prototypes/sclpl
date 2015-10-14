@@ -181,14 +181,48 @@ AST* def_value(AST* def)
     return def->value.def.value;
 }
 
+AST* IfExpr(void)
+{
+    return ast(AST_IF);
+}
+
+AST* ifexpr_cond(AST* ifexpr)
+{
+    return ifexpr->value.ifexpr.cond;
+}
+
+void ifexpr_set_cond(AST* ifexpr, AST* cond)
+{
+    ifexpr->value.ifexpr.cond = (AST*)gc_addref(cond);
+}
+
+AST* ifexpr_then(AST* ifexpr)
+{
+    return ifexpr->value.ifexpr.bthen;
+}
+
+void ifexpr_set_then(AST* ifexpr, AST* bthen)
+{
+    ifexpr->value.ifexpr.cond = (AST*)gc_addref(bthen);
+}
+
+AST* ifexpr_else(AST* ifexpr)
+{
+    return ifexpr->value.ifexpr.belse;
+}
+
+void ifexpr_set_else(AST* ifexpr, AST* belse)
+{
+    ifexpr->value.ifexpr.cond = (AST*)gc_addref(belse);
+}
+
 AST* Block(void)
 {
-    return NULL;
+    return ast(AST_BLOCK);
 }
 
 void block_append(AST* block, AST* expr)
 {
-
 }
 
 size_t block_size(AST* block)
@@ -196,7 +230,7 @@ size_t block_size(AST* block)
     return 0;
 }
 
-AST* block_get(size_t index)
+AST* block_get(AST* block, size_t index)
 {
     return NULL;
 }

@@ -64,6 +64,17 @@ void error(Parser* parser, const char* text)
     exit(1);
 }
 
+bool match(Parser* parser, TokType type)
+{
+    return (peek(parser)->type == type);
+}
+
+bool match_str(Parser* parser, TokType type, const char* text)
+{
+    return (match(parser, type) &&
+            (0 == strcmp((char*)(peek(parser)->value.text), text)));
+}
+
 Tok* accept(Parser* parser, TokType type)
 {
     Tok* tok = peek(parser);

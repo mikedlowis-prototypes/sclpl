@@ -73,7 +73,7 @@ typedef struct {
  *****************************************************************************/
 typedef enum ASTType {
     AST_STRING = 0, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC,
+    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC, AST_BLOCK
 } ASTType;
 
 typedef struct AST {
@@ -155,16 +155,19 @@ char* def_name(AST* def);
 AST* def_value(AST* def);
 
 /* If Expression */
-AST* IfExpr(AST* cond, AST* bthen, AST* belse);
-AST* ifexpr_condition(AST* ifexpr);
-AST* ifexpr_branch_then(AST* ifexpr);
-AST* ifexpr_branch_else(AST* ifexpr);
+AST* IfExpr(void);
+AST* ifexpr_cond(AST* ifexpr);
+void ifexpr_set_cond(AST* ifexpr, AST* cond);
+AST* ifexpr_then(AST* ifexpr);
+void ifexpr_set_then(AST* ifexpr, AST* bthen);
+AST* ifexpr_else(AST* ifexpr);
+void ifexpr_set_else(AST* ifexpr, AST* belse);
 
 /* Code Block */
 AST* Block(void);
 void block_append(AST* block, AST* expr);
 size_t block_size(AST* block);
-AST* block_get(size_t index);
+AST* block_get(AST* block, size_t index);
 
 
 
@@ -202,6 +205,8 @@ Tok* peek(Parser* p_parser);
 bool parser_eof(Parser* p_parser);
 void parser_resume(Parser* p_parser);
 void error(Parser* p_parser, const char* p_text);
+bool match(Parser* parser, TokType type);
+bool match_str(Parser* parser, TokType type, const char* text);
 Tok* accept(Parser* p_parser, TokType type);
 Tok* accept_str(Parser* p_parser, TokType type, const char* p_text);
 Tok* expect(Parser* p_parser, TokType type);

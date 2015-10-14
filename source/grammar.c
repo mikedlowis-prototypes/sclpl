@@ -17,7 +17,7 @@ static AST* token_to_tree(Tok* tok);
 AST* toplevel(Parser* p)
 {
     AST* ret = NULL;
-    if (peek(p)->type != T_END_FILE) {
+    if (!match(p, T_END_FILE)) {
         if (accept_str(p, T_ID, "require"))
             ret = require(p);
         else if (accept_str(p, T_ID, "def"))
@@ -55,7 +55,7 @@ static AST* require(Parser* p)
 
 static AST* expression(Parser* p)
 {
-    if (peek(p)->type == T_ID) {
+    if (match(p, T_ID)) {
         return Ident(expect(p,T_ID));
         //if (peek(p)->type == T_LPAR) {
         //    arglist(p);
@@ -82,12 +82,13 @@ static AST* expression(Parser* p)
 
 static AST* if_stmnt(Parser* p)
 {
-    //AST* ifexpr = IfExpr();
-    //ifexpr_set_condition( expression(p) );
-    //ifexpr_set_branch_then( expr_block(p) );
-    //expect(p,T_END);
-    //return ifexpr;
-    return NULL;
+    AST* ifexpr = IfExpr();
+    ifexpr_set_cond( ifexpr, expression(p) );
+    ifexpr_set_then( ifexpr, expr_block(p) );
+    if (accept_str(p, T_ID, "else"))
+        ifexpr_set_else( ifexpr, expr_block(p) );
+    expect(p,T_END);
+    return ifexpr;
 }
 
 static AST* literal(Parser* p)
@@ -113,7 +114,7 @@ static AST* expr_block(Parser* p)
     AST* block = Block();
     do {
         block_append(block, expression(p));
-    } while(!accept_str(p, T_ID, "else") && !accept(p, T_END));
+    } while(!match(p, T_END) && !match_str(p, T_ID, "else"));
     return block;
 }
 
