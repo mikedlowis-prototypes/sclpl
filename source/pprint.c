@@ -116,23 +116,48 @@ static void pprint_literal(FILE* file, AST* tree, int depth)
 
 void pprint_tree(FILE* file, AST* tree, int depth)
 {
+    if (tree == NULL)
+        return;
     print_indent(file, depth);
-    if (tree->type <= AST_IDENT) {
-        pprint_literal(file, tree, depth);
-    } else if (tree->type == AST_REQ) {
-        printf("(require \"%s\")", require_name(tree));
-    } else if (tree->type == AST_DEF) {
-        printf("(def %s ", def_name(tree));
-        pprint_tree(file, def_value(tree), depth);
-        printf(")");
-    } else {
-        //fputs("(tree", file);
-        //vec_t* p_vec = tree->ptr.vec;
-        //for(size_t idx = 0; idx < vec_size(p_vec); idx++) {
-        //    pprint_tree(file, (AST*)vec_at(p_vec, idx), depth+1);
-        //}
-        //print_indent(file, depth);
-        //fputs(")\n", file);
+    switch (tree->type) {
+        case AST_REQ:
+            printf("(require \"%s\")", require_name(tree));
+            break;
+
+        case AST_DEF:
+            printf("(def %s ", def_name(tree));
+            pprint_tree(file, def_value(tree), depth);
+            printf(")");
+            break;
+
+        case AST_IF:
+            printf("(if ");
+            pprint_tree(file, ifexpr_cond(tree), depth);
+            printf(" ");
+            pprint_tree(file, ifexpr_then(tree), depth);
+            printf(" ");
+            pprint_tree(file, ifexpr_else(tree), depth);
+            printf(")");
+            break;
+
+        case AST_BLOCK:
+            printf("(block ");
+            for (size_t i = 0; i < block_size(tree); i++) {
+                printf(" ");
+                pprint_tree(file, block_get(tree, i), depth);
+            }
+            printf(")");
+            break;
+
+        case AST_ANN:
+            break;
+
+        case AST_FUNC:
+            break;
+
+        default:
+            pprint_literal(file, tree, depth);
+            break;
     }
 }
 

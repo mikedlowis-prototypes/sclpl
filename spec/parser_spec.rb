@@ -52,6 +52,24 @@ describe "sclpl grammar" do
       expect{ast('require foo bar;')}.to raise_error /Error/
     end
   end
+
+  context "if statements" do
+    it "should parse an if statement with no else clause" do
+      expect(ast('if 123 321 end')).to eq([
+        ["if", "T_INT:123", ["block", "T_INT:321"]]])
+    end
+
+    it "should parse an if statement with an optional then keyword" do
+      expect(ast('if 123 then 321 end')).to eq([
+        ["if", "T_INT:123", ["block", "T_INT:321"]]])
+    end
+
+    it "should parse an if statement with an else clause " do
+      expect(ast('if 123 321 else 456 end')).to eq([
+        ["if", "T_INT:123", ["block", "T_INT:321"], ["block", "T_INT:456"]]])
+    end
+  end
+#
 #
 #  context "type definitions" do
 #    it "should parse a simple type definition" do
@@ -171,17 +189,6 @@ describe "sclpl grammar" do
 #
 #      it "should parse a nested parenthesized expression" do
 #        expect(ast('((123))')).to eq([[['T_INT:123']]])
-#      end
-#    end
-#
-#    context "if statements" do
-#      it "should parse an if statement with no else clause" do
-#        expect(ast('if 123 321 end')).to eq([["T_ID:if", "T_INT:123", "T_INT:321"]])
-#      end
-#
-#      it "should parse an if statement with an else clause " do
-#        expect(ast('if 123 321 else 456 end')).to eq([
-#          ["T_ID:if", "T_INT:123", "T_INT:321", "T_ID:else", "T_INT:456"]])
 #      end
 #    end
 #

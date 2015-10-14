@@ -55,13 +55,13 @@ static AST* require(Parser* p)
 
 static AST* expression(Parser* p)
 {
-    if (match(p, T_ID)) {
+    if (accept_str(p, T_ID, "if")) {
+        return if_stmnt(p);
+    } else if (match(p, T_ID)) {
         return Ident(expect(p,T_ID));
         //if (peek(p)->type == T_LPAR) {
         //    arglist(p);
         //}
-    } else if (accept_str(p, T_ID, "if")) {
-        return if_stmnt(p);
     } else {
         return literal(p);
     }
@@ -84,6 +84,7 @@ static AST* if_stmnt(Parser* p)
 {
     AST* ifexpr = IfExpr();
     ifexpr_set_cond( ifexpr, expression(p) );
+    accept_str(p, T_ID, "then");
     ifexpr_set_then( ifexpr, expr_block(p) );
     if (accept_str(p, T_ID, "else"))
         ifexpr_set_else( ifexpr, expr_block(p) );

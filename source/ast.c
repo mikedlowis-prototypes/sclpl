@@ -203,7 +203,7 @@ AST* ifexpr_then(AST* ifexpr)
 
 void ifexpr_set_then(AST* ifexpr, AST* bthen)
 {
-    ifexpr->value.ifexpr.cond = (AST*)gc_addref(bthen);
+    ifexpr->value.ifexpr.bthen = (AST*)gc_addref(bthen);
 }
 
 AST* ifexpr_else(AST* ifexpr)
@@ -213,26 +213,29 @@ AST* ifexpr_else(AST* ifexpr)
 
 void ifexpr_set_else(AST* ifexpr, AST* belse)
 {
-    ifexpr->value.ifexpr.cond = (AST*)gc_addref(belse);
+    ifexpr->value.ifexpr.belse = (AST*)gc_addref(belse);
 }
 
 AST* Block(void)
 {
-    return ast(AST_BLOCK);
+    AST* node = ast(AST_BLOCK);
+    vec_init(&(node->value.exprs));
+    return node;
 }
 
 void block_append(AST* block, AST* expr)
 {
+    vec_push_back(&(block->value.exprs), expr);
 }
 
 size_t block_size(AST* block)
 {
-    return 0;
+    return vec_size(&(block->value.exprs));
 }
 
 AST* block_get(AST* block, size_t index)
 {
-    return NULL;
+    return (AST*)vec_at(&(block->value.exprs), index);
 }
 
 
@@ -255,32 +258,6 @@ AST* block_get(AST* block, size_t index)
 //AST* ann_value(AST* ann)
 //{
 //    (void)ann;
-//    return NULL;
-//}
-//
-//AST* IfExpr(AST* cond, AST* bthen, AST* belse)
-//{
-//    (void)cond;
-//    (void)bthen;
-//    (void)belse;
-//    return NULL;
-//}
-//
-//AST* ifexpr_condition(AST* ifexpr)
-//{
-//    (void)ifexpr;
-//    return NULL;
-//}
-//
-//AST* ifexpr_branch_then(AST* ifexpr)
-//{
-//    (void)ifexpr;
-//    return NULL;
-//}
-//
-//AST* ifexpr_branch_else(AST* ifexpr)
-//{
-//    (void)ifexpr;
 //    return NULL;
 //}
 //

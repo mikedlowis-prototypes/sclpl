@@ -104,6 +104,8 @@ typedef struct AST {
             struct AST* args;
             struct AST* body;
         } func;
+        /* Code Block */
+        vec_t exprs;
         /* String, Symbol, Identifier */
         char* text;
         /* Character */
