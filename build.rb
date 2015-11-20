@@ -45,7 +45,7 @@ end
 # Release Build Targets
 #------------------------------------------------------------------------------
 # Build the compiler
-sources = FileList['source/*.c', 'modules/libopts/source/*.c']
+sources = FileList['source/*.c']
 main_env.Program('build/bin/sclpl', sources)
 
 #------------------------------------------------------------------------------
