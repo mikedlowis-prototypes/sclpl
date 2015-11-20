@@ -55,8 +55,15 @@ static AST* require(Parser* p)
 
 static AST* expression(Parser* p)
 {
-    if (accept_str(p, T_ID, "if")) {
+
+    if (accept(p, T_LPAR)) {
+        AST* expr = expression(p);
+        expect(p, T_RPAR);
+        return expr;
+    } else if (accept_str(p, T_ID, "if")) {
         return if_stmnt(p);
+    //} else if (accept_str(p, T_ID, "fn")) {
+    //    return fn_stmnt(p);
     } else if (match(p, T_ID)) {
         return Ident(expect(p,T_ID));
         //if (peek(p)->type == T_LPAR) {
@@ -66,18 +73,6 @@ static AST* expression(Parser* p)
         return literal(p);
     }
 
-    //if (accept(p, T_LPAR)) {
-    //    //size_t mrk = mark(p);
-    //    expression(p);
-    //    expect(p, T_RPAR);
-    //    //reduce(p, mrk);
-    //} else if (accept_str(p, T_ID, "fn")) {
-    //    fn_stmnt(p);
-    //} else if (peek(p)->type == T_ID) {
-    //    expect(p, T_ID);
-    //    if (peek(p)->type == T_LPAR) {
-    //        arglist(p);
-    //    }
 }
 
 static AST* if_stmnt(Parser* p)
