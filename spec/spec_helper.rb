@@ -2,7 +2,7 @@ require 'open3'
 
 def cli(options, input = "")
   out, err, status = Open3.capture3(
-      *(['./build/bin/sclpl-test'] + options + [{:stdin_data => input}]))
+      *(['./sclpl'] + options + [{:stdin_data => input}]))
   raise err unless err == ""
   raise "Command returned non-zero status" unless status.success?
   out

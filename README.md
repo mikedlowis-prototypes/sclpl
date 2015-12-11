@@ -1,10 +1,6 @@
 SCLPL
 ==============================================
 
-    Version:    0.1
-    Created By: Michael D. Lowis
-    Email:      mike@mdlowis.com
-
 About This Project
 ----------------------------------------------
 
@@ -14,31 +10,21 @@ Unless explicitly stated otherwise, all code and documentation contained within
 this repository is released under the BSD 2-Clause license. The text for this
 license can be found in the LICENSE.md file.
 
-Requirements For Building
-----------------------------------------------
-The only external dependencies currently required to build this library are as
-follows:
-
-* Chciken Scheme
-* SConstruct
-
 Build Instructions
 ----------------------------------------------
-This project uses SConstruct to build all binaries and libraries. To build the
-software simply execute the following command at the root of the project:
 
-    scons
+## Build and Test the Compiler
 
-Project Files and Directories
-----------------------------------------------
+Execute the following command to build the compiler executable and run all tests
+on it:
 
-    build/         This is the directory where all output files will be placed.
-    source/        The source for the project.
-    tests/         Unit test and mock files.
-    tools/         Tools required by the build system.
-    Doxyfile       Doxygen documentation generator configuration.
-    LICENSE.md     The software license notification.
-    premake4.lua   A premake4 configuration file for generating build scripts.
-    project.vim    A VIM script with project specific configurations.
-    README.md      You're reading this file right now!
+    make all
 
+## Build the Compiler and Skip the Tests
+
+The test suite for the compiler uses Ruby and Rspec. It is conceivable that an
+end user may not have these dependencies installed and may therefore wish to
+build the compiler without fully testing it. This may be accomplished by
+running the following command:
+
+    make sclpl
