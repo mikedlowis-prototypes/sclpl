@@ -9,7 +9,7 @@ def cli(options, input = "")
 end
 
 def lexer(input)
-  cli(['--tokens'], input).scan(/^\d+:\d+:(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
+  cli(['-Atok'], input).scan(/^\d+:\d+:(T_[A-Z]+(:("[^"]*"|[^\n]+))?)/m).map {|m| m[0] }
 end
 
 def re_structure( token_array, offset = 0 )
@@ -30,7 +30,7 @@ def re_structure( token_array, offset = 0 )
 end
 
 def ast(input)
-  out = cli(['--ast'], input)
+  out = cli(['-Aast'], input)
   # Prep the parens for reading
   out.gsub!(/([()])|tree/,' \1 ')
   # Replace string literals so we can tokenize on spaces
@@ -53,5 +53,5 @@ def ast(input)
 end
 
 def ccode(input)
-  cli(['--csource'], input)
+  cli(['-Asrc'], input)
 end

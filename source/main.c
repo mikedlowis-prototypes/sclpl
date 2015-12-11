@@ -1,26 +1,21 @@
 #include <sclpl.h>
 
+char* ARGV0;
+bool verbose   = false;
+char* artifact = "bin";
+
 /* Command Line Options
  *****************************************************************************/
-const char Usage[] = "Usage: sclpl [OPTION]... MODE [FILE]...\n";
+const char Usage[] =
+    "Usage: sclpl [OPTION]... MODE [FILE]...\n"
+    "\n-A<type>   Emit the given type of artifact"
+    "\n-h         Print help information"
+    "\n-v         Enable verbose status messages"
+    "\n"
+;
 
-opts_cfg_t Options_Config[] = {
-    {"tokens",    false, "mode",    "Emit the token output of lexical analysis for the given file"},
-    {"ast",       false, "mode",    "Emit the abstract syntax tree for the given file"},
-    {"csource",   false, "mode",    "Emit the intermediate C source file for the given file"},
-    {"repl",      false, "mode",    "Execute the application in a REPL"},
-    {"object",    false, "mode",    "Compile the source as an object file"},
-    {"staticlib", false, "mode",    "Compile the application as a static library"},
-    {"sharedlib", false, "mode",    "Compile the application as a shared library"},
-    {"program",   false, "mode",    "Compile the application as an executable"},
-    {"verbose",   false, "verbose", "Enable verbose status messages"},
-    {"v",         false, "verbose", "Enable verbose status messages"},
-    {NULL,        false, NULL,      NULL }
-};
-
-void print_usage(void) {
-    puts(Usage);
-    opts_print_help(stdout, Options_Config);
+void usage(void) {
+    fprintf(stderr, "%s", Usage);
     exit(1);
 }
 
@@ -46,19 +41,11 @@ static int emit_csource(void) {
     return 0;
 }
 
-static int exec_repl(void) {
-    return 0;
-}
-
 static int emit_object(void) {
     return 0;
 }
 
 static int emit_staticlib(void) {
-    return 0;
-}
-
-static int emit_sharedlib(void) {
     return 0;
 }
 
@@ -75,28 +62,26 @@ static int emit_program(void) {
 
 */
 int user_main(int argc, char **argv) {
-    opts_parse( Options_Config, NULL, argc, argv );
-    atexit(&opts_reset);
-    if (!opts_is_set(NULL,"mode")) {
-        print_usage();
-    } else if (opts_equal(NULL, "mode", "tokens")) {
-        return emit_tokens();
-    } else if(opts_equal(NULL, "mode", "repl")) {
-        return exec_repl();
-    } else if (opts_equal(NULL, "mode", "ast")) {
-        return emit_tree();
-    } else if (opts_equal(NULL, "mode", "csource")) {
-        return emit_csource();
-    } else if (opts_equal(NULL, "mode", "object")) {
-        return emit_object();
-    } else if (opts_equal(NULL, "mode", "staticlib")) {
-        return emit_staticlib();
-    } else if (opts_equal(NULL, "mode", "sharedlib")) {
-        return emit_sharedlib();
-    } else if (opts_equal(NULL, "mode", "program")) {
+    OPTBEGIN {
+        case 'A': artifact = EOPTARG(usage()); break;
+        case 'v': verbose = true; break;
+        default:  usage();
+    } OPTEND;
+
+    /* Execute the main compiler process */
+    if (0 == strcmp("bin", artifact)) {
         return emit_program();
+    } else if (0 == strcmp("lib", artifact)) {
+        return emit_staticlib();
+    } else if (0 == strcmp("src", artifact)) {
+        return emit_csource();
+    } else if (0 == strcmp("ast", artifact)) {
+        return emit_tree();
+    } else if (0 == strcmp("tok", artifact)) {
+        return emit_tokens();
     } else {
-        print_usage();
+        fprintf(stderr, "Unknonwn artifact type: '%s'\n\n", artifact);
+        usage();
     }
     return 1;
 }

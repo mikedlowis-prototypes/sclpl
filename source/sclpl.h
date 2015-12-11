@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <setjmp.h>
-#include <opts.h>
+#include <opt.h>
 
 /* Garbage Collection
  *****************************************************************************/
