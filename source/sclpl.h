@@ -171,7 +171,10 @@ void block_append(AST* block, AST* expr);
 size_t block_size(AST* block);
 AST* block_get(AST* block, size_t index);
 
-
+/* Function */
+AST* Func(AST* args, AST* body);
+AST* func_args(AST* func);
+AST* func_body(AST* func);
 
 ///* Annotation */
 //AST* Ann(char* name, AST* value);
@@ -179,10 +182,6 @@ AST* block_get(AST* block, size_t index);
 //AST* ann_value(AST* def);
 //
 //
-///* Function */
-//AST* Func(AST* args, AST* body);
-//AST* func_args(AST* func);
-//AST* func_body(AST* func);
 //
 //
 /* Lexer and Parser Types

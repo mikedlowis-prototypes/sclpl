@@ -1,23 +1,8 @@
 #include <sclpl.h>
 
 char* ARGV0;
-bool verbose   = false;
-char* artifact = "bin";
-
-/* Command Line Options
- *****************************************************************************/
-const char Usage[] =
-    "Usage: sclpl [OPTION]... MODE [FILE]...\n"
-    "\n-A<type>   Emit the given type of artifact"
-    "\n-h         Print help information"
-    "\n-v         Enable verbose status messages"
-    "\n"
-;
-
-void usage(void) {
-    fprintf(stderr, "%s", Usage);
-    exit(1);
-}
+bool Verbose   = false;
+char* Artifact = "bin";
 
 /* Driver Modes
  *****************************************************************************/
@@ -53,6 +38,17 @@ static int emit_program(void) {
     return 0;
 }
 
+/* Main Routine and Usage
+ *****************************************************************************/
+void usage(void) {
+    fprintf(stderr, "%s\n",
+        "Usage: sclpl [OPTION]... MODE [FILE]...\n"
+        "\n-A<type>   Emit the given type of artifact"
+        "\n-h         Print help information"
+        "\n-v         Enable verbose status messages");
+    exit(1);
+}
+
 /* TODO:
 
     * Formalize grammar for parser
@@ -62,25 +58,26 @@ static int emit_program(void) {
 
 */
 int user_main(int argc, char **argv) {
+    /* Option parsing */
     OPTBEGIN {
-        case 'A': artifact = EOPTARG(usage()); break;
-        case 'v': verbose = true; break;
+        case 'A': Artifact = EOPTARG(usage()); break;
+        case 'v': Verbose = true; break;
         default:  usage();
     } OPTEND;
 
     /* Execute the main compiler process */
-    if (0 == strcmp("bin", artifact)) {
+    if (0 == strcmp("bin", Artifact)) {
         return emit_program();
-    } else if (0 == strcmp("lib", artifact)) {
+    } else if (0 == strcmp("lib", Artifact)) {
         return emit_staticlib();
-    } else if (0 == strcmp("src", artifact)) {
+    } else if (0 == strcmp("src", Artifact)) {
         return emit_csource();
-    } else if (0 == strcmp("ast", artifact)) {
+    } else if (0 == strcmp("ast", Artifact)) {
         return emit_tree();
-    } else if (0 == strcmp("tok", artifact)) {
+    } else if (0 == strcmp("tok", Artifact)) {
         return emit_tokens();
     } else {
-        fprintf(stderr, "Unknonwn artifact type: '%s'\n\n", artifact);
+        fprintf(stderr, "Unknonwn artifact type: '%s'\n\n", Artifact);
         usage();
     }
     return 1;

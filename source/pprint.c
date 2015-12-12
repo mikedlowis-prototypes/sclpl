@@ -153,6 +153,12 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             break;
 
         case AST_FUNC:
+            printf("(fn ()");
+            for (size_t i = 0; i < block_size(func_body(tree)); i++) {
+                printf(" ");
+                pprint_tree(file, block_get(func_body(tree), i), depth);
+            }
+            printf(")");
             break;
 
         default:

@@ -10,6 +10,7 @@ static AST* require(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
 static AST* if_stmnt(Parser* p);
+static AST* function(Parser* p);
 static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
 static AST* token_to_tree(Tok* tok);
@@ -20,9 +21,9 @@ AST* toplevel(Parser* p)
     if (!match(p, T_END_FILE)) {
         if (accept_str(p, T_ID, "require"))
             ret = require(p);
-        else if (accept_str(p, T_ID, "def"))
+        else if (accept_str(p, T_ID, "def")) {
             ret = definition(p);
-        else
+        } else
             ret = expression(p);
     }
     //printf("%p\n", ret);
@@ -35,13 +36,14 @@ AST* toplevel(Parser* p)
 
 static AST* definition(Parser* p)
 {
-    Tok* id = expect(p, T_ID);//expect_lit(p, T_ID);
+    Tok* id = expect(p, T_ID);
     AST* expr;
-    //if (peek(p)->type == T_LPAR)
-    //    expr = function(p);
-    //else
+    if (peek(p)->type == T_LPAR) {
+        expr = function(p);
+    } else {
         expr = expression(p);
-    expect(p, T_END);
+        expect(p, T_END);
+    }
     return Def(id, expr);
 }
 
@@ -62,8 +64,8 @@ static AST* expression(Parser* p)
         return expr;
     } else if (accept_str(p, T_ID, "if")) {
         return if_stmnt(p);
-    //} else if (accept_str(p, T_ID, "fn")) {
-    //    return fn_stmnt(p);
+    } else if (accept_str(p, T_ID, "fn")) {
+        return function(p);
     } else if (match(p, T_ID)) {
         return Ident(expect(p,T_ID));
         //if (peek(p)->type == T_LPAR) {
@@ -85,6 +87,20 @@ static AST* if_stmnt(Parser* p)
         ifexpr_set_else( ifexpr, expr_block(p) );
     expect(p,T_END);
     return ifexpr;
+}
+
+static AST* function(Parser* p)
+{
+    expect(p, T_LPAR);
+    //while(peek(p)->type != T_RPAR) {
+    //    expect(p, T_ID);
+    //    if(peek(p)->type != T_RPAR)
+    //        expect(p, T_COMMA);
+    //}
+    expect(p, T_RPAR);
+    AST* body = expr_block(p);
+    expect(p, T_END);
+    return Func(NULL,body);
 }
 
 static AST* literal(Parser* p)
@@ -216,24 +232,5 @@ static AST* arglist(Parser* p)
 }
 
 
-static AST* fn_stmnt(Parser* p)
-{
-    ////size_t mark1 = mark(p);
-    //expect(p, T_LPAR);
-    ////size_t mark2 = mark(p);
-    //while(peek(p)->type != T_RPAR) {
-    //    expect(p, T_ID);
-    //    if(peek(p)->type != T_RPAR)
-    //        expect(p, T_COMMA);
-    //}
-    //expect(p, T_RPAR);
-    ////reduce(p, mark2);
-    //while(peek(p)->type != T_END) {
-    //    expression(p);
-    //}
-    //expect(p, T_END);
-    ////reduce(p, mark1);
-    return NULL;
-}
 
 #endif

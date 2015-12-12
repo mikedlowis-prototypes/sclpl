@@ -69,8 +69,7 @@ describe "sclpl grammar" do
         ["if", "T_INT:123", ["block", "T_INT:321"], ["block", "T_INT:456"]]])
     end
   end
-#
-#
+
 #  context "type definitions" do
 #    it "should parse a simple type definition" do
 #      expect(ast('type foo is int;')).to eq([ ['T_ID:type', 'T_ID:foo', 'T_ID:is', 'T_ID:int'] ])
@@ -129,21 +128,21 @@ describe "sclpl grammar" do
 #          ['T_ID:type', 'T_ID:foo', ['T_ID:record', ['T_ID:int', 'T_ID:a'], ['T_ID:int', 'T_ID:b'], ['T_ID:int', 'T_ID:c']]] ])
 #    end
 #  end
-#
-#  context "definitions" do
-#    it "should parse a value definition" do
-#      expect(ast('def foo 123;')).to eq([ ['T_ID:def', 'T_ID:foo', 'T_INT:123'] ])
-#    end
-#
-#    it "should parse a function definition" do
-#      expect(ast('def foo() 123;')).to eq([
-#        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', [], 'T_INT:123']] ])
-#    end
-#
-#    it "should parse a function definition  with multiple expressions in the body" do
-#      expect(ast('def foo() 123 321;')).to eq([
-#        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', [], 'T_INT:123', 'T_INT:321']] ])
-#    end
+
+  context "definitions" do
+    it "should parse a value definition" do
+      expect(ast('def foo 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
+    end
+
+    it "should parse a function definition" do
+      expect(ast('def foo() 123;')).to eq([
+        ['def', 'foo', ['fn', [], 'T_INT:123']] ])
+    end
+
+    it "should parse a function definition  with multiple expressions in the body" do
+      expect(ast('def foo() 123 321;')).to eq([
+        ['def', 'foo', ['fn', [], 'T_INT:123', 'T_INT:321']] ])
+    end
 #
 #    it "should parse a function definition with one argument" do
 #      expect(ast('def foo(a) 123;')).to eq([
@@ -159,7 +158,7 @@ describe "sclpl grammar" do
 #      expect(ast('def foo(a,b,c) 123;')).to eq([
 #        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'], 'T_INT:123']] ])
 #    end
-#  end
+  end
 #
 #  context "annotations" do
 #    it "should parse a type annotation for a simple type" do
@@ -181,21 +180,21 @@ describe "sclpl grammar" do
 #    end
 #  end
 #
-#  context "expressions" do
-#    context "parenthese grouping" do
-#      it "should parse a parenthesized expression" do
-#        expect(ast('(123)')).to eq([['T_INT:123']])
-#      end
-#
-#      it "should parse a nested parenthesized expression" do
-#        expect(ast('((123))')).to eq([[['T_INT:123']]])
-#      end
-#    end
-#
-#    context "function literals" do
-#      it "should parse a function with no params" do
-#        expect(ast('fn() 123;')).to eq([["T_ID:fn", [], "T_INT:123"]])
-#      end
+  context "expressions" do
+    context "parenthese grouping" do
+      it "should parse a parenthesized expression" do
+        expect(ast('(123)')).to eq(['T_INT:123'])
+      end
+
+      it "should parse a nested parenthesized expression" do
+        expect(ast('((123))')).to eq(['T_INT:123'])
+      end
+    end
+
+    context "function literals" do
+      it "should parse a function with no params" do
+        expect(ast('fn() 123;')).to eq([["fn", [], "T_INT:123"]])
+      end
 #
 #      it "should parse a function with one param" do
 #        expect(ast('fn(a) 123;')).to eq([["T_ID:fn", ["T_ID:a"], "T_INT:123"]])
@@ -204,7 +203,7 @@ describe "sclpl grammar" do
 #      it "should parse a function with two params" do
 #        expect(ast('fn(a,b) 123;')).to eq([["T_ID:fn", ["T_ID:a", "T_ID:b"], "T_INT:123"]])
 #      end
-#    end
+    end
 #
 #    context "function application" do
 #      it "should parse an application with no params " do
@@ -219,15 +218,15 @@ describe "sclpl grammar" do
 #        expect(ast('foo(a,b)')).to eq([["T_ID:foo", "T_ID:a", "T_ID:b"]])
 #      end
 #    end
-#  end
-#
-#  context "corner cases" do
-#    it "an unexpected terminator should error" do
-#      expect{ast(';')}.to raise_error /Error/
-#    end
-#
-#    it "an invalid literal should error" do
-#      expect{ast('\'')}.to raise_error /Error/
-#    end
-#  end
+  end
+
+  context "corner cases" do
+    it "an unexpected terminator should error" do
+      expect{ast(';')}.to raise_error /Error/
+    end
+
+    it "an invalid literal should error" do
+      expect{ast('\'')}.to raise_error /Error/
+    end
+  end
 end

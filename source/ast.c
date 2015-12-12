@@ -238,9 +238,23 @@ AST* block_get(AST* block, size_t index)
     return (AST*)vec_at(&(block->value.exprs), index);
 }
 
+AST* Func(AST* args, AST* body)
+{
+    AST* node = ast(AST_FUNC);
+    node->value.func.args = args;
+    node->value.func.body = body;
+    return node;
+}
 
+AST* func_args(AST* func)
+{
+    return func->value.func.args;
+}
 
-
+AST* func_body(AST* func)
+{
+    return func->value.func.body;
+}
 
 //AST* Ann(char* name, AST* value)
 //{
@@ -258,25 +272,6 @@ AST* block_get(AST* block, size_t index)
 //AST* ann_value(AST* ann)
 //{
 //    (void)ann;
-//    return NULL;
-//}
-//
-//AST* Func(AST* args, AST* body)
-//{
-//    (void)args;
-//    (void)body;
-//    return NULL;
-//}
-//
-//AST* func_args(AST* func)
-//{
-//    (void)func;
-//    return NULL;
-//}
-//
-//AST* func_body(AST* func)
-//{
-//    (void)func;
 //    return NULL;
 //}
 //
