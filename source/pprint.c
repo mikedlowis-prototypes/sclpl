@@ -88,7 +88,7 @@ static const char* tree_type_to_string(ASTType type) {
     switch(type) {
         case AST_STRING: return "T_STRING";
         case AST_SYMBOL: return "T_SYMBOL";
-        case AST_IDENT:  return "T_IDENT";
+        case AST_IDENT:  return "T_ID";
         case AST_CHAR:   return "T_CHAR";
         case AST_INT:    return "T_INT";
         case AST_FLOAT:  return "T_FLOAT";
@@ -153,7 +153,12 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             break;
 
         case AST_FUNC:
-            printf("(fn ()");
+            printf("(fn (");
+            for (size_t i = 0; i < vec_size(func_args(tree)); i++) {
+                printf(" ");
+                pprint_literal(file, vec_at(func_args(tree), i), depth);
+            }
+            printf(")");
             for (size_t i = 0; i < block_size(func_body(tree)); i++) {
                 printf(" ");
                 pprint_tree(file, block_get(func_body(tree), i), depth);

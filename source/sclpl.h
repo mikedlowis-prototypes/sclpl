@@ -101,7 +101,7 @@ typedef struct AST {
         } ifexpr;
         /* Function */
         struct {
-            struct AST* args;
+            vec_t args;
             struct AST* body;
         } func;
         /* Code Block */
@@ -172,9 +172,13 @@ size_t block_size(AST* block);
 AST* block_get(AST* block, size_t index);
 
 /* Function */
-AST* Func(AST* args, AST* body);
-AST* func_args(AST* func);
+AST* Func(void);
+vec_t* func_args(AST* func);
 AST* func_body(AST* func);
+void func_add_arg(AST* func, AST* arg);
+void func_set_body(AST* func, AST* body);
+
+
 
 ///* Annotation */
 //AST* Ann(char* name, AST* value);

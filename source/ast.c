@@ -30,7 +30,7 @@ static void ast_free(void* ptr)
             break;
 
         case AST_FUNC:
-            gc_delref(ast->value.func.args);
+            //vec_deinit(&(ast->value.func.args));
             gc_delref(ast->value.func.body);
             break;
 
@@ -238,23 +238,34 @@ AST* block_get(AST* block, size_t index)
     return (AST*)vec_at(&(block->value.exprs), index);
 }
 
-AST* Func(AST* args, AST* body)
+AST* Func(void)
 {
     AST* node = ast(AST_FUNC);
-    node->value.func.args = args;
-    node->value.func.body = body;
+    vec_init(&(node->value.func.args));
+    node->value.func.body = NULL;
     return node;
 }
 
-AST* func_args(AST* func)
+vec_t* func_args(AST* func)
 {
-    return func->value.func.args;
+    return &(func->value.func.args);
 }
 
 AST* func_body(AST* func)
 {
     return func->value.func.body;
 }
+
+void func_add_arg(AST* func, AST* arg)
+{
+    vec_push_back(func_args(func), arg);
+}
+
+void func_set_body(AST* func, AST* body)
+{
+    func->value.func.body = body;
+}
+
 
 //AST* Ann(char* name, AST* value)
 //{

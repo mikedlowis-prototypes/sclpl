@@ -21,9 +21,9 @@ AST* toplevel(Parser* p)
     if (!match(p, T_END_FILE)) {
         if (accept_str(p, T_ID, "require"))
             ret = require(p);
-        else if (accept_str(p, T_ID, "def")) {
+        else if (accept_str(p, T_ID, "def"))
             ret = definition(p);
-        } else
+        else
             ret = expression(p);
     }
     //printf("%p\n", ret);
@@ -49,15 +49,13 @@ static AST* definition(Parser* p)
 
 static AST* require(Parser* p)
 {
-    Tok* tok = expect(p, T_STRING);
-    AST* ast = Require(tok);
+    AST* ast = Require(expect(p, T_STRING));
     expect(p, T_END);
     return ast;
 }
 
 static AST* expression(Parser* p)
 {
-
     if (accept(p, T_LPAR)) {
         AST* expr = expression(p);
         expect(p, T_RPAR);
@@ -74,7 +72,6 @@ static AST* expression(Parser* p)
     } else {
         return literal(p);
     }
-
 }
 
 static AST* if_stmnt(Parser* p)
@@ -91,16 +88,17 @@ static AST* if_stmnt(Parser* p)
 
 static AST* function(Parser* p)
 {
+    AST* func = Func();
     expect(p, T_LPAR);
-    //while(peek(p)->type != T_RPAR) {
-    //    expect(p, T_ID);
-    //    if(peek(p)->type != T_RPAR)
-    //        expect(p, T_COMMA);
-    //}
+    while(peek(p)->type != T_RPAR) {
+        func_add_arg(func, Ident(expect(p,T_ID)));
+        if(peek(p)->type != T_RPAR)
+            expect(p, T_COMMA);
+    }
     expect(p, T_RPAR);
-    AST* body = expr_block(p);
+    func_set_body(func, expr_block(p));
     expect(p, T_END);
-    return Func(NULL,body);
+    return func;
 }
 
 static AST* literal(Parser* p)

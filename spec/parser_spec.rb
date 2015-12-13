@@ -23,7 +23,7 @@ describe "sclpl grammar" do
     end
 
     it "should parse an identifier" do
-      expect(ast('foo')).to eq(['T_IDENT:foo'])
+      expect(ast('foo')).to eq(['T_ID:foo'])
     end
   end
 
@@ -143,23 +143,23 @@ describe "sclpl grammar" do
       expect(ast('def foo() 123 321;')).to eq([
         ['def', 'foo', ['fn', [], 'T_INT:123', 'T_INT:321']] ])
     end
-#
-#    it "should parse a function definition with one argument" do
-#      expect(ast('def foo(a) 123;')).to eq([
-#        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', ['T_ID:a'], 'T_INT:123']] ])
-#    end
-#
-#    it "should parse a function definition with two arguments" do
-#      expect(ast('def foo(a,b) 123;')).to eq([
-#        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', ['T_ID:a', 'T_ID:b'], 'T_INT:123']] ])
-#    end
-#
-#    it "should parse a function definition with three arguments" do
-#      expect(ast('def foo(a,b,c) 123;')).to eq([
-#        ['T_ID:def', 'T_ID:foo', ['T_ID:fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'], 'T_INT:123']] ])
-#    end
+
+    it "should parse a function definition with one argument" do
+      expect(ast('def foo(a) 123;')).to eq([
+        ['def', 'foo', ['fn', ['T_ID:a'], 'T_INT:123']] ])
+    end
+
+    it "should parse a function definition with two arguments" do
+      expect(ast('def foo(a,b) 123;')).to eq([
+        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b'], 'T_INT:123']] ])
+    end
+
+    it "should parse a function definition with three arguments" do
+      expect(ast('def foo(a,b,c) 123;')).to eq([
+        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'], 'T_INT:123']] ])
+    end
   end
-#
+
 #  context "annotations" do
 #    it "should parse a type annotation for a simple type" do
 #      expect(ast('ann foo int;')).to eq([ ['T_ID:ann', 'T_ID:foo', 'T_ID:int'] ])
@@ -195,16 +195,16 @@ describe "sclpl grammar" do
       it "should parse a function with no params" do
         expect(ast('fn() 123;')).to eq([["fn", [], "T_INT:123"]])
       end
-#
-#      it "should parse a function with one param" do
-#        expect(ast('fn(a) 123;')).to eq([["T_ID:fn", ["T_ID:a"], "T_INT:123"]])
-#      end
-#
-#      it "should parse a function with two params" do
-#        expect(ast('fn(a,b) 123;')).to eq([["T_ID:fn", ["T_ID:a", "T_ID:b"], "T_INT:123"]])
-#      end
+
+      it "should parse a function with one param" do
+        expect(ast('fn(a) 123;')).to eq([["fn", ["T_ID:a"], "T_INT:123"]])
+      end
+
+      it "should parse a function with two params" do
+        expect(ast('fn(a,b) 123;')).to eq([["fn", ["T_ID:a", "T_ID:b"], "T_INT:123"]])
+      end
     end
-#
+
 #    context "function application" do
 #      it "should parse an application with no params " do
 #        expect(ast('foo()')).to eq([["T_ID:foo"]])
