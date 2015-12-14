@@ -225,7 +225,7 @@ AST* Block(void)
 
 void block_append(AST* block, AST* expr)
 {
-    vec_push_back(&(block->value.exprs), expr);
+    vec_push_back(&(block->value.exprs), gc_addref(expr));
 }
 
 size_t block_size(AST* block)
@@ -258,12 +258,12 @@ AST* func_body(AST* func)
 
 void func_add_arg(AST* func, AST* arg)
 {
-    vec_push_back(func_args(func), arg);
+    vec_push_back(func_args(func), gc_addref(arg));
 }
 
 void func_set_body(AST* func, AST* body)
 {
-    func->value.func.body = body;
+    func->value.func.body = (AST*)gc_addref(body);
 }
 
 
