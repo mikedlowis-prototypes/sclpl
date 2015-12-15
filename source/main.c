@@ -42,7 +42,7 @@ static int emit_program(void) {
  *****************************************************************************/
 void usage(void) {
     fprintf(stderr, "%s\n",
-        "Usage: sclpl [OPTION]... MODE [FILE]...\n"
+        "Usage: sclpl [options...] [-A artifact] [file...]\n"
         "\n-A<type>   Emit the given type of artifact"
         "\n-h         Print help information"
         "\n-v         Enable verbose status messages");
