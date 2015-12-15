@@ -49,14 +49,6 @@ void usage(void) {
     exit(1);
 }
 
-/* TODO:
-
-    * Formalize grammar for parser
-    * Paren for function application must be on same line as variable in REPL
-    * Handle punctuation in the grammar directly instead of as an AST op.
-    * Implement name mangling algorithm for files and identifiers
-
-*/
 int user_main(int argc, char **argv) {
     /* Option parsing */
     OPTBEGIN {
