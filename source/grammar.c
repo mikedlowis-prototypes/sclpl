@@ -149,7 +149,7 @@ static AST* func_app(Parser* p, AST* fn)
     AST* app = FnApp(fn);
     expect(p,T_LPAR);
     while (peek(p)->type != T_RPAR) {
-        fnapp_add_arg(p, expression(p));
+        fnapp_add_arg(app, expression(p));
         if (peek(p)->type != T_RPAR)
             expect(p, T_COMMA);
     }

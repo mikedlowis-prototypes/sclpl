@@ -34,6 +34,11 @@ static void ast_free(void* ptr)
             gc_delref(ast->value.func.body);
             break;
 
+        case AST_FNAPP:
+            gc_delref(ast->value.fnapp.fn);
+            vec_deinit(&(ast->value.fnapp.args));
+            break;
+
         default:
             break;
     }
@@ -266,17 +271,27 @@ void func_set_body(AST* func, AST* body)
     func->value.func.body = (AST*)gc_addref(body);
 }
 
-AST* FnApp(AST* fn)
+AST* FnApp(AST* fnapp)
 {
     AST* node = ast(AST_FNAPP);
-    node->value.fnapp.fn = (AST*)gc_addref(fn);
+    node->value.fnapp.fn = (AST*)gc_addref(fnapp);
     vec_init(&(node->value.fnapp.args));
     return node;
 }
 
-void fnapp_add_arg(AST* func, AST* arg)
+AST* fnapp_fn(AST* fnapp)
 {
-    vec_push_back(&(func->value.fnapp.args), gc_addref(arg));
+    return fnapp->value.fnapp.fn;
+}
+
+vec_t* fnapp_args(AST* fnapp)
+{
+    return &(fnapp->value.fnapp.args);
+}
+
+void fnapp_add_arg(AST* fnapp, AST* arg)
+{
+    vec_push_back(&(fnapp->value.fnapp.args), gc_addref(arg));
 }
 
 

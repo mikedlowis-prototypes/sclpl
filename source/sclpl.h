@@ -185,9 +185,9 @@ void func_set_body(AST* func, AST* body);
 
 /* Function Application */
 AST* FnApp(AST* fn);
+AST* fnapp_fn(AST* fnapp);
+vec_t* fnapp_args(AST* fnapp);
 void fnapp_add_arg(AST* func, AST* arg);
-
-
 
 ///* Annotation */
 //AST* Ann(char* name, AST* value);

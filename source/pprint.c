@@ -166,6 +166,16 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             printf(")");
             break;
 
+        case AST_FNAPP:
+            printf("(");
+            pprint_tree(file, fnapp_fn(tree), depth);
+            for (size_t i = 0; i < vec_size(fnapp_args(tree)); i++) {
+                printf(" ");
+                pprint_tree(file, vec_at(fnapp_args(tree), i), depth);
+            }
+            printf(")");
+            break;
+
         default:
             pprint_literal(file, tree, depth);
             break;
