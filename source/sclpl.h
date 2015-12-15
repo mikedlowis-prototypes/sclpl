@@ -73,7 +73,7 @@ typedef struct {
  *****************************************************************************/
 typedef enum ASTType {
     AST_STRING = 0, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC, AST_BLOCK
+    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC, AST_FNAPP, AST_BLOCK
 } ASTType;
 
 typedef struct AST {
@@ -104,6 +104,11 @@ typedef struct AST {
             vec_t args;
             struct AST* body;
         } func;
+        /* Function Application */
+        struct {
+            struct AST* fn;
+            vec_t args;
+        } fnapp;
         /* Code Block */
         vec_t exprs;
         /* String, Symbol, Identifier */
@@ -178,16 +183,17 @@ AST* func_body(AST* func);
 void func_add_arg(AST* func, AST* arg);
 void func_set_body(AST* func, AST* body);
 
+/* Function Application */
+AST* FnApp(AST* fn);
+void fnapp_add_arg(AST* func, AST* arg);
+
 
 
 ///* Annotation */
 //AST* Ann(char* name, AST* value);
 //char* ann_name(AST* def);
 //AST* ann_value(AST* def);
-//
-//
-//
-//
+
 /* Lexer and Parser Types
  *****************************************************************************/
 typedef struct {

@@ -205,19 +205,19 @@ describe "sclpl grammar" do
       end
     end
 
-#    context "function application" do
-#      it "should parse an application with no params " do
-#        expect(ast('foo()')).to eq([["T_ID:foo"]])
-#      end
-#
-#      it "should parse an application with one param" do
-#        expect(ast('foo(a)')).to eq([["T_ID:foo", "T_ID:a"]])
-#      end
-#
-#      it "should parse an application with two params" do
-#        expect(ast('foo(a,b)')).to eq([["T_ID:foo", "T_ID:a", "T_ID:b"]])
-#      end
-#    end
+    context "function application" do
+      it "should parse an application with no params " do
+        expect(ast('foo()')).to eq([["T_ID:foo"]])
+      end
+
+      it "should parse an application with one param" do
+        expect(ast('foo(a)')).to eq([["T_ID:foo", "T_ID:a"]])
+      end
+
+      it "should parse an application with two params" do
+        expect(ast('foo(a,b)')).to eq([["T_ID:foo", "T_ID:a", "T_ID:b"]])
+      end
+    end
   end
 
   context "corner cases" do

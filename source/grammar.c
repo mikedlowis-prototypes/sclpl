@@ -14,6 +14,7 @@ static AST* function(Parser* p);
 static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
 static AST* token_to_tree(Tok* tok);
+static AST* func_app(Parser* p, AST* fn);
 
 AST* toplevel(Parser* p)
 {
@@ -56,22 +57,24 @@ static AST* require(Parser* p)
 
 static AST* expression(Parser* p)
 {
+    AST* expr = NULL;
     if (accept(p, T_LPAR)) {
-        AST* expr = expression(p);
+        expr = expression(p);
         expect(p, T_RPAR);
-        return expr;
     } else if (accept_str(p, T_ID, "if")) {
-        return if_stmnt(p);
+        expr = if_stmnt(p);
     } else if (accept_str(p, T_ID, "fn")) {
-        return function(p);
+        expr = function(p);
     } else if (match(p, T_ID)) {
-        return Ident(expect(p,T_ID));
-        //if (peek(p)->type == T_LPAR) {
-        //    arglist(p);
-        //}
+        expr = Ident(expect(p,T_ID));
     } else {
-        return literal(p);
+        expr = literal(p);
     }
+    /* Check if this is a function application */
+    if (peek(p)->type == T_LPAR) {
+        expr = func_app(p, expr);
+    }
+    return expr;
 }
 
 static AST* if_stmnt(Parser* p)
@@ -141,24 +144,21 @@ static AST* token_to_tree(Tok* tok)
     }
 }
 
-
+static AST* func_app(Parser* p, AST* fn)
+{
+    AST* app = FnApp(fn);
+    expect(p,T_LPAR);
+    while (peek(p)->type != T_RPAR) {
+        fnapp_add_arg(p, expression(p));
+        if (peek(p)->type != T_RPAR)
+            expect(p, T_COMMA);
+    }
+    expect(p,T_RPAR);
+    return app;
+}
 
 
 #if 0
-
-static AST* require(Parser* p);
-static AST* type_annotation(Parser* p);
-static AST* type_definition(Parser* p);
-static AST* type(Parser* p);
-static AST* tuple(Parser* p);
-static AST* function(Parser* p);
-static AST* definition(Parser* p);
-static AST* expression(Parser* p);
-static AST* arglist(Parser* p);
-static AST* if_stmnt(Parser* p);
-static AST* fn_stmnt(Parser* p);
-
-
 static AST* type_annotation(Parser* p)
 {
     //shifttok(p, T_ID);
@@ -167,8 +167,6 @@ static AST* type_annotation(Parser* p)
     //reduce(Annotation);
     return NULL;
 }
-
-/*****************************************************************************/
 
 static AST* type_definition(Parser* p)
 {
@@ -201,34 +199,4 @@ static AST* tuple(Parser* p) {
     ////reduce(p, mrk);
     return NULL;
 }
-
-static AST* function(Parser* p) {
-    ////size_t mark1 = mark(p) - 1;
-    ////size_t mark2 = mark(p);
-    //while (!accept(p, T_RPAR)) {
-    //    type(p);
-    //    if (T_RPAR != peek(p)->type)
-    //        expect(p, T_COMMA);
-    //}
-    ////reduce(p, mark2);
-    ////reduce(p, mark1);
-    return NULL;
-}
-
-static AST* arglist(Parser* p)
-{
-    ////size_t mrk = mark(p);
-    //expect(p, T_LPAR);
-    //while(peek(p)->type != T_RPAR) {
-    //    expression(p);
-    //    if(peek(p)->type != T_RPAR)
-    //        expect(p, T_COMMA);
-    //}
-    //expect(p, T_RPAR);
-    ////reduce(p, mrk);
-    return NULL;
-}
-
-
-
 #endif

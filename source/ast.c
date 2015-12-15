@@ -30,7 +30,7 @@ static void ast_free(void* ptr)
             break;
 
         case AST_FUNC:
-            //vec_deinit(&(ast->value.func.args));
+            vec_deinit(&(ast->value.func.args));
             gc_delref(ast->value.func.body);
             break;
 
@@ -264,6 +264,19 @@ void func_add_arg(AST* func, AST* arg)
 void func_set_body(AST* func, AST* body)
 {
     func->value.func.body = (AST*)gc_addref(body);
+}
+
+AST* FnApp(AST* fn)
+{
+    AST* node = ast(AST_FNAPP);
+    node->value.fnapp.fn = (AST*)gc_addref(fn);
+    vec_init(&(node->value.fnapp.args));
+    return node;
+}
+
+void fnapp_add_arg(AST* func, AST* arg)
+{
+    vec_push_back(&(func->value.fnapp.args), gc_addref(arg));
 }
 
 
