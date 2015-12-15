@@ -17,7 +17,6 @@ LDFLAGS  += ${LIBS}
 # Build Targets and Rules
 #------------------------------------------------------------------------------
 SRCS = source/main.c    \
-       source/grammar.c \
        source/lexer.c   \
        source/parser.c  \
        source/pprint.c  \
