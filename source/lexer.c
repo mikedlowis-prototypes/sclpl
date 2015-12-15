@@ -6,115 +6,59 @@
   */
 #include <sclpl.h>
 
-static char* dupstring(const char* old) {
-    size_t length = strlen(old);
-    char* str = (char*)gc_alloc(length+1, NULL);
-    memcpy(str, old, length);
-    str[length] = '\0';
-    return str;
-}
-
-/* Token Constructors
+/* Private Declarations
  *****************************************************************************/
-static void token_free(void* obj)
-{
-    Tok* tok = (Tok*)obj;
-    if ((tok->type != T_BOOL) &&
-        (tok->type != T_CHAR) &&
-        (tok->type != T_INT) &&
-        (tok->type != T_FLOAT) &&
-        (NULL != tok->value.text))
-        gc_delref(tok->value.text);
-}
+// Token Scanning
+static char* scan(Parser* ctx, size_t* line, size_t* column);
+static void skip_ws(Parser* ctx);
+static char* read_string(Parser* ctx);
+static bool eof(Parser* ctx);
+static bool oneof(Parser* ctx, const char* set);
+static char current(Parser* ctx);
+static bool eol(Parser* ctx);
+static char* dup(Parser* ctx, size_t start_idx, size_t len);
 
-static Tok* Token(TokType type)
-{
-    Tok* tok = (Tok*)gc_alloc(sizeof(Tok), &token_free);
-    tok->type = type;
-    return tok;
-}
+// Lexical Analysis
+static Tok* classify(const char* file, size_t line, size_t col, char* text);
+static bool char_oneof(const char* class, char c);
+static Tok* punctuation(char* text);
+static Tok* character(char* text);
+static Tok* integer(char* text, int base);
+static int getradix(char ch);
+static Tok* radixint(char* text);
+static bool is_float(char* text);
+static Tok* floating(char* text);
+static Tok* number(char* text);
+static Tok* boolean(char* text);
 
-static Tok* TextTok(TokType type, char* text)
-{
-    Tok* tok = Token(type);
-    tok->value.text = (char*)gc_addref(dupstring(text));
-    return tok;
-}
+// Token Constructors
+static Tok* Token(TokType type);
+static Tok* TextTok(TokType type, char* text);
+static Tok* CharTok(uint32_t val);
+static Tok* IntTok(intptr_t val);
+static Tok* FloatTok(double val);
+static Tok* BoolTok(bool val);
+static void token_free(void* obj);
 
-static Tok* CharTok(uint32_t val)
-{
-    Tok* tok = Token(T_CHAR);
-    tok->value.character = val;
-    return tok;
-}
+// Utility Functions
+static char* dupstring(const char* old);
 
-static Tok* IntTok(intptr_t val)
-{
-    Tok* tok = Token(T_INT);
-    tok->value.integer = val;
-    return tok;
-}
-
-static Tok* FloatTok(double val)
-{
-    Tok* tok = Token(T_FLOAT);
-    tok->value.floating = val;
-    return tok;
-}
-
-static Tok* BoolTok(bool val)
-{
-    Tok* tok = Token(T_BOOL);
-    tok->value.boolean = val;
-    return tok;
-}
-
-/* Token Scanning
+/* Public API
  *****************************************************************************/
-static char current(Parser* ctx) {
-    return ctx->line[ctx->index];
-}
-
-static bool eol(Parser* ctx)
+Tok* gettoken(Parser* ctx)
 {
-    bool ret = true;
-    size_t index = ctx->index;
-    char ch;
-    while((NULL != ctx->line) && ('\0' != (ch = ctx->line[index]))) {
-        if((' '!=ch) && ('\t'!=ch) && ('\r'!=ch) && ('\n'!=ch)) {
-            ret = false;
-            break;
-        }
-        index++;
+    Tok* tok = NULL;
+    size_t line, col;
+    char* text = scan(ctx, &line, &col);
+    if (text != NULL) {
+        tok = classify(NULL, line, col, text);
+        free(text);
     }
-    return ret;
+    return tok;
 }
 
-static bool eof(Parser* ctx)
+void fetchline(Parser* ctx)
 {
-    return (eol(ctx) && feof(ctx->input));
-}
-
-static bool oneof(Parser* ctx, const char* set) {
-    bool ret = false;
-    size_t sz = strlen(set);
-    for (size_t idx = 0; idx < sz; idx++) {
-        if (current(ctx) == set[idx]) {
-            ret = true;
-            break;
-        }
-    }
-    return ret;
-}
-
-static char* dup(Parser* ctx, size_t start_idx, size_t len) {
-    char* str = (char*)malloc(len+1);
-    memcpy(str, &(ctx->line[start_idx]), len);
-    str[len] = '\0';
-    return str;
-}
-
-void fetchline(Parser* ctx) {
     int c;
     size_t capacity = 8;
     size_t index    = 0;
@@ -142,7 +86,50 @@ void fetchline(Parser* ctx) {
     }
 }
 
-static char* read_string(Parser* ctx) {
+/* Token Scanning
+ *****************************************************************************/
+static char* scan(Parser* ctx, size_t* line, size_t* column)
+{
+    char* tok = NULL;
+    skip_ws(ctx);
+    *line   = ctx->lineno;
+    *column = ctx->index+1;
+    if (!eof(ctx)) {
+        if (oneof(ctx, "()[]{};,'")) {
+            tok = dup(ctx, ctx->index, 1);
+            ctx->index++;
+        } else if (current(ctx) == '"') {
+            tok = read_string(ctx);
+        } else {
+            size_t start = ctx->index;
+            while(!oneof(ctx," \t\r\n()[]{};,'\"") && (current(ctx) != '\0')) {
+                ctx->index++;
+            }
+            tok = dup(ctx, start, ctx->index - start);
+        }
+    }
+    return tok;
+}
+
+static void skip_ws(Parser* ctx)
+{
+    /* If we haven't read a line yet, read one now */
+    if (NULL == ctx->line)
+        fetchline(ctx);
+    /* Fast forward past whitespace and read a newline if necessary  */
+    while(!eof(ctx)) {
+        if ('\0' == current(ctx)) {
+            fetchline(ctx);
+        } else if (oneof(ctx, " \t\r\n")) {
+            ctx->index++;
+        } else {
+            break;
+        }
+    }
+}
+
+static char* read_string(Parser* ctx)
+{
     size_t capacity = 8;
     size_t index = 0;
     char*  tok = (char*)malloc(capacity);
@@ -182,47 +169,87 @@ static char* read_string(Parser* ctx) {
     return tok;
 }
 
-static void skip_ws(Parser* ctx) {
-    /* If we haven't read a line yet, read one now */
-    if (NULL == ctx->line)
-        fetchline(ctx);
-    /* Fast forward past whitespace and read a newline if necessary  */
-    while(!eof(ctx)) {
-        if ('\0' == current(ctx)) {
-            fetchline(ctx);
-        } else if (oneof(ctx, " \t\r\n")) {
-            ctx->index++;
-        } else {
+static bool eof(Parser* ctx)
+{
+    return (eol(ctx) && feof(ctx->input));
+}
+
+static bool oneof(Parser* ctx, const char* set)
+{
+    bool ret = false;
+    size_t sz = strlen(set);
+    for (size_t idx = 0; idx < sz; idx++) {
+        if (current(ctx) == set[idx]) {
+            ret = true;
             break;
         }
     }
+    return ret;
 }
 
-static char* scan(Parser* ctx, size_t* line, size_t* column) {
-    char* tok = NULL;
-    skip_ws(ctx);
-    *line   = ctx->lineno;
-    *column = ctx->index+1;
-    if (!eof(ctx)) {
-        if (oneof(ctx, "()[]{};,'")) {
-            tok = dup(ctx, ctx->index, 1);
-            ctx->index++;
-        } else if (current(ctx) == '"') {
-            tok = read_string(ctx);
-        } else {
-            size_t start = ctx->index;
-            while(!oneof(ctx," \t\r\n()[]{};,'\"") && (current(ctx) != '\0')) {
-                ctx->index++;
-            }
-            tok = dup(ctx, start, ctx->index - start);
+static char current(Parser* ctx)
+{
+    return ctx->line[ctx->index];
+}
+
+static bool eol(Parser* ctx)
+{
+    bool ret = true;
+    size_t index = ctx->index;
+    char ch;
+    while((NULL != ctx->line) && ('\0' != (ch = ctx->line[index]))) {
+        if((' '!=ch) && ('\t'!=ch) && ('\r'!=ch) && ('\n'!=ch)) {
+            ret = false;
+            break;
         }
+        index++;
+    }
+    return ret;
+}
+
+static char* dup(Parser* ctx, size_t start_idx, size_t len)
+{
+    char* str = (char*)malloc(len+1);
+    memcpy(str, &(ctx->line[start_idx]), len);
+    str[len] = '\0';
+    return str;
+}
+
+
+/* Lexical Analysis
+ *****************************************************************************/
+static Tok* classify(const char* file, size_t line, size_t col, char* text)
+{
+    Tok* tok = NULL;
+    (void)file;
+    if (0 == strcmp(text,"end")) {
+        tok = Token(T_END);
+    } else if (char_oneof("()[]{};,'", text[0])) {
+        tok = punctuation(text);
+    } else if ('"' == text[0]) {
+        text[strlen(text)-1] = '\0';
+        tok = TextTok(T_STRING, &text[1]);
+    } else if (text[0] == '\\') {
+        tok = character(text);
+    } else if ((text[0] == '0') && char_oneof("bodh",text[1])) {
+        tok = radixint(text);
+    } else if (char_oneof("+-0123456789",text[0])) {
+        tok = number(text);
+    } else if ((0 == strcmp(text,"true")) || (0 == strcmp(text,"false"))) {
+        tok = boolean(text);
+    } else {
+        tok = TextTok(T_ID, text);
+    }
+    /* If we found a valid token then fill in the location details */
+    if (NULL != tok) {
+        tok->line = line;
+        tok->col  = col;
     }
     return tok;
 }
 
-/* Lexical Analysis
- *****************************************************************************/
-static bool char_oneof(const char* class, char c) {
+static bool char_oneof(const char* class, char c)
+{
     bool ret = false;
     size_t sz = strlen(class);
     for (size_t idx = 0; idx < sz; idx++) {
@@ -286,7 +313,8 @@ static Tok* integer(char* text, int base)
     return (end[0] == '\0') ? IntTok(integer) : NULL;
 }
 
-static int getradix(char ch) {
+static int getradix(char ch)
+{
     int ret = -1;
     switch(ch) {
         case 'b': ret = 2;  break;
@@ -305,7 +333,8 @@ static Tok* radixint(char* text)
     return ret;
 }
 
-static bool is_float(char* text) {
+static bool is_float(char* text)
+{
     while (text[0] != '\0')
         if (text[0] == '.')
             return true;
@@ -339,45 +368,68 @@ static Tok* boolean(char* text)
     return BoolTok(0 == strcmp(text,"true"));
 }
 
-static Tok* classify(const char* file, size_t line, size_t col, char* text)
+/* Token Constructors
+ *****************************************************************************/
+static Tok* Token(TokType type)
 {
-    Tok* tok = NULL;
-    (void)file;
-    if (0 == strcmp(text,"end")) {
-        tok = Token(T_END);
-    } else if (char_oneof("()[]{};,'", text[0])) {
-        tok = punctuation(text);
-    } else if ('"' == text[0]) {
-        text[strlen(text)-1] = '\0';
-        tok = TextTok(T_STRING, &text[1]);
-    } else if (text[0] == '\\') {
-        tok = character(text);
-    } else if ((text[0] == '0') && char_oneof("bodh",text[1])) {
-        tok = radixint(text);
-    } else if (char_oneof("+-0123456789",text[0])) {
-        tok = number(text);
-    } else if ((0 == strcmp(text,"true")) || (0 == strcmp(text,"false"))) {
-        tok = boolean(text);
-    } else {
-        tok = TextTok(T_ID, text);
-    }
-    /* If we found a valid token then fill in the location details */
-    if (NULL != tok) {
-        tok->line = line;
-        tok->col  = col;
-    }
+    Tok* tok = (Tok*)gc_alloc(sizeof(Tok), &token_free);
+    tok->type = type;
     return tok;
 }
 
-Tok* gettoken(Parser* ctx)
+static Tok* TextTok(TokType type, char* text)
 {
-    Tok* tok = NULL;
-    size_t line, col;
-    char* text = scan(ctx, &line, &col);
-    if (text != NULL) {
-        tok = classify(NULL, line, col, text);
-        free(text);
-    }
+    Tok* tok = Token(type);
+    tok->value.text = (char*)gc_addref(dupstring(text));
     return tok;
+}
+
+static Tok* CharTok(uint32_t val)
+{
+    Tok* tok = Token(T_CHAR);
+    tok->value.character = val;
+    return tok;
+}
+
+static Tok* IntTok(intptr_t val)
+{
+    Tok* tok = Token(T_INT);
+    tok->value.integer = val;
+    return tok;
+}
+
+static Tok* FloatTok(double val)
+{
+    Tok* tok = Token(T_FLOAT);
+    tok->value.floating = val;
+    return tok;
+}
+
+static Tok* BoolTok(bool val)
+{
+    Tok* tok = Token(T_BOOL);
+    tok->value.boolean = val;
+    return tok;
+}
+
+static void token_free(void* obj)
+{
+    Tok* tok = (Tok*)obj;
+    if ((tok->type != T_BOOL) &&
+        (tok->type != T_CHAR) &&
+        (tok->type != T_INT) &&
+        (tok->type != T_FLOAT) &&
+        (NULL != tok->value.text))
+        gc_delref(tok->value.text);
+}
+
+/* Utility Functions
+ *****************************************************************************/
+static char* dupstring(const char* old) {
+    size_t length = strlen(old);
+    char* str = (char*)gc_alloc(length+1, NULL);
+    memcpy(str, old, length);
+    str[length] = '\0';
+    return str;
 }
 
