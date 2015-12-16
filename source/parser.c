@@ -49,11 +49,6 @@ AST* toplevel(Parser* p)
         else
             ret = expression(p);
     }
-    //printf("%p\n", ret);
-    //else if (accept_str(p, T_ID, "type"))
-    //    return type_definition(p);
-    //else if (accept_str(p, T_ID, "ann"))
-    //    return type_annotation(p);
     return ret;
 }
 
@@ -178,51 +173,6 @@ static AST* func_app(Parser* p, AST* fn)
     expect(p,T_RPAR);
     return app;
 }
-
-
-#if 0
-static AST* type_annotation(Parser* p)
-{
-    //shifttok(p, T_ID);
-    //type(p);
-    //expect(p, T_END);
-    //reduce(Annotation);
-    return NULL;
-}
-
-static AST* type_definition(Parser* p)
-{
-    //expect(p, T_ID);
-    //expect_str(p, T_ID, "is");
-    //type(p);
-    //expect(p, T_END);
-    return NULL;
-}
-
-static AST* type(Parser* p) {
-    //if (accept(p, T_LBRACE)) {
-    //    tuple(p);
-    //} else {
-    //    expect(p, T_ID);
-    //    if (accept(p, T_LPAR)) {
-    //        function(p);
-    //    }
-    //}
-    return NULL;
-}
-
-static AST* tuple(Parser* p) {
-    ////size_t mrk = mark(p);
-    ////insert(p, T_ID, lexer_dup("tuple"));
-    //do {
-    //    type(p);
-    //} while (accept(p, T_COMMA));
-    //expect(p, T_RBRACE);
-    ////reduce(p, mrk);
-    return NULL;
-}
-#endif
-
 
 /* Parsing Routines
  *****************************************************************************/

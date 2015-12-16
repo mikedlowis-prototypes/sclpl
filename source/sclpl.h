@@ -27,7 +27,7 @@ void* gc_addref(void* ptr);
 void gc_delref(void* ptr);
 void gc_swapref(void** dest, void* newref);
 
-// Redfine main
+// Redefine main
 extern int user_main(int argc, char** argv);
 
 /* Vector Implementation
@@ -188,11 +188,6 @@ AST* FnApp(AST* fn);
 AST* fnapp_fn(AST* fnapp);
 vec_t* fnapp_args(AST* fnapp);
 void fnapp_add_arg(AST* func, AST* arg);
-
-///* Annotation */
-//AST* Ann(char* name, AST* value);
-//char* ann_name(AST* def);
-//AST* ann_value(AST* def);
 
 /* Lexer and Parser Types
  *****************************************************************************/

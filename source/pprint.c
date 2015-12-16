@@ -101,12 +101,12 @@ static void pprint_literal(FILE* file, AST* tree, int depth)
 {
     printf("%s:", tree_type_to_string(tree->type));
     switch(tree->type) {
-        case AST_STRING: printf("\"%s\"", string_value(tree)); break;
-        case AST_SYMBOL: printf("%s", symbol_value(tree));     break;
-        case AST_IDENT:  printf("%s", ident_value(tree));      break;
-        case AST_CHAR:   printf("%c", char_value(tree));       break;
-        case AST_INT:    printf("%ld", integer_value(tree));   break;
-        case AST_FLOAT:  printf("%lf", float_value(tree));     break;
+        case AST_STRING: printf("\"%s\"", string_value(tree));  break;
+        case AST_SYMBOL: printf("%s",     symbol_value(tree));  break;
+        case AST_IDENT:  printf("%s",     ident_value(tree));   break;
+        case AST_CHAR:   printf("%c",     char_value(tree));    break;
+        case AST_INT:    printf("%ld",    integer_value(tree)); break;
+        case AST_FLOAT:  printf("%lf",    float_value(tree));   break;
         case AST_BOOL:
             printf("%s", bool_value(tree) ? "true" : "false");
             break;
