@@ -1,17 +1,12 @@
-SCLPL
-==============================================
+# SCLPL
 
-About This Project
-----------------------------------------------
+# License
 
-License
-----------------------------------------------
 Unless explicitly stated otherwise, all code and documentation contained within
 this repository is released under the BSD 2-Clause license. The text for this
 license can be found in the LICENSE.md file.
 
-Build Instructions
-----------------------------------------------
+# Build Instructions
 
 ## Build and Test the Compiler
 
