@@ -4,6 +4,28 @@ char* ARGV0;
 bool Verbose   = false;
 char* Artifact = "bin";
 
+bool isatomic(AST* tree)
+{
+    switch (tree->type) {
+        case AST_STRING:
+        case AST_SYMBOL:
+        case AST_IDENT:
+        case AST_CHAR:
+        case AST_INT:
+        case AST_FLOAT:
+        case AST_BOOL:
+        case AST_FUNC:
+            return true;
+        default:
+            return false;
+    }
+}
+
+AST* normalize(AST* tree)
+{
+    return tree;
+}
+
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
@@ -14,11 +36,19 @@ static int emit_tokens(void) {
     return 0;
 }
 
-static int emit_tree(void) {
+static int emit_ast(void) {
     AST* tree = NULL;
     Parser* ctx = parser_new(NULL, stdin);
     while(NULL != (tree = toplevel(ctx)))
         pprint_tree(stdout, tree, 0);
+    return 0;
+}
+
+static int emit_anf(void) {
+    AST* tree = NULL;
+    Parser* ctx = parser_new(NULL, stdin);
+    while(NULL != (tree = toplevel(ctx)))
+        pprint_tree(stdout, normalize(tree), 0);
     return 0;
 }
 
@@ -58,16 +88,19 @@ int user_main(int argc, char **argv) {
     } OPTEND;
 
     /* Execute the main compiler process */
-    if (0 == strcmp("bin", Artifact)) {
+
+    if (0 == strcmp("tok", Artifact)) {
+        return emit_tokens();
+    } else if (0 == strcmp("ast", Artifact)) {
+        return emit_ast();
+    } else if (0 == strcmp("anf", Artifact)) {
+        return emit_anf();
+    } else if (0 == strcmp("src", Artifact)) {
+        return emit_csource();
+    } else if (0 == strcmp("bin", Artifact)) {
         return emit_program();
     } else if (0 == strcmp("lib", Artifact)) {
         return emit_staticlib();
-    } else if (0 == strcmp("src", Artifact)) {
-        return emit_csource();
-    } else if (0 == strcmp("ast", Artifact)) {
-        return emit_tree();
-    } else if (0 == strcmp("tok", Artifact)) {
-        return emit_tokens();
     } else {
         fprintf(stderr, "Unknonwn artifact type: '%s'\n\n", Artifact);
         usage();

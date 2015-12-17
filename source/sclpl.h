@@ -72,27 +72,18 @@ typedef struct {
 /* AST Types
  *****************************************************************************/
 typedef enum ASTType {
-    AST_STRING = 0, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_REQ, AST_DEF, AST_ANN, AST_IF, AST_FUNC, AST_FNAPP, AST_BLOCK
+    AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
+    AST_REQ, AST_DEF, AST_IF, AST_FUNC, AST_FNAPP, AST_BLOCK, AST_LET, AST_TEMP
 } ASTType;
 
 typedef struct AST {
     ASTType type;
     union {
-        /* Require Node */
-        struct {
-            char* name;
-        } req;
         /* Definition Node */
         struct {
             char* name;
             struct AST* value;
         } def;
-        /* Annotation Node */
-        struct {
-            char* name;
-            struct AST* value;
-        } ann;
         /* If Expression */
         struct {
             struct AST* cond;
@@ -109,6 +100,12 @@ typedef struct AST {
             struct AST* fn;
             vec_t args;
         } fnapp;
+        /* Let Expression */
+        struct {
+            struct AST* temp;
+            struct AST* value;
+            struct AST* body;
+        } let;
         /* Code Block */
         vec_t exprs;
         /* String, Symbol, Identifier */
@@ -188,6 +185,9 @@ AST* FnApp(AST* fn);
 AST* fnapp_fn(AST* fnapp);
 vec_t* fnapp_args(AST* fnapp);
 void fnapp_add_arg(AST* func, AST* arg);
+
+/* Let Expression */
+AST* Let(AST* temp, AST* val, AST* body);
 
 /* Lexer and Parser Types
  *****************************************************************************/

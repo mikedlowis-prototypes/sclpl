@@ -149,9 +149,6 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             printf(")");
             break;
 
-        case AST_ANN:
-            break;
-
         case AST_FUNC:
             printf("(fn (");
             for (size_t i = 0; i < vec_size(func_args(tree)); i++) {
@@ -174,6 +171,10 @@ void pprint_tree(FILE* file, AST* tree, int depth)
                 pprint_tree(file, vec_at(fnapp_args(tree), i), depth);
             }
             printf(")");
+            break;
+
+        case AST_LET:
+            printf("(let)");
             break;
 
         default:

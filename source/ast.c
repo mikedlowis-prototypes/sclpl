@@ -2,25 +2,20 @@
 
 static void ast_free(void* ptr)
 {
+//    AST_LET AST_TEMP
+
     AST* ast = (AST*)ptr;
     switch(ast->type) {
+        case AST_REQ:
         case AST_IDENT:
         case AST_STRING:
+        case AST_SYMBOL:
             gc_delref(ast->value.text);
-            break;
-
-        case AST_REQ:
-            gc_delref(ast->value.req.name);
             break;
 
         case AST_DEF:
             gc_delref(ast->value.def.name);
             gc_delref(ast->value.def.value);
-            break;
-
-        case AST_ANN:
-            gc_delref(ast->value.ann.name);
-            gc_delref(ast->value.ann.value);
             break;
 
         case AST_IF:
@@ -37,6 +32,16 @@ static void ast_free(void* ptr)
         case AST_FNAPP:
             gc_delref(ast->value.fnapp.fn);
             vec_deinit(&(ast->value.fnapp.args));
+            break;
+
+        case AST_BLOCK:
+            vec_deinit(&(ast->value.exprs));
+            break;
+
+        case AST_LET:
+            break;
+
+        case AST_TEMP:
             break;
 
         default:
@@ -294,3 +299,11 @@ void fnapp_add_arg(AST* fnapp, AST* arg)
     vec_push_back(&(fnapp->value.fnapp.args), gc_addref(arg));
 }
 
+AST* Let(AST* temp, AST* val, AST* body)
+{
+    AST* node = ast(AST_LET);
+    node->value.let.temp  = (AST*)gc_addref(temp);
+    node->value.let.value = (AST*)gc_addref(val);
+    node->value.let.body  = (AST*)gc_addref(body);
+    return node;
+}
