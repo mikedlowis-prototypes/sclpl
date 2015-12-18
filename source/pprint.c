@@ -93,6 +93,7 @@ static const char* tree_type_to_string(ASTType type) {
         case AST_INT:    return "T_INT";
         case AST_FLOAT:  return "T_FLOAT";
         case AST_BOOL:   return "T_BOOL";
+        case AST_TEMP:   return "$";
         default:         return "???";
     }
 }
@@ -107,6 +108,7 @@ static void pprint_literal(FILE* file, AST* tree, int depth)
         case AST_CHAR:   printf("%c",     char_value(tree));    break;
         case AST_INT:    printf("%ld",    integer_value(tree)); break;
         case AST_FLOAT:  printf("%lf",    float_value(tree));   break;
+        case AST_TEMP:   printf("%ld",    temp_value(tree));    break;
         case AST_BOOL:
             printf("%s", bool_value(tree) ? "true" : "false");
             break;
@@ -174,7 +176,13 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             break;
 
         case AST_LET:
-            printf("(let)");
+            printf("(let (");
+            pprint_tree(file, let_var(tree), depth);
+            printf(" ");
+            pprint_tree(file, let_val(tree), depth);
+            printf(") ");
+            pprint_tree(file, let_body(tree), depth);
+            printf(")");
             break;
 
         default:

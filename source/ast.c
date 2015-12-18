@@ -113,6 +113,13 @@ intptr_t integer_value(AST* val)
     return val->value.integer;
 }
 
+intptr_t temp_value(AST* val)
+{
+    assert(val != NULL);
+    assert(val->type == AST_TEMP);
+    return val->value.integer;
+}
+
 AST* Float(Tok* val)
 {
     AST* node = ast(AST_FLOAT);
@@ -284,6 +291,13 @@ AST* FnApp(AST* fnapp)
     return node;
 }
 
+void fnapp_set_fn(AST* fnapp, AST* fn)
+{
+    AST* old = fnapp->value.fnapp.fn;
+    fnapp->value.fnapp.fn = (AST*)gc_addref(fn);
+    gc_delref(old);
+}
+
 AST* fnapp_fn(AST* fnapp)
 {
     return fnapp->value.fnapp.fn;
@@ -305,5 +319,28 @@ AST* Let(AST* temp, AST* val, AST* body)
     node->value.let.temp  = (AST*)gc_addref(temp);
     node->value.let.value = (AST*)gc_addref(val);
     node->value.let.body  = (AST*)gc_addref(body);
+    return node;
+}
+
+AST* let_var(AST* let)
+{
+    return let->value.let.temp;
+}
+
+AST* let_val(AST* let)
+{
+    return let->value.let.value;
+}
+
+AST* let_body(AST* let)
+{
+    return let->value.let.body;
+}
+
+AST* TempVar(void)
+{
+    static intptr_t val = 0;
+    AST* node = ast(AST_TEMP);
+    node->value.integer = val++;
     return node;
 }

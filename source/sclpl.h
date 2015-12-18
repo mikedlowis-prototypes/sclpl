@@ -149,6 +149,10 @@ bool bool_value(AST* val);
 AST* Ident(Tok* val);
 char* ident_value(AST* val);
 
+/* Temp Variable */
+AST* TempVar(void);
+intptr_t temp_value(AST* val);
+
 /* Require */
 AST* Require(Tok* name);
 char* require_name(AST* req);
@@ -183,11 +187,15 @@ void func_set_body(AST* func, AST* body);
 /* Function Application */
 AST* FnApp(AST* fn);
 AST* fnapp_fn(AST* fnapp);
+void fnapp_set_fn(AST* fnapp, AST* fn);
 vec_t* fnapp_args(AST* fnapp);
 void fnapp_add_arg(AST* func, AST* arg);
 
 /* Let Expression */
 AST* Let(AST* temp, AST* val, AST* body);
+AST* let_var(AST* let);
+AST* let_val(AST* let);
+AST* let_body(AST* let);
 
 /* Lexer and Parser Types
  *****************************************************************************/

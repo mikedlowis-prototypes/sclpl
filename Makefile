@@ -10,7 +10,7 @@ LD = ${CC}
 # flags
 INCS      = -Isource/
 CPPFLAGS  = -D_XOPEN_SOURCE=700
-CFLAGS   += ${INCS} ${CPPFLAGS}
+CFLAGS   += ${INCS} ${CPPFLAGS} -g
 LDFLAGS  += ${LIBS}
 
 #------------------------------------------------------------------------------

@@ -29,8 +29,8 @@ def re_structure( token_array, offset = 0 )
   return [offset, struct]
 end
 
-def ast(input)
-  out = cli(['-Aast'], input)
+def ast(input, pass="ast")
+  out = cli(["-A#{pass}"], input)
   # Prep the parens for reading
   out.gsub!(/([()])|tree/,' \1 ')
   # Replace string literals so we can tokenize on spaces
@@ -55,3 +55,8 @@ end
 def ccode(input)
   cli(['-Asrc'], input)
 end
+
+def anf(input)
+  ast(input, "anf")
+end
+

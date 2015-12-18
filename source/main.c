@@ -21,9 +21,24 @@ bool isatomic(AST* tree)
     }
 }
 
+AST* normalize_fnapp(AST* tree)
+{
+    AST* fn = fnapp_fn(tree);
+    if (!isatomic(fn)) {
+        AST* temp = TempVar();
+        fnapp_set_fn(tree, temp);
+        return Let(temp, fn, tree);
+    } else {
+        return tree;
+    }
+}
+
 AST* normalize(AST* tree)
 {
-    return tree;
+    if (tree->type == AST_FNAPP)
+        return normalize_fnapp(tree);
+    else
+        return tree;
 }
 
 /* Driver Modes
