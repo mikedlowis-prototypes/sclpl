@@ -337,6 +337,11 @@ AST* let_body(AST* let)
     return let->value.let.body;
 }
 
+void let_set_body(AST* let, AST* body)
+{
+    let->value.let.body = (AST*)gc_addref(body);
+}
+
 AST* TempVar(void)
 {
     static intptr_t val = 0;

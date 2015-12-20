@@ -45,6 +45,7 @@ void vec_clear(vec_t* vec);
 size_t vec_size(vec_t* vec);
 void* vec_at(vec_t* vec, size_t index);
 void vec_push_back(vec_t* vec, void* data);
+void vec_set(vec_t* vec, size_t index, void* data);
 
 /* Token Types
  *****************************************************************************/
@@ -196,6 +197,7 @@ AST* Let(AST* temp, AST* val, AST* body);
 AST* let_var(AST* let);
 AST* let_val(AST* let);
 AST* let_body(AST* let);
+void let_set_body(AST* let, AST* body);
 
 /* Lexer and Parser Types
  *****************************************************************************/

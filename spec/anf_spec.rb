@@ -39,5 +39,45 @@ describe "sclpl a-normal form" do
     it "should normalize an application with a complex function" do
       expect(anf('(foo())()')).to eq([['let', ['$:0', ['T_ID:foo']], ['$:0']]])
     end
+
+    it "should normalize an application with a complex arg" do
+      expect(anf('foo(bar())')).to eq([['let', ['$:0', ['T_ID:bar']], ['T_ID:foo', '$:0']]])
+    end
+
+    it "should normalize an application with two complex args" do
+      expect(anf('foo(bar(),baz())')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['let', ['$:1', ['T_ID:baz']],
+              ['T_ID:foo', '$:0', '$:1']]]])
+    end
+
+    it "should normalize an application with three complex args" do
+      expect(anf('foo(bar(),baz(),boo())')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['let', ['$:1', ['T_ID:baz']],
+              ['let', ['$:2', ['T_ID:boo']],
+                ['T_ID:foo', '$:0', '$:1', '$:2']]]]])
+    end
+
+    it "should normalize an application with simple and complex args (s,c,c)" do
+      expect(anf('foo(a,bar(),baz())')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['let', ['$:1', ['T_ID:baz']],
+              ['T_ID:foo', 'T_ID:a', '$:0', '$:1']]]])
+    end
+
+    it "should normalize an application with simple and complex args (c,s,c)" do
+      expect(anf('foo(bar(),a,baz())')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['let', ['$:1', ['T_ID:baz']],
+              ['T_ID:foo', '$:0', 'T_ID:a', '$:1']]]])
+    end
+
+    it "should normalize an application with simple and complex args (c,c,s)" do
+      expect(anf('foo(bar(),baz(),a)')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['let', ['$:1', ['T_ID:baz']],
+              ['T_ID:foo', '$:0', '$:1', 'T_ID:a']]]])
+    end
   end
 end

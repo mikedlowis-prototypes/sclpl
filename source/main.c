@@ -21,16 +21,40 @@ bool isatomic(AST* tree)
     }
 }
 
+//AST* normalize_fnapp_args(AST* tree)
+//{
+//}
+
 AST* normalize_fnapp(AST* tree)
 {
+    AST* normalized = tree;
     AST* fn = fnapp_fn(tree);
+    /* Normalize the function */
     if (!isatomic(fn)) {
         AST* temp = TempVar();
         fnapp_set_fn(tree, temp);
-        return Let(temp, fn, tree);
-    } else {
-        return tree;
+        normalized = Let(temp, fn, tree);
     }
+    /* Normalize the function arguments */
+    vec_t temps;
+    vec_init(&temps);
+    vec_t* args = fnapp_args(tree);
+    for (int i = 0; i < vec_size(args); i++) {
+        AST* arg = (AST*)vec_at(args, i);
+        if (!isatomic(arg)) {
+            AST* temp = TempVar();
+            vec_push_back(&temps, Let(temp, arg, NULL));
+            vec_set(args, i, temp);
+        }
+    }
+    /* Nest all the scopes and return the new form */
+    for (int i = vec_size(&temps); i > 0; i--) {
+        AST* let = (AST*)vec_at(&temps,i-1);
+        let_set_body(let, normalized);
+        normalized = let;
+    }
+    vec_deinit(&temps);
+    return normalized;
 }
 
 AST* normalize(AST* tree)
