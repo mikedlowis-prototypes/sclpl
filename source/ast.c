@@ -34,10 +34,6 @@ static void ast_free(void* ptr)
             vec_deinit(&(ast->value.fnapp.args));
             break;
 
-        case AST_BLOCK:
-            vec_deinit(&(ast->value.exprs));
-            break;
-
         case AST_LET:
             break;
 
@@ -231,28 +227,6 @@ AST* ifexpr_else(AST* ifexpr)
 void ifexpr_set_else(AST* ifexpr, AST* belse)
 {
     ifexpr->value.ifexpr.belse = (AST*)gc_addref(belse);
-}
-
-AST* Block(void)
-{
-    AST* node = ast(AST_BLOCK);
-    vec_init(&(node->value.exprs));
-    return node;
-}
-
-void block_append(AST* block, AST* expr)
-{
-    vec_push_back(&(block->value.exprs), gc_addref(expr));
-}
-
-size_t block_size(AST* block)
-{
-    return vec_size(&(block->value.exprs));
-}
-
-AST* block_get(AST* block, size_t index)
-{
-    return (AST*)vec_at(&(block->value.exprs), index);
 }
 
 AST* Func(void)

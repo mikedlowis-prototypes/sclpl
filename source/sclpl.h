@@ -74,7 +74,7 @@ typedef struct {
  *****************************************************************************/
 typedef enum ASTType {
     AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_REQ, AST_DEF, AST_IF, AST_FUNC, AST_FNAPP, AST_BLOCK, AST_LET, AST_TEMP
+    AST_REQ, AST_DEF, AST_IF, AST_FUNC, AST_FNAPP, AST_LET, AST_TEMP
 } ASTType;
 
 typedef struct AST {
@@ -107,8 +107,6 @@ typedef struct AST {
             struct AST* value;
             struct AST* body;
         } let;
-        /* Code Block */
-        vec_t exprs;
         /* String, Symbol, Identifier */
         char* text;
         /* Character */
@@ -171,12 +169,6 @@ AST* ifexpr_then(AST* ifexpr);
 void ifexpr_set_then(AST* ifexpr, AST* bthen);
 AST* ifexpr_else(AST* ifexpr);
 void ifexpr_set_else(AST* ifexpr, AST* belse);
-
-/* Code Block */
-AST* Block(void);
-void block_append(AST* block, AST* expr);
-size_t block_size(AST* block);
-AST* block_get(AST* block, size_t index);
 
 /* Function */
 AST* Func(void);

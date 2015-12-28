@@ -56,78 +56,38 @@ describe "sclpl grammar" do
   context "if statements" do
     it "should parse an if statement with no else clause" do
       expect(ast('if 123 321 end')).to eq([
-        ["if", "T_INT:123", ["block", "T_INT:321"]]])
+        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
     end
 
     it "should parse an if statement with an optional then keyword" do
       expect(ast('if 123 then 321 end')).to eq([
-        ["if", "T_INT:123", ["block", "T_INT:321"]]])
+        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
     end
 
     it "should parse an if statement with an else clause " do
       expect(ast('if 123 321 else 456 end')).to eq([
-        ["if", "T_INT:123", ["block", "T_INT:321"], ["block", "T_INT:456"]]])
+        ["if", "T_INT:123",
+          ["let", ["$:0", "T_INT:321"], "$:0"],
+          ["let", ["$:1", "T_INT:456"], "$:1"]]])
+    end
+
+    it "should parse an if statement with a then clause with multiple expressions" do
+      expect(ast('if 1 2 3 else 4 end')).to eq([
+        ["if", "T_INT:1",
+          ["let", ["$:0", "T_INT:2"],
+            ["let", ["$:1", "T_INT:3"], "$:1"]],
+          ["let", ["$:2", "T_INT:4"], "$:2"]]])
+    end
+
+    it "should parse an if statement with an else clause with multiple expressions" do
+      expect(ast('if 1 2 else 3 4 end')).to eq([
+        ["if", "T_INT:1",
+          ["let", ["$:0", "T_INT:2"], "$:0"],
+          ["let", ["$:1", "T_INT:3"],
+            ["let", ["$:2", "T_INT:4"], "$:2"]],
+      ]])
     end
   end
-
-#  context "type definitions" do
-#    it "should parse a simple type definition" do
-#      expect(ast('type foo is int;')).to eq([ ['T_ID:type', 'T_ID:foo', 'T_ID:is', 'T_ID:int'] ])
-#    end
-#
-#    it "should parse a function type definition with no args" do
-#      expect(ast('type foo is int();')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', []]] ])
-#    end
-#
-#    it "should parse a function type definition with one arg" do
-#      expect(ast('type foo is int(int);')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int']]] ])
-#    end
-#
-#    it "should parse a function type definition with two args" do
-#      expect(ast('type foo is int(int,int);')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int', 'T_ID:int']]] ])
-#    end
-#
-#    it "should parse a function type definition with three args" do
-#      expect(ast('type foo is int(int,int,int);')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:int', ['T_ID:int', 'T_ID:int', 'T_ID:int']]] ])
-#    end
-#
-#    it "should parse a tuple type definition with one field" do
-#      expect(ast('type foo is {int};')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int']] ])
-#    end
-#
-#    it "should parse a tuple type definition with two fields" do
-#      expect(ast('type foo is {int,int};')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int', 'T_ID:int']] ])
-#    end
-#
-#    it "should parse a tuple type definition with three fields" do
-#      expect(ast('type foo is {int,int,int};')).to eq([
-#          ['T_ID:type', 'T_ID:foo', 'T_ID:is', ['T_ID:tuple', 'T_ID:int', 'T_ID:int', 'T_ID:int']] ])
-#    end
-#
-#    it "should parse a record type definition with one field" do
-#      pending "Type annotations have not been implemented yet"
-#      expect(ast('type foo is { int a };')).to eq([
-#          ['T_ID:type', 'T_ID:foo', ['T_ID:record', ['T_ID:int', 'T_ID:a']]] ])
-#    end
-#
-#    it "should parse a record type definition with two fields" do
-#      pending "Type annotations have not been implemented yet"
-#      expect(ast('type foo is { int a, int b };')).to eq([
-#          ['T_ID:type', 'T_ID:foo', ['T_ID:record', ['T_ID:int', 'T_ID:a'], ['T_ID:int', 'T_ID:b']]] ])
-#    end
-#
-#    it "should parse a record type definition with three fields" do
-#      pending "Type annotations have not been implemented yet"
-#      expect(ast('type foo is { int a, int b };')).to eq([
-#          ['T_ID:type', 'T_ID:foo', ['T_ID:record', ['T_ID:int', 'T_ID:a'], ['T_ID:int', 'T_ID:b'], ['T_ID:int', 'T_ID:c']]] ])
-#    end
-#  end
 
   context "definitions" do
     it "should parse a value definition" do
@@ -136,50 +96,43 @@ describe "sclpl grammar" do
 
     it "should parse a function definition" do
       expect(ast('def foo() 123;')).to eq([
-        ['def', 'foo', ['fn', [], 'T_INT:123']] ])
+        ['def', 'foo', ['fn', [],
+          ["let", ["$:0", "T_INT:123"], "$:0"]]] ])
     end
 
     it "should parse a function definition  with multiple expressions in the body" do
       expect(ast('def foo() 123 321;')).to eq([
-        ['def', 'foo', ['fn', [], 'T_INT:123', 'T_INT:321']] ])
+        ['def', 'foo', ['fn', [],
+          ["let", ["$:0", "T_INT:123"],
+            ["let", ["$:1", "T_INT:321"], "$:1"]]]]])
+    end
+
+    it "should parse a function definition with one definition and expression" do
+      expect(ast('def foo() def bar 123; add(bar,321);')).to eq([
+        ['def', 'foo', ['fn', [],
+          ["let", ["T_ID:bar", "T_INT:123"],
+            ["let", ["$:0", ["T_ID:add", "T_ID:bar", "T_INT:321"]], "$:0"]]]]])
     end
 
     it "should parse a function definition with one argument" do
       expect(ast('def foo(a) 123;')).to eq([
-        ['def', 'foo', ['fn', ['T_ID:a'], 'T_INT:123']] ])
+        ['def', 'foo', ['fn', ['T_ID:a'],
+          ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
 
     it "should parse a function definition with two arguments" do
       expect(ast('def foo(a,b) 123;')).to eq([
-        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b'], 'T_INT:123']] ])
+        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b'],
+          ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
 
     it "should parse a function definition with three arguments" do
       expect(ast('def foo(a,b,c) 123;')).to eq([
-        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'], 'T_INT:123']] ])
+        ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'],
+          ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
   end
 
-#  context "annotations" do
-#    it "should parse a type annotation for a simple type" do
-#      expect(ast('ann foo int;')).to eq([ ['T_ID:ann', 'T_ID:foo', 'T_ID:int'] ])
-#    end
-#
-#    it "should parse a type annotation for a function type" do
-#      expect(ast('ann foo int();')).to eq([ ['T_ID:ann', 'T_ID:foo', ['T_ID:int', []]] ])
-#    end
-#
-#    it "should parse a type annotation for a tuple type" do
-#      expect(ast('ann foo {int, int};')).to eq([ ['T_ID:ann', 'T_ID:foo', ['T_ID:tuple', 'T_ID:int', 'T_ID:int']] ])
-#    end
-#
-#    it "should parse a type annotation with a generic type" do
-#      pending "Type annotations have not been implemented yet"
-#      expect(ast('ann foo Pair[int,int];')).to eq([
-#          ['T_ID:ann', 'T_ID:foo', ['T_ID:Pair', 'T_ID:int', 'T_ID:int']] ])
-#    end
-#  end
-#
   context "expressions" do
     context "parenthese grouping" do
       it "should parse a parenthesized expression" do
@@ -193,15 +146,21 @@ describe "sclpl grammar" do
 
     context "function literals" do
       it "should parse a function with no params" do
-        expect(ast('fn() 123;')).to eq([["fn", [], "T_INT:123"]])
+        expect(ast('fn() 123;')).to eq([
+          ["fn", [],
+            ["let", ["$:0", "T_INT:123"], "$:0"]]])
       end
 
       it "should parse a function with one param" do
-        expect(ast('fn(a) 123;')).to eq([["fn", ["T_ID:a"], "T_INT:123"]])
+        expect(ast('fn(a) 123;')).to eq([
+          ["fn", ["T_ID:a"],
+            ["let", ["$:0", "T_INT:123"], "$:0"]]])
       end
 
       it "should parse a function with two params" do
-        expect(ast('fn(a,b) 123;')).to eq([["fn", ["T_ID:a", "T_ID:b"], "T_INT:123"]])
+        expect(ast('fn(a,b) 123;')).to eq([
+          ["fn", ["T_ID:a", "T_ID:b"],
+            ["let", ["$:0", "T_INT:123"], "$:0"]]])
       end
     end
 

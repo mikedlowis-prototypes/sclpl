@@ -118,8 +118,9 @@ static void pprint_literal(FILE* file, AST* tree, int depth)
 
 void pprint_tree(FILE* file, AST* tree, int depth)
 {
-    if (tree == NULL)
+    if (tree == NULL) {
         return;
+    }
     print_indent(file, depth);
     switch (tree->type) {
         case AST_REQ:
@@ -142,15 +143,6 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             printf(")");
             break;
 
-        case AST_BLOCK:
-            printf("(block ");
-            for (size_t i = 0; i < block_size(tree); i++) {
-                printf(" ");
-                pprint_tree(file, block_get(tree, i), depth);
-            }
-            printf(")");
-            break;
-
         case AST_FUNC:
             printf("(fn (");
             for (size_t i = 0; i < vec_size(func_args(tree)); i++) {
@@ -158,10 +150,7 @@ void pprint_tree(FILE* file, AST* tree, int depth)
                 pprint_literal(file, vec_at(func_args(tree), i), depth);
             }
             printf(")");
-            for (size_t i = 0; i < block_size(func_body(tree)); i++) {
-                printf(" ");
-                pprint_tree(file, block_get(func_body(tree), i), depth);
-            }
+            pprint_tree(file, func_body(tree), depth);
             printf(")");
             break;
 

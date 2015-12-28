@@ -27,6 +27,16 @@ describe "sclpl a-normal form" do
     end
   end
 
+  context "definitions" do
+    it "should leave atomic defintions alone" do
+      expect(anf('def foo 123;')).to eq([["def", "foo", "T_INT:123"]])
+    end
+
+    it "should leave normalize complex defintions" do
+      expect(anf('def foo bar();')).to eq([["def", "foo", ["T_ID:bar"]]])
+    end
+  end
+
   context "function applications" do
     it "should leave an application with no args alone" do
       expect(anf('foo()')).to eq([['T_ID:foo']])
@@ -78,6 +88,49 @@ describe "sclpl a-normal form" do
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
               ['T_ID:foo', '$:0', '$:1', 'T_ID:a']]]])
+    end
+  end
+
+  context "if expressions" do
+    it "should leave atomic expressions alone" do
+      expect(anf('if 1 2 3;')).to eq([
+          ["if", "T_INT:1",
+            ["let", ["$:0", "T_INT:2"],
+              ["let", ["$:1", "T_INT:3"],
+                "$:1"]]]])
+    end
+
+    it "should normalize the conditional expression" do
+      expect(anf('if foo() 2 else 3;')).to eq([
+          ["let", ["$:2", ["T_ID:foo"]],
+            ["if", "$:2",
+              ["let", ["$:0", "T_INT:2"], "$:0"],
+              ["let", ["$:1", "T_INT:3"], "$:1"]]]])
+    end
+
+    it "should normalize the first branch expression" do
+      expect(anf('if 1 foo() else 3;')).to eq([
+        ["if", "T_INT:1",
+          ["let", ["$:0", ["T_ID:foo"]], "$:0"],
+          ["let", ["$:1", "T_INT:3"], "$:1"]]])
+    end
+
+    it "should normalize the first branch expression" do
+      expect(anf('if 1 2 else foo();')).to eq([
+        ["if", "T_INT:1",
+          ["let", ["$:0", "T_INT:2"], "$:0"],
+          ["let", ["$:1", ["T_ID:foo"]], "$:1"]]])
+    end
+  end
+
+  context "function literals" do
+    it "should normalize a literal with a complex expression" do
+      expect(anf('fn() foo(bar());')).to eq([
+        ["fn", [],
+          ["let", ["$:1", ["T_ID:bar"]],
+            ["let", ["$:0", ["T_ID:foo", "$:1"]],
+                "$:0"]]]
+      ])
     end
   end
 end

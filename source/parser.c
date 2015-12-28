@@ -141,10 +141,27 @@ static AST* literal(Parser* p)
 
 static AST* expr_block(Parser* p)
 {
-    AST* block = Block();
+    AST* block = NULL;
+    vec_t exprs;
+    vec_init(&exprs);
+    /* Build all expressions into let forms with no bodies */
     do {
-        block_append(block, expression(p));
+        if (accept_str(p, T_ID, "def")) {
+            AST* def = definition(p);
+            Tok name = { .value.text = def_name(def) };
+            vec_push_back(&exprs, Let(Ident(&name), def_value(def), NULL));
+        } else {
+            vec_push_back(&exprs, Let(TempVar(), expression(p), NULL));
+        }
     } while(!match(p, T_END) && !match_str(p, T_ID, "else"));
+    /* Now nest all of the let forms making sure that the last one returns
+     * it's definition as its body */
+    for (int i = vec_size(&exprs); i > 0; i--) {
+        AST* let = (AST*)vec_at(&exprs,i-1);
+        let_set_body(let, (block == NULL) ? let_var(let) : block);
+        block = let;
+    }
+    vec_deinit(&exprs);
     return block;
 }
 

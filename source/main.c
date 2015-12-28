@@ -4,6 +4,8 @@ char* ARGV0;
 bool Verbose   = false;
 char* Artifact = "bin";
 
+AST* normalize(AST* tree);
+
 bool isatomic(AST* tree)
 {
     switch (tree->type) {
@@ -21,9 +23,11 @@ bool isatomic(AST* tree)
     }
 }
 
-//AST* normalize_fnapp_args(AST* tree)
-//{
-//}
+AST* normalize_def(AST* tree)
+{
+    Tok name = { .value.text = def_name(tree) };
+    return Def(&name, normalize(def_value(tree)));
+}
 
 AST* normalize_fnapp(AST* tree)
 {
@@ -57,12 +61,65 @@ AST* normalize_fnapp(AST* tree)
     return normalized;
 }
 
+AST* normalize_if(AST* tree)
+{
+    AST* cond   = normalize(ifexpr_cond(tree));
+    AST* thenbr = normalize(ifexpr_then(tree));
+    AST* elsebr = normalize(ifexpr_else(tree));
+    if (!isatomic(cond)) {
+        AST* temp = TempVar();
+        AST* body = IfExpr(); //(temp, thenbr, elsebr);
+        ifexpr_set_cond(body, temp);
+        ifexpr_set_then(body, thenbr);
+        ifexpr_set_else(body, elsebr);
+        tree = Let(temp, cond, body);
+    } else {
+        tree = IfExpr(); //(cond, thenbr, elsebr);
+        ifexpr_set_cond(tree, cond);
+        ifexpr_set_then(tree, thenbr);
+        ifexpr_set_else(tree, elsebr);
+    }
+    return tree;
+}
+
+AST* normalize_func(AST* tree)
+{
+    func_set_body(tree, normalize(func_body(tree)));
+    return tree;
+}
+
+AST* normalize_let(AST* tree)
+{
+    AST* var  = let_var(tree);
+    AST* val  = normalize(let_val(tree));
+    AST* body = normalize(let_body(tree));
+    /* Find the inner most let block */
+    if (!isatomic(val)) {
+        AST* let = val;
+        while (let->type == AST_LET && let_body(let)->type == AST_LET)
+            let = let_body(let);
+        let_set_body(let, Let(var, let_body(let), body));
+        tree = let;
+    } else {
+        tree = Let(var, val, body);
+    }
+    return tree;
+}
+
 AST* normalize(AST* tree)
 {
-    if (tree->type == AST_FNAPP)
-        return normalize_fnapp(tree);
-    else
+    if (NULL == tree)
         return tree;
+    switch (tree->type)
+    {
+        case AST_DEF:   tree = normalize_def(tree);   break;
+        case AST_FNAPP: tree = normalize_fnapp(tree); break;
+        case AST_IF:    tree = normalize_if(tree);    break;
+        case AST_FUNC:  tree = normalize_func(tree);  break;
+        case AST_LET:   tree = normalize_let(tree);   break;
+        default: break;
+    }
+    return tree;
 }
 
 /* Driver Modes

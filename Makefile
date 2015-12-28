@@ -16,14 +16,13 @@ LDFLAGS  += ${LIBS}
 #------------------------------------------------------------------------------
 # Build Targets and Rules
 #------------------------------------------------------------------------------
-SRCS = source/main.c    \
-       source/lexer.c   \
-       source/parser.c  \
-       source/pprint.c  \
-       source/gc.c      \
-       source/vec.c     \
-       source/ast.c
-OBJS = ${SRCS:.c=.o}
+OBJS = source/main.o    \
+       source/lexer.o   \
+       source/parser.o  \
+       source/pprint.o  \
+       source/gc.o      \
+       source/vec.o     \
+       source/ast.o
 
 all: options sclpl test
 
