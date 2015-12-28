@@ -212,6 +212,9 @@ Parser* parser_new(char* p_prompt, FILE* input);
 // Grammar Routines
 AST* toplevel(Parser* p);
 
+// Compiler Passes
+AST* normalize(AST* tree);
+
 /* Pretty Printing
  *****************************************************************************/
 void pprint_token_type(FILE* file, Tok* token);

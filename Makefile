@@ -22,7 +22,8 @@ OBJS = source/main.o    \
        source/pprint.o  \
        source/gc.o      \
        source/vec.o     \
-       source/ast.o
+       source/ast.o     \
+       source/anf.o
 
 all: options sclpl test
 
