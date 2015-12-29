@@ -17,13 +17,14 @@ LDFLAGS  += ${LIBS}
 # Build Targets and Rules
 #------------------------------------------------------------------------------
 OBJS = source/main.o    \
-       source/lexer.o   \
-       source/parser.o  \
-       source/pprint.o  \
        source/gc.o      \
        source/vec.o     \
+       source/pprint.o  \
+       source/lexer.o   \
+       source/parser.o  \
        source/ast.o     \
-       source/anf.o
+       source/anf.o     \
+       source/codegen.o
 
 all: options sclpl test
 

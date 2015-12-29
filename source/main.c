@@ -31,6 +31,10 @@ static int emit_anf(void) {
 }
 
 static int emit_csource(void) {
+    AST* tree = NULL;
+    Parser* ctx = parser_new(NULL, stdin);
+    while(NULL != (tree = normalize(toplevel(ctx))))
+        codegen(stdout, tree);
     return 0;
 }
 

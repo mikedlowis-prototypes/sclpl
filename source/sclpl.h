@@ -191,6 +191,13 @@ AST* let_val(AST* let);
 AST* let_body(AST* let);
 void let_set_body(AST* let, AST* body);
 
+/* Pretty Printing
+ *****************************************************************************/
+void pprint_token_type(FILE* file, Tok* token);
+void pprint_token_value(FILE* file, Tok* token);
+void pprint_token(FILE* file, Tok* token, bool print_loc);
+void pprint_tree(FILE* file, AST* tree, int depth);
+
 /* Lexer and Parser Types
  *****************************************************************************/
 typedef struct {
@@ -214,12 +221,6 @@ AST* toplevel(Parser* p);
 
 // Compiler Passes
 AST* normalize(AST* tree);
-
-/* Pretty Printing
- *****************************************************************************/
-void pprint_token_type(FILE* file, Tok* token);
-void pprint_token_value(FILE* file, Tok* token);
-void pprint_token(FILE* file, Tok* token, bool print_loc);
-void pprint_tree(FILE* file, AST* tree, int depth);
+void codegen(FILE* file, AST* tree);
 
 #endif /* SCLPL_H */
