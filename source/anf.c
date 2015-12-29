@@ -19,14 +19,10 @@ static bool isatomic(AST* tree)
 
 static bool isconst(AST* tree) {
     bool ret = isatomic(tree);
-    if (!ret) {
-        if (tree->type == AST_FNAPP) {
-            ret = isatomic(fnapp_fn(tree));
-            for (int i = 0; i < vec_size(fnapp_args(tree)); i++) {
-                ret = ret && isatomic(vec_at(fnapp_args(tree), i));
-            }
-        } else if (tree->type == AST_IF) {
-            ret = isatomic(ifexpr_cond(tree));
+    if (!ret && tree->type == AST_FNAPP) {
+        ret = isatomic(fnapp_fn(tree));
+        for (int i = 0; i < vec_size(fnapp_args(tree)); i++) {
+            ret = ret && isatomic(vec_at(fnapp_args(tree), i));
         }
     }
     return ret;

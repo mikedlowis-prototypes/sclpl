@@ -48,6 +48,16 @@ void codegen(FILE* file, AST* tree)
             break;
 
         case AST_IF:
+            fprintf(file,"    if (");
+            codegen(file, ifexpr_cond(tree));
+            fprintf(file,")\n");
+            codegen(file, ifexpr_then(tree));
+            if (ifexpr_else(tree)) {
+                fprintf(file,"\n    else\n");
+                codegen(file, ifexpr_else(tree));
+            } else {
+                fprintf(file,"    {return nil;}");
+            }
             break;
 
         case AST_FUNC:
@@ -75,12 +85,18 @@ void codegen(FILE* file, AST* tree)
             break;
 
         case AST_LET:
-            fprintf(file,"{val ");
+            fprintf(file,"    {val ");
             codegen(file, let_var(tree));
             fprintf(file," = ");
             codegen(file, let_val(tree));
-            fprintf(file,";");
-            codegen(file, let_body(tree));
+            fprintf(file,";\n");
+            if (let_body(tree)->type != AST_LET && let_body(tree)->type != AST_IF) {
+                fprintf(file,"    return ");
+                codegen(file, let_body(tree));
+                fprintf(file,";");
+            } else {
+                codegen(file, let_body(tree));
+            }
             fprintf(file,"}");
             break;
 

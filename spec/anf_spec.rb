@@ -132,5 +132,14 @@ describe "sclpl a-normal form" do
                 "$:0"]]]
       ])
     end
+
+    it "should normalize a literal with a complex expression" do
+      expect(anf('fn() if 1 2 else 3;;')).to eq([
+        ["fn", [],
+          ["let", ["$:1", ["T_ID:bar"]],
+            ["let", ["$:0", ["T_ID:foo", "$:1"]],
+                "$:0"]]]
+      ])
+    end
   end
 end
