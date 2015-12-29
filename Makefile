@@ -6,16 +6,26 @@
 # tools
 CC = c99
 LD = ${CC}
+AR = ar
 
-# flags
-INCS      = -Isource/
+# completed flags
+INCS      = -Isource/ -Itests/
 CPPFLAGS  = -D_XOPEN_SOURCE=700
-CFLAGS   += ${INCS} ${CPPFLAGS} -g --coverage
-LDFLAGS  += --coverage ${LIBS}
+CFLAGS   += ${INCS} ${CPPFLAGS}
+LDFLAGS  += ${LIBS}
+ARFLAGS   = rcs
+
+# Enable GCC/Clang debug symbols
+#CFLAGS += -g
+
+# Enable GCC coverage
+#CFLAGS  += --coverage
+#LDFLAGS += --coverage
 
 #------------------------------------------------------------------------------
 # Build Targets and Rules
 #------------------------------------------------------------------------------
+BIN  = sclpl
 OBJS = source/main.o    \
        source/gc.o      \
        source/vec.o     \
@@ -26,7 +36,11 @@ OBJS = source/main.o    \
        source/anf.o     \
        source/codegen.o
 
-all: options sclpl test
+TESTBIN  = testsclpl
+TESTOBJS = tests/atf.o        \
+           tests/sclpl/main.o
+
+all: options sclpl tests specs
 
 options:
 	@echo "Toolchain Configuration:"
@@ -34,12 +48,25 @@ options:
 	@echo "  CFLAGS   = ${CFLAGS}"
 	@echo "  LD       = ${LD}"
 	@echo "  LDFLAGS  = ${LDFLAGS}"
+	@echo "  AR       = ${AR}"
+	@echo "  ARFLAGS  = ${ARFLAGS}"
 
-sclpl: ${OBJS}
+lib${BIN}.a: ${OBJS}
+	@echo AR $@ $*
+	@${AR} ${ARFLAGS} $@ $^
+
+${BIN}: lib${BIN}.a
 	@echo LD $@
-	@${LD} ${LDFLAGS} -o $@ ${OBJS}
+	@${LD} ${LDFLAGS} -o $@ $^
 
-test: sclpl
+${TESTBIN}: ${TESTOBJS}
+	@echo LD $@
+	@${LD} ${LDFLAGS} -o $@ $^
+
+tests: $(TESTBIN)
+	@./$<
+
+specs: $(BIN)
 	@echo TEST $<
 	@rspec --pattern 'spec/**{,/*/**}/*_spec.rb'
 
@@ -48,7 +75,9 @@ test: sclpl
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
-	@rm -f sclpl ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno}
+	@rm -f ${BIN} lib${BIN}.a
+	@rm -f ${TESTBIN} ${TESTOBJS} ${TESTOBJS:.o=.gcda} ${TESTOBJS:.o=.gcno}
+	@rm -f ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno}
 
-.PHONY: all options test
+.PHONY: all options tests specs
 
