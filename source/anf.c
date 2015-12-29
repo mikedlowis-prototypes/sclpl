@@ -11,6 +11,7 @@ static bool isatomic(AST* tree)
         case AST_FLOAT:
         case AST_BOOL:
         case AST_FUNC:
+        case AST_TEMP:
             return true;
         default:
             return false;
@@ -73,13 +74,13 @@ static AST* normalize_if(AST* tree)
     AST* elsebr = normalize(ifexpr_else(tree));
     if (!isatomic(cond)) {
         AST* temp = TempVar();
-        AST* body = IfExpr(); //(temp, thenbr, elsebr);
+        AST* body = IfExpr();
         ifexpr_set_cond(body, temp);
         ifexpr_set_then(body, thenbr);
         ifexpr_set_else(body, elsebr);
         tree = Let(temp, cond, body);
     } else {
-        tree = IfExpr(); //(cond, thenbr, elsebr);
+        tree = IfExpr();
         ifexpr_set_cond(tree, cond);
         ifexpr_set_then(tree, thenbr);
         ifexpr_set_else(tree, elsebr);
@@ -99,7 +100,9 @@ static AST* normalize_let(AST* tree)
     AST* val  = normalize(let_val(tree));
     AST* body = normalize(let_body(tree));
     /* Find the inner most let block */
-    if (!isconst(val)) {
+    if (val->type == AST_IF && isatomic(body)) {
+        tree = val;
+    } else if (!isconst(val)) {
         AST* let = val;
         while (let->type == AST_LET && let_body(let)->type == AST_LET)
             let = let_body(let);

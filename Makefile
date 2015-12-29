@@ -10,8 +10,8 @@ LD = ${CC}
 # flags
 INCS      = -Isource/
 CPPFLAGS  = -D_XOPEN_SOURCE=700
-CFLAGS   += ${INCS} ${CPPFLAGS} -g
-LDFLAGS  += ${LIBS}
+CFLAGS   += ${INCS} ${CPPFLAGS} -g --coverage
+LDFLAGS  += --coverage ${LIBS}
 
 #------------------------------------------------------------------------------
 # Build Targets and Rules
@@ -48,7 +48,7 @@ test: sclpl
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
-	@rm -f sclpl ${OBJS}
+	@rm -f sclpl ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno}
 
 .PHONY: all options test
 

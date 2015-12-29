@@ -29,36 +29,51 @@ describe "sclpl a-normal form" do
 
   context "definitions" do
     it "should leave atomic defintions alone" do
-      expect(anf('def foo 123;')).to eq([["def", "foo", "T_INT:123"]])
+      expect(anf('def foo 123;')).to eq([
+          ["def", "foo", "T_INT:123"]
+      ])
     end
 
     it "should leave normalize complex defintions" do
-      expect(anf('def foo bar();')).to eq([["def", "foo", ["T_ID:bar"]]])
+      expect(anf('def foo bar();')).to eq([
+          ["def", "foo", ["T_ID:bar"]]
+      ])
     end
   end
 
   context "function applications" do
     it "should leave an application with no args alone" do
-      expect(anf('foo()')).to eq([['T_ID:foo']])
+      expect(anf('foo()')).to eq([
+          ['T_ID:foo']
+      ])
     end
 
     it "should leave an application with one arg alone" do
-      expect(anf('foo(a)')).to eq([['T_ID:foo', 'T_ID:a']])
+      expect(anf('foo(a)')).to eq([
+          ['T_ID:foo', 'T_ID:a']
+      ])
     end
 
     it "should normalize an application with a complex function" do
-      expect(anf('(foo())()')).to eq([['let', ['$:0', ['T_ID:foo']], ['$:0']]])
+      expect(anf('(foo())()')).to eq([
+          ['let', ['$:0', ['T_ID:foo']],
+            ['$:0']]
+      ])
     end
 
     it "should normalize an application with a complex arg" do
-      expect(anf('foo(bar())')).to eq([['let', ['$:0', ['T_ID:bar']], ['T_ID:foo', '$:0']]])
+      expect(anf('foo(bar())')).to eq([
+          ['let', ['$:0', ['T_ID:bar']],
+            ['T_ID:foo', '$:0']]
+      ])
     end
 
     it "should normalize an application with two complex args" do
       expect(anf('foo(bar(),baz())')).to eq([
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
-              ['T_ID:foo', '$:0', '$:1']]]])
+              ['T_ID:foo', '$:0', '$:1']]]
+      ])
     end
 
     it "should normalize an application with three complex args" do
@@ -66,28 +81,32 @@ describe "sclpl a-normal form" do
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
               ['let', ['$:2', ['T_ID:boo']],
-                ['T_ID:foo', '$:0', '$:1', '$:2']]]]])
+                ['T_ID:foo', '$:0', '$:1', '$:2']]]]
+      ])
     end
 
     it "should normalize an application with simple and complex args (s,c,c)" do
       expect(anf('foo(a,bar(),baz())')).to eq([
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
-              ['T_ID:foo', 'T_ID:a', '$:0', '$:1']]]])
+              ['T_ID:foo', 'T_ID:a', '$:0', '$:1']]]
+      ])
     end
 
     it "should normalize an application with simple and complex args (c,s,c)" do
       expect(anf('foo(bar(),a,baz())')).to eq([
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
-              ['T_ID:foo', '$:0', 'T_ID:a', '$:1']]]])
+              ['T_ID:foo', '$:0', 'T_ID:a', '$:1']]]
+      ])
     end
 
     it "should normalize an application with simple and complex args (c,c,s)" do
       expect(anf('foo(bar(),baz(),a)')).to eq([
           ['let', ['$:0', ['T_ID:bar']],
             ['let', ['$:1', ['T_ID:baz']],
-              ['T_ID:foo', '$:0', '$:1', 'T_ID:a']]]])
+              ['T_ID:foo', '$:0', '$:1', 'T_ID:a']]]
+      ])
     end
   end
 
@@ -97,7 +116,8 @@ describe "sclpl a-normal form" do
           ["if", "T_INT:1",
             ["let", ["$:0", "T_INT:2"],
               ["let", ["$:1", "T_INT:3"],
-                "$:1"]]]])
+                "$:1"]]]
+      ])
     end
 
     it "should normalize the conditional expression" do
@@ -105,25 +125,55 @@ describe "sclpl a-normal form" do
           ["let", ["$:2", ["T_ID:foo"]],
             ["if", "$:2",
               ["let", ["$:0", "T_INT:2"], "$:0"],
-              ["let", ["$:1", "T_INT:3"], "$:1"]]]])
+              ["let", ["$:1", "T_INT:3"], "$:1"]]]
+      ])
     end
 
     it "should normalize the first branch expression" do
       expect(anf('if 1 foo() else 3;')).to eq([
         ["if", "T_INT:1",
           ["let", ["$:0", ["T_ID:foo"]], "$:0"],
-          ["let", ["$:1", "T_INT:3"], "$:1"]]])
+          ["let", ["$:1", "T_INT:3"], "$:1"]]
+      ])
     end
 
     it "should normalize the first branch expression" do
       expect(anf('if 1 2 else foo();')).to eq([
         ["if", "T_INT:1",
           ["let", ["$:0", "T_INT:2"], "$:0"],
-          ["let", ["$:1", ["T_ID:foo"]], "$:1"]]])
+          ["let", ["$:1", ["T_ID:foo"]], "$:1"]]
+      ])
     end
   end
 
   context "function literals" do
+    it "should normalize a literal with a simple expression" do
+      expect(anf('fn() 123;')).to eq([
+        ["fn", [],
+          ["let", ["$:0", "T_INT:123"],
+            "$:0"]]
+      ])
+    end
+
+    it "should normalize a literal with two sequential simple expressions" do
+      expect(anf('fn() 1 2;')).to eq([
+        ["fn", [],
+          ["let", ["$:0", "T_INT:1"],
+            ["let", ["$:1", "T_INT:2"],
+              "$:1"]]]
+      ])
+    end
+
+    it "should normalize a literal with three sequential simple expressions" do
+      expect(anf('fn() 1 2 3;')).to eq([
+        ["fn", [],
+          ["let", ["$:0", "T_INT:1"],
+            ["let", ["$:1", "T_INT:2"],
+              ["let", ["$:2", "T_INT:3"],
+                "$:2"]]]]
+      ])
+    end
+
     it "should normalize a literal with a complex expression" do
       expect(anf('fn() foo(bar());')).to eq([
         ["fn", [],
@@ -133,13 +183,18 @@ describe "sclpl a-normal form" do
       ])
     end
 
-    it "should normalize a literal with a complex expression" do
+    it "should normalize a literal with an if expression" do
       expect(anf('fn() if 1 2 else 3;;')).to eq([
         ["fn", [],
-          ["let", ["$:1", ["T_ID:bar"]],
-            ["let", ["$:0", ["T_ID:foo", "$:1"]],
-                "$:0"]]]
+          ["if", "T_INT:1",
+            ["let", ["$:0", "T_INT:2"], "$:0"],
+            ["let", ["$:1", "T_INT:3"], "$:1"]]]
       ])
     end
+
+    #it "should normalize a literal with two sequential if expressions" do
+    #  expect(anf('fn() if 1 2 else 3; if 1 2 else 3; ;')).to eq([
+    #  ])
+    #end
   end
 end
