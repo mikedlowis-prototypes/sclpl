@@ -191,23 +191,23 @@ describe "sclpl grammar" do
       it "should normalize a literal with an if expression" do
         expect(ast('fn() if 1 2 else 3;;')).to eq([
           ["fn", [],
-            ["let", ["$:2", ["if", "T_INT:1",
-                              ["let", ["$:0", "T_INT:2"], "$:0"],
-                              ["let", ["$:1", "T_INT:3"], "$:1"]]],
-              "$:2"]]
+            ["let", ["$:0", ["if", "T_INT:1",
+                              ["let", ["$:1", "T_INT:2"], "$:1"],
+                              ["let", ["$:2", "T_INT:3"], "$:2"]]],
+              "$:0"]]
         ])
       end
 
       it "should normalize a literal with two sequential if expressions" do
         expect(ast('fn() if 1 2 else 3; if 1 2 else 3; ;')).to eq([
           ["fn", [],
-            ["let", ["$:2", ["if", "T_INT:1",
-                              ["let", ["$:0", "T_INT:2"], "$:0"],
-                              ["let", ["$:1", "T_INT:3"], "$:1"]]],
-              ["let", ["$:5", ["if", "T_INT:1",
-                                ["let", ["$:3", "T_INT:2"], "$:3"],
-                                ["let", ["$:4", "T_INT:3"], "$:4"]]],
-                "$:5"]]]
+            ["let", ["$:0", ["if", "T_INT:1",
+                              ["let", ["$:1", "T_INT:2"], "$:1"],
+                              ["let", ["$:2", "T_INT:3"], "$:2"]]],
+              ["let", ["$:3", ["if", "T_INT:1",
+                                ["let", ["$:4", "T_INT:2"], "$:4"],
+                                ["let", ["$:5", "T_INT:3"], "$:5"]]],
+                "$:3"]]]
         ])
       end
     end

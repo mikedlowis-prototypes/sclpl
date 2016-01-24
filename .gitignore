@@ -11,3 +11,4 @@ cscope.out
 .DS_Store
 .rsconscache
 sclpl
+source/lexer.c

@@ -187,8 +187,8 @@ describe "sclpl a-normal form" do
       expect(anf('fn() if 1 2 else 3;;')).to eq([
         ["fn", [],
           ["if", "T_INT:1",
-            ["let", ["$:0", "T_INT:2"], "$:0"],
-            ["let", ["$:1", "T_INT:3"], "$:1"]]]
+            ["let", ["$:1", "T_INT:2"], "$:1"],
+            ["let", ["$:2", "T_INT:3"], "$:2"]]]
       ])
     end
 

@@ -35,7 +35,7 @@ extern char* ARGV0;
 /* This is a helper function used by the macros in this file to parse the next
  * option from the command line.
  */
-static inline char* getopt(int* p_argc, char*** p_argv) {
+static inline char* __getopt(int* p_argc, char*** p_argv) {
     if (!(*p_argv)[0][1] && !(*p_argv)[1]) {
         return (char*)0;
     } else if ((*p_argv)[0][1]) {
@@ -73,13 +73,13 @@ static inline char* getopt(int* p_argc, char*** p_argv) {
 /* Get an argument from the command line and return it as a string. If no
  * argument is available, this macro returns NULL */
 #define OPTARG() \
-    (optarg_ = getopt(&argc,&argv), brk_ = (optarg_!=0), optarg_)
+    (optarg_ = __getopt(&argc,&argv), brk_ = (optarg_!=0), optarg_)
 
 /* Get an argument from the command line and return it as a string. If no
  * argument is available, this macro executes the provided code. If that code
  * returns, then abort is called. */
 #define EOPTARG(code) \
-    (optarg_ = getopt(&argc,&argv), \
+    (optarg_ = __getopt(&argc,&argv), \
      (!optarg_ ? ((code), abort(), (char*)0) : (brk_ = 1, optarg_)))
 
 /* Helper macro to recognize number options */

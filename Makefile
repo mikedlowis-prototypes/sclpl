@@ -30,8 +30,8 @@ OBJS = source/main.o    \
        source/gc.o      \
        source/vec.o     \
        source/pprint.o  \
-       source/lexer.o   \
        source/parser.o  \
+       source/lexer.o   \
        source/ast.o     \
        source/anf.o     \
        source/codegen.o
@@ -59,16 +59,20 @@ ${BIN}: lib${BIN}.a
 	@echo LD $@
 	@${LD} ${LDFLAGS} -o $@ $^
 
-${TESTBIN}: ${TESTOBJS}
-	@echo LD $@
-	@${LD} ${LDFLAGS} -o $@ $^
-
-tests: $(TESTBIN)
-	@./$<
+#${TESTBIN}: ${TESTOBJS}
+#	@echo LD $@
+#	@${LD} ${LDFLAGS} -o $@ $^
+#
+#tests: $(TESTBIN)
+#	@./$<
 
 specs: $(BIN)
 	@echo TEST $<
 	@rspec --pattern 'spec/**{,/*/**}/*_spec.rb'
+
+.l.c:
+	@echo LEX $<
+	@${LEX} -o $@ $<
 
 .c.o:
 	@echo CC $<
@@ -77,7 +81,7 @@ specs: $(BIN)
 clean:
 	@rm -f ${BIN} lib${BIN}.a
 	@rm -f ${TESTBIN} ${TESTOBJS} ${TESTOBJS:.o=.gcda} ${TESTOBJS:.o=.gcno}
-	@rm -f ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno}
+	@rm -f ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno} source/lexer.c
 
 .PHONY: all options tests specs
 
