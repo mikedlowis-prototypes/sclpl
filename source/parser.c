@@ -30,11 +30,8 @@ static bool parser_eof(Parser* parser);
 static void parser_resume(Parser* parser);
 static void error(Parser* parser, const char* text);
 static bool match(Parser* parser, TokType type);
-static bool match_str(Parser* parser, TokType type, const char* text);
 static Tok* accept(Parser* parser, TokType type);
-static Tok* accept_str(Parser* parser, TokType type, const char* text);
 static Tok* expect(Parser* parser, TokType type);
-static Tok* expect_str(Parser* parser, TokType type, const char* text);
 
 /* Grammar Definition
  *****************************************************************************/
@@ -42,9 +39,9 @@ AST* toplevel(Parser* p)
 {
     AST* ret = NULL;
     if (!match(p, T_END_FILE)) {
-        if (accept_str(p, T_ID, "require"))
+        if (accept(p, T_REQUIRE))
             ret = require(p);
-        else if (accept_str(p, T_ID, "def"))
+        else if (accept(p, T_DEF))
             ret = definition(p);
         else
             ret = expression(p);
@@ -78,9 +75,9 @@ static AST* expression(Parser* p)
     if (accept(p, T_LPAR)) {
         expr = expression(p);
         expect(p, T_RPAR);
-    } else if (accept_str(p, T_ID, "if")) {
+    } else if (accept(p, T_IF)) {
         expr = if_stmnt(p);
-    } else if (accept_str(p, T_ID, "fn")) {
+    } else if (accept(p, T_FN)) {
         expr = function(p);
     } else if (match(p, T_ID)) {
         expr = Ident(expect(p,T_ID));
@@ -98,9 +95,9 @@ static AST* if_stmnt(Parser* p)
 {
     AST* ifexpr = IfExpr();
     ifexpr_set_cond( ifexpr, expression(p) );
-    accept_str(p, T_ID, "then");
+    accept(p, T_THEN);
     ifexpr_set_then( ifexpr, expr_block(p) );
-    if (accept_str(p, T_ID, "else"))
+    if (accept(p, T_ELSE))
         ifexpr_set_else( ifexpr, expr_block(p) );
     expect(p,T_END);
     return ifexpr;
@@ -146,14 +143,14 @@ static AST* expr_block(Parser* p)
     vec_init(&exprs);
     /* Build all expressions into let forms with no bodies */
     do {
-        if (accept_str(p, T_ID, "def")) {
+        if (accept(p, T_DEF)) {
             AST* def = definition(p);
             Tok name = { .value.text = def_name(def) };
             vec_push_back(&exprs, Let(Ident(&name), def_value(def), NULL));
         } else {
             vec_push_back(&exprs, Let(TempVar(), expression(p), NULL));
         }
-    } while(!match(p, T_END) && !match_str(p, T_ID, "else"));
+    } while(!match(p, T_END) && !match(p, T_ELSE));
     /* Now nest all of the let forms making sure that the last one returns
      * it's definition as its body */
     for (int i = vec_size(&exprs); i > 0; i--) {
@@ -257,12 +254,6 @@ static bool match(Parser* parser, TokType type)
     return (peek(parser)->type == type);
 }
 
-static bool match_str(Parser* parser, TokType type, const char* text)
-{
-    return (match(parser, type) &&
-            (0 == strcmp((char*)(peek(parser)->value.text), text)));
-}
-
 static Tok* accept(Parser* parser, TokType type)
 {
     Tok* tok = peek(parser);
@@ -273,28 +264,9 @@ static Tok* accept(Parser* parser, TokType type)
     return NULL;
 }
 
-static Tok* accept_str(Parser* parser, TokType type, const char* text)
-{
-    Tok* tok = peek(parser);
-    if ((tok->type == type) && (0 == strcmp((char*)(tok->value.text), text))) {
-        gc_swapref((void**)&(parser->tok), NULL);
-        return tok;
-    }
-    return NULL;
-}
-
 static Tok* expect(Parser* parser, TokType type)
 {
     Tok* tok = accept(parser, type);
-    if (tok == NULL) {
-        error(parser, "Unexpected token");
-    }
-    return tok;
-}
-
-static Tok* expect_str(Parser* parser, TokType type, const char* text)
-{
-    Tok* tok = accept_str(parser, type, text);
     if (tok == NULL) {
         error(parser, "Unexpected token");
     }

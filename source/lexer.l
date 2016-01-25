@@ -103,6 +103,13 @@ false {
     return T_BOOL;
 }
 
+"require" { return T_REQUIRE; }
+"def"     { return T_DEF;     }
+"if"      { return T_IF;      }
+"fn"      { return T_FN;      }
+"then"    { return T_THEN;    }
+"else"    { return T_ELSE;    }
+
 [a-zA-Z_][a-zA-Z0-9_]* {
     Value.text = dupstring(yytext);
     return T_ID;
@@ -112,6 +119,7 @@ false {
     Value.text = dupstring(yytext);
     return T_ID;
 }
+
 
 %%
 
