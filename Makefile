@@ -68,7 +68,11 @@ ${BIN}: lib${BIN}.a
 
 specs: $(BIN)
 	@echo TEST $<
-	@rspec --pattern 'spec/**{,/*/**}/*_spec.rb'
+	@rspec --pattern 'spec/**{,/*/**}/*_spec.rb' --format documentation
+
+lspecs: $(BIN)
+	@echo TEST $<
+	@./spec/spec.lua spec/*_spec.lua
 
 .l.c:
 	@echo LEX $<
