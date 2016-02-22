@@ -28,14 +28,44 @@ end
 
 -- Test Assertion Functions
 -------------------------------------------------------------------------------
+function compare(thing1,thing2)
+    local type1 = type(thing1)
+    local type2 = type(thing2)
+    -- Are they the same type?
+    if type1 ~= type2 then
+        return false
+    end
+    -- If they aren't tables just compare them
+    if type1 ~= "table" then
+        return thing1 == thing2
+    end
+    -- If thing1  has __eq method then we can compare them
+    local mt = getmetatable(thing1)
+    if mt and mt.__eq then
+        return thing1 == thing2
+    end
+    -- Are the tables the same size?
+    if table.getn(thing1) ~= table.getn(thing2) then
+        return false
+    end
+    -- Otherwise iterate over the table and compare the vals
+    for k1,v1 in pairs(thing1) do
+        local v2 = thing2[k1]
+        if v2 == nil or not compare(v1,v2) then
+            return false
+        end
+    end
+    return true
+end
+
 function check_nequal(expected, actual)
-    if (expected == actual) then
+    if compare(expected, actual) then
         error(string.format("Expected %s and %s to differ", tostring(expected), tostring(actual)))
     end
 end
 
 function check_equal(expected, actual)
-    if (expected ~= actual) then
+    if not compare(expected, actual) then
         error(string.format("Expected %s, received %s instead", tostring(expected), tostring(actual)))
     end
 end
