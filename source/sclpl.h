@@ -51,8 +51,8 @@ void vec_set(vec_t* vec, size_t index, void* data);
  *****************************************************************************/
 typedef enum {
     T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE, T_LBRACK,
-    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_REQUIRE,
-    T_DEF, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
+    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_COLON,
+    T_REQUIRE, T_DEF, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
 } TokType;
 
 typedef struct {
@@ -189,6 +189,68 @@ AST* let_var(AST* let);
 AST* let_val(AST* let);
 AST* let_body(AST* let);
 void let_set_body(AST* let, AST* body);
+
+/* Symbol Table
+ *****************************************************************************/
+typedef struct SymTable {
+    struct SymTable* next;
+    char* name;
+} SymTable;
+
+SymTable* symbol_new(void);
+//void symbol_free(SymTable* sym);
+SymTable* symbol_push(SymTable* top, SymTable* newtop);
+SymTable* symbol_pop(SymTable* top);
+SymTable* symbol_get(const char* name);
+SymTable* symbol_map(SymTable* top, void (*apply)(SymTable*, void*), void* arg);
+
+/*
+Base Types:
+    bool
+    int
+    uint
+    u8 u16 u32 u64
+    i8 i16 i32 i64
+    uintptr intptr
+    rune
+    byte
+    string
+
+Reference:
+    u8&
+
+Array:
+    u8[] u8[10] u8[10][10]
+
+Function:
+    int (string[])
+
+Struct:
+
+Union:
+
+
+Examples:
+def main(args)
+    return 0;
+end
+
+def main(args : string[]) : int
+    return 0;
+end
+
+def main : int(string[])
+    fn(args)
+
+    end
+end
+
+def foo (123 : int);
+def foo : int 123;
+def foo 123;
+
+*/
+
 
 /* Pretty Printing
  *****************************************************************************/

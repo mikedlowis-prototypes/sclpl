@@ -2,8 +2,6 @@
 
 static void ast_free(void* ptr)
 {
-//    AST_LET AST_TEMP
-
     AST* ast = (AST*)ptr;
     switch(ast->type) {
         case AST_REQ:

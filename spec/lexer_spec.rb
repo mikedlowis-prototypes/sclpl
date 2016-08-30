@@ -38,6 +38,10 @@ describe "lexer" do
       expect(lexer(';')).to eq ['T_END']
     end
 
+    it "should recognize :" do
+      expect(lexer(':')).to eq ['T_COLON']
+    end
+
     it "should recognize all punctuation" do
       expect(lexer('[](){}\',;')).to eq(
         ["T_LBRACK", "T_RBRACK", "T_LPAR", "T_RPAR", "T_LBRACE", "T_RBRACE",

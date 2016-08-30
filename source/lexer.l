@@ -42,6 +42,7 @@ NOSPACE [^ \t\r\n]
 ";"   { return T_END;    }
 ","   { return T_COMMA;  }
 "'"   { return T_SQUOTE; }
+":"   { return T_COLON;  }
 
 \\.       { Value.character = yytext[1];    return T_CHAR; }
 \\space   { Value.character = ' ';          return T_CHAR; }
@@ -115,11 +116,10 @@ false {
     return T_ID;
 }
 
-[^ \r\t\n\[\]\{\}\(\)'\",;]+ {
+[^ \r\t\n\[\]\{\}\(\)'\",;:]+ {
     Value.text = dupstring(yytext);
     return T_ID;
 }
-
 
 %%
 
