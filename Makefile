@@ -6,7 +6,6 @@
 # tools
 CC = c99
 LD = ${CC}
-AR = ar
 
 # completed flags
 INCS      = -Isource/ -Itests/
@@ -14,13 +13,6 @@ CPPFLAGS  = -D_XOPEN_SOURCE=700
 CFLAGS   += ${INCS} ${CPPFLAGS}
 LDFLAGS  += ${LIBS}
 ARFLAGS   = rcs
-
-# Enable GCC/Clang debug symbols
-#CFLAGS += -g
-
-# Enable GCC coverage
-#CFLAGS  += --coverage
-#LDFLAGS += --coverage
 
 #------------------------------------------------------------------------------
 # Build Targets and Rules
@@ -40,52 +32,31 @@ TESTBIN  = testsclpl
 TESTOBJS = tests/atf.o        \
            tests/sclpl/main.o
 
-all: options sclpl tests specs
-
-options:
-	@echo "Toolchain Configuration:"
-	@echo "  CC       = ${CC}"
-	@echo "  CFLAGS   = ${CFLAGS}"
-	@echo "  LD       = ${LD}"
-	@echo "  LDFLAGS  = ${LDFLAGS}"
-	@echo "  AR       = ${AR}"
-	@echo "  ARFLAGS  = ${ARFLAGS}"
+.PHONY: all options tests specs
+all: sclpl specs tests
 
 lib${BIN}.a: ${OBJS}
-	@echo AR $@ $*
-	@${AR} ${ARFLAGS} $@ $^
+	${AR} ${ARFLAGS} $@ $^
 
 ${BIN}: lib${BIN}.a
-	@echo LD $@
-	@${LD} ${LDFLAGS} -o $@ $^
+	${LD} ${LDFLAGS} -o $@ $^
 
-#${TESTBIN}: ${TESTOBJS}
-#	@echo LD $@
-#	@${LD} ${LDFLAGS} -o $@ $^
-#
-#tests: $(TESTBIN)
-#	@./$<
+${TESTBIN}: ${TESTOBJS}
+	${LD} ${LDFLAGS} -o $@ $^
+
+tests: $(TESTBIN)
+	./$<
 
 specs: $(BIN)
-	@echo TEST $<
-	@rspec --pattern 'spec/**{,/*/**}/*_spec.rb' --format documentation
-
-lspecs: $(BIN)
-	@echo TEST $<
-	@./spec/spec.lua spec/*_spec.lua
+	rspec --pattern 'spec/**{,/*/**}/*_spec.rb' --format documentation
 
 .l.c:
-	@echo LEX $<
-	@${LEX} -o $@ $<
+	${LEX} -o $@ $<
 
 .c.o:
-	@echo CC $<
-	@${CC} ${CFLAGS} -c -o $@ $<
+	${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
 	@rm -f ${BIN} lib${BIN}.a
 	@rm -f ${TESTBIN} ${TESTOBJS} ${TESTOBJS:.o=.gcda} ${TESTOBJS:.o=.gcno}
 	@rm -f ${OBJS} ${OBJS:.o=.gcda} ${OBJS:.o=.gcno} source/lexer.c
-
-.PHONY: all options tests specs
-
