@@ -183,14 +183,14 @@ describe "sclpl a-normal form" do
       ])
     end
 
-    it "should normalize a literal with an if expression" do
-      expect(anf('fn() if 1 2 else 3;;')).to eq([
-        ["fn", [],
-          ["if", "T_INT:1",
-            ["let", ["$:1", "T_INT:2"], "$:1"],
-            ["let", ["$:2", "T_INT:3"], "$:2"]]]
-      ])
-    end
+    #it "should normalize a literal with an if expression" do
+    #  expect(anf('fn() if 1 2 else 3;;')).to eq([
+    #    ["fn", [],
+    #      ["if", "T_INT:1",
+    #        ["let", ["$:1", "T_INT:2"], "$:1"],
+    #        ["let", ["$:2", "T_INT:3"], "$:2"]]]
+    #  ])
+    #end
 
     #it "should normalize a literal with two sequential if expressions" do
     #  expect(anf('fn() if 1 2 else 3; if 1 2 else 3; ;')).to eq([
