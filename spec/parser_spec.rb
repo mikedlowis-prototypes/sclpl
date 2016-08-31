@@ -94,10 +94,29 @@ describe "sclpl grammar" do
       expect(ast('def foo 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
     end
 
+    it "should error on missing type for definiton" do
+      expect{ast('def foo : 123;')}.to raise_error /Error/
+    end
+
+    it "should parse a value definition with type annotation" do
+      expect(ast('def foo:int 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
+    end
+
     it "should parse a function definition" do
       expect(ast('def foo() 123;')).to eq([
         ['def', 'foo', ['fn', [],
           ["let", ["$:0", "T_INT:123"], "$:0"]]] ])
+    end
+
+    it "should parse a function definition with return type annotation" do
+      expect(ast('def foo():int 123;')).to eq([
+        ['def', 'foo', ['fn', [],
+          ["let", ["$:0", "T_INT:123"], "$:0"]]] ])
+    end
+
+    it "should error on a function definition with missing return type" do
+      pending("TODO: fix the error message here")
+      expect(ast('def foo() : 123;')).to raise_error /Error/
     end
 
     it "should parse a function definition  with multiple expressions in the body" do
@@ -151,8 +170,20 @@ describe "sclpl grammar" do
             ["let", ["$:0", "T_INT:123"], "$:0"]]])
       end
 
+      it "should parse a function with no params and a return type annotation" do
+        expect(ast('fn():int 123;')).to eq([
+          ["fn", [],
+            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+      end
+
       it "should parse a function with one param" do
         expect(ast('fn(a) 123;')).to eq([
+          ["fn", ["T_ID:a"],
+            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+      end
+
+      it "should parse a function with one param with type annotation" do
+        expect(ast('fn(a:int) 123;')).to eq([
           ["fn", ["T_ID:a"],
             ["let", ["$:0", "T_INT:123"], "$:0"]]])
       end

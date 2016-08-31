@@ -32,8 +32,8 @@ TESTBIN  = testsclpl
 TESTOBJS = tests/atf.o        \
            tests/sclpl/main.o
 
-.PHONY: all options tests specs
-all: sclpl specs tests
+.PHONY: all tests specs
+all: sclpl tests specs
 
 lib${BIN}.a: ${OBJS}
 	${AR} ${ARFLAGS} $@ $^
@@ -41,11 +41,11 @@ lib${BIN}.a: ${OBJS}
 ${BIN}: lib${BIN}.a
 	${LD} ${LDFLAGS} -o $@ $^
 
-${TESTBIN}: ${TESTOBJS}
-	${LD} ${LDFLAGS} -o $@ $^
+#${TESTBIN}: ${TESTOBJS}
+#	${LD} ${LDFLAGS} -o $@ $^
 
-tests: $(TESTBIN)
-	./$<
+#tests: ${TESTBIN}
+#	./$<
 
 specs: $(BIN)
 	rspec --pattern 'spec/**{,/*/**}/*_spec.rb' --format documentation

@@ -12,3 +12,4 @@ cscope.out
 .rsconscache
 sclpl
 source/lexer.c
+project.vim

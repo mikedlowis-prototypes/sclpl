@@ -28,6 +28,7 @@ static const char* token_type_to_string(TokType type) {
         case T_ID:       return "T_ID";
         case T_END:      return "T_END";
         case T_COLON:    return "T_COLON";
+        case T_AMP:      return "T_AMP";
         case T_SQUOTE:   return "T_SQUOTE";
         case T_DQUOTE:   return "T_DQUOTE";
         case T_END_FILE: return "T_END_FILE";
