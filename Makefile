@@ -8,8 +8,8 @@ CC = c99
 LD = ${CC}
 
 # completed flags
-INCS      = -Isource/ -Itests/
-CPPFLAGS  = -D_XOPEN_SOURCE=700
+INCS      = -Isource/
+CPPFLAGS  =
 CFLAGS   += ${INCS} ${CPPFLAGS}
 LDFLAGS  += ${LIBS}
 ARFLAGS   = rcs
@@ -26,10 +26,6 @@ OBJS = source/main.o    \
        source/lexer.o   \
        source/ast.o
 
-TESTBIN  = testsclpl
-TESTOBJS = tests/atf.o        \
-           tests/sclpl/main.o
-
 .PHONY: all tests specs
 all: sclpl tests specs
 
@@ -38,12 +34,6 @@ lib${BIN}.a: ${OBJS}
 
 ${BIN}: lib${BIN}.a
 	${LD} ${LDFLAGS} -o $@ $^
-
-#${TESTBIN}: ${TESTOBJS}
-#	${LD} ${LDFLAGS} -o $@ $^
-
-#tests: ${TESTBIN}
-#	./$<
 
 specs: $(BIN)
 	rspec --pattern 'spec/**{,/*/**}/*_spec.rb' --format documentation

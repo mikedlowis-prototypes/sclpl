@@ -1,7 +1,6 @@
 #include <sclpl.h>
 
 char* ARGV0;
-bool Verbose   = false;
 char* Artifact = "bin";
 
 /* Driver Modes
@@ -33,7 +32,7 @@ void usage(void) {
         "Usage: sclpl [options...] [-A artifact] [file...]\n"
         "\n-A<artifact> Emit the given type of artifact"
         "\n-h           Print help information"
-        "\n-v           Enable verbose status messages");
+    );
     exit(1);
 }
 
@@ -41,7 +40,6 @@ int user_main(int argc, char **argv) {
     /* Option parsing */
     OPTBEGIN {
         case 'A': Artifact = EOPTARG(usage()); break;
-        case 'v': Verbose = true; break;
         default:  usage();
     } OPTEND;
 
@@ -59,4 +57,3 @@ int user_main(int argc, char **argv) {
     }
     return 1;
 }
-
