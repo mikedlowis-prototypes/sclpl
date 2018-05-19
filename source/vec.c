@@ -59,7 +59,7 @@ static void vec_resize(vec_t* vec, size_t count, void* fillval)
     if (count > vec->count) {
         vec_reserve(vec, vec_next_capacity(count+1));
         for (; vec->count < count; vec->count++)
-            vec->buffer[vec->count] = gc_addref(fillval);
+            vec->buffer[vec->count] = fillval;
     } else if (count < vec->count) {
         vec->count = count;
     }
@@ -73,13 +73,11 @@ void vec_push_back(vec_t* vec, void* data)
 void vec_set(vec_t* vec, size_t index, void* data)
 {
     assert(index < vec->count);
-    gc_swapref((void**)&(vec->buffer[index]), data);
+    vec->buffer[index] = data;
 }
 
 void vec_clear(vec_t* vec)
 {
-    for (size_t i = 0; i < vec->count; i++)
-        gc_delref(vec->buffer[i]);
     vec->count = 0;
 }
 

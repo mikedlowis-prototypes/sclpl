@@ -19,7 +19,6 @@ ARFLAGS   = rcs
 #------------------------------------------------------------------------------
 BIN  = sclpl
 OBJS = source/main.o    \
-       source/gc.o      \
        source/vec.o     \
        source/pprint.o  \
        source/parser.o  \

@@ -9,39 +9,16 @@
 #include <assert.h>
 #include <setjmp.h>
 
-typedef void (*destructor_t)(void*);
-
 static void fatal(char* estr) {
     perror(estr);
     exit(1);
 }
 
-static void* gc_alloc(size_t size, destructor_t destructor)
-{
+static void* emalloc(size_t size) {
     void* ptr = malloc(size);
-    //fprintf(stderr, "%d\n", size);
     if (!ptr) fatal("malloc()");
     return ptr;
 }
-
-static void* gc_addref(void* ptr)
-{
-    return ptr;
-}
-
-static void gc_delref(void* ptr)
-{
-}
-
-static void gc_swapref(void** dest, void* newref)
-{
-    void* oldref = *dest;
-    *dest = gc_addref(newref);
-    gc_delref(oldref);
-}
-
-/* Garbage Collection
- *****************************************************************************/
 
 /* Vector Implementation
  *****************************************************************************/

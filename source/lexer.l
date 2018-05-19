@@ -11,7 +11,7 @@ static union {
 
 static char* dupstring(const char* old) {
     size_t length = strlen(old);
-    char* str = (char*)gc_alloc(length+1, NULL);
+    char* str = emalloc(length+1);
     memcpy(str, old, length);
     str[length] = '\0';
     return str;
@@ -124,23 +124,12 @@ false {
 
 %%
 
-static void token_free(void* obj)
-{
-    Tok* tok = (Tok*)obj;
-    if ((tok->type != T_BOOL) &&
-        (tok->type != T_CHAR) &&
-        (tok->type != T_INT) &&
-        (tok->type != T_FLOAT) &&
-        (NULL != tok->value.text))
-        gc_delref(tok->value.text);
-}
-
 Tok* gettoken(Parser* ctx)
 {
     Tok* tok = NULL;
     int type = yylex();
     if (type != T_END_FILE) {
-        tok = (Tok*)gc_alloc(sizeof(Tok), &token_free);
+        tok = emalloc(sizeof(Tok));
         tok->type = type;
         memcpy(&(tok->value), &Value, sizeof(Value));
     }

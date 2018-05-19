@@ -209,7 +209,7 @@ static void type_annotation(Parser* p)
  *****************************************************************************/
 Parser* parser_new(char* prompt, FILE* input)
 {
-    Parser* parser  = (Parser*)gc_alloc(sizeof(Parser), &parser_free);
+    Parser* parser  = emalloc(sizeof(Parser));
     parser->line    = NULL;
     parser->index   = 0;
     parser->lineno  = 0;
@@ -217,16 +217,6 @@ Parser* parser_new(char* prompt, FILE* input)
     parser->prompt  = prompt;
     parser->tok     = NULL;
     return parser;
-}
-
-static void parser_free(void* obj)
-{
-    Parser* parser = (Parser*)obj;
-    if ((NULL != parser->tok) && (&tok_eof != parser->tok)) {
-        gc_delref(parser->tok);
-    }
-    if (parser->line != NULL)
-        free(parser->line);
 }
 
 static void fetch(Parser* parser)
@@ -250,10 +240,8 @@ static bool parser_eof(Parser* parser)
 
 static void parser_resume(Parser* parser)
 {
-    if ((NULL != parser->tok) && (&tok_eof != parser->tok)) {
-        gc_delref(parser->tok);
+    if ((NULL != parser->tok) && (&tok_eof != parser->tok))
         parser->tok = NULL;
-    }
     /* We ignore the rest of the current line and attempt to start parsing
      * again on the next line */
     fetchline(parser);
@@ -275,7 +263,7 @@ static Tok* accept(Parser* parser, TokType type)
 {
     Tok* tok = peek(parser);
     if (tok->type == type) {
-        gc_swapref((void**)&(parser->tok), NULL);
+        parser->tok = NULL;
         return tok;
     }
     return NULL;
@@ -284,9 +272,8 @@ static Tok* accept(Parser* parser, TokType type)
 static Tok* expect(Parser* parser, TokType type)
 {
     Tok* tok = accept(parser, type);
-    if (tok == NULL) {
+    if (tok == NULL)
         error(parser, "Unexpected token");
-    }
     return tok;
 }
 

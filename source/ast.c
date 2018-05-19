@@ -1,51 +1,8 @@
 #include <sclpl.h>
 
-static void ast_free(void* ptr)
-{
-    AST* ast = (AST*)ptr;
-    switch(ast->type) {
-        case AST_REQ:
-        case AST_IDENT:
-        case AST_STRING:
-        case AST_SYMBOL:
-            gc_delref(ast->value.text);
-            break;
-
-        case AST_DEF:
-            gc_delref(ast->value.def.name);
-            gc_delref(ast->value.def.value);
-            break;
-
-        case AST_IF:
-            gc_delref(ast->value.ifexpr.cond);
-            gc_delref(ast->value.ifexpr.bthen);
-            gc_delref(ast->value.ifexpr.belse);
-            break;
-
-        case AST_FUNC:
-            vec_deinit(&(ast->value.func.args));
-            gc_delref(ast->value.func.body);
-            break;
-
-        case AST_FNAPP:
-            gc_delref(ast->value.fnapp.fn);
-            vec_deinit(&(ast->value.fnapp.args));
-            break;
-
-        case AST_LET:
-            break;
-
-        case AST_TEMP:
-            break;
-
-        default:
-            break;
-    }
-}
-
 static AST* ast(ASTType type)
 {
-    AST* tree = gc_alloc(sizeof(AST), &ast_free);
+    AST* tree = emalloc(sizeof(AST));
     memset(tree, 0, sizeof(AST));
     tree->type = type;
     return tree;
@@ -54,7 +11,7 @@ static AST* ast(ASTType type)
 AST* String(Tok* val)
 {
     AST* node = ast(AST_STRING);
-    node->value.text = (char*)gc_addref(val->value.text);
+    node->value.text = val->value.text;
     return node;
 }
 
@@ -68,7 +25,7 @@ char* string_value(AST* val)
 AST* Symbol(Tok* val)
 {
     AST* node = ast(AST_SYMBOL);
-    node->value.text = (char*)gc_addref(val->value.text);
+    node->value.text = val->value.text;
     return node;
 }
 
@@ -145,7 +102,7 @@ bool bool_value(AST* val)
 AST* Ident(Tok* val)
 {
     AST* node = ast(AST_IDENT);
-    node->value.text = (char*)gc_addref(val->value.text);
+    node->value.text = val->value.text;
     return node;
 }
 
@@ -159,7 +116,7 @@ char* ident_value(AST* val)
 AST* Require(Tok* name)
 {
     AST* node = ast(AST_REQ);
-    node->value.text = (char*)gc_addref(name->value.text);
+    node->value.text = name->value.text;
     return node;
 }
 
@@ -173,8 +130,8 @@ char* require_name(AST* req)
 AST* Def(Tok* name, AST* value)
 {
     AST* node = ast(AST_DEF);
-    node->value.def.name = (char*)gc_addref(name->value.text);
-    node->value.def.value = (AST*)gc_addref(value);
+    node->value.def.name = name->value.text;
+    node->value.def.value = value;
     return node;
 }
 
@@ -204,7 +161,7 @@ AST* ifexpr_cond(AST* ifexpr)
 
 void ifexpr_set_cond(AST* ifexpr, AST* cond)
 {
-    ifexpr->value.ifexpr.cond = (AST*)gc_addref(cond);
+    ifexpr->value.ifexpr.cond = cond;
 }
 
 AST* ifexpr_then(AST* ifexpr)
@@ -214,7 +171,7 @@ AST* ifexpr_then(AST* ifexpr)
 
 void ifexpr_set_then(AST* ifexpr, AST* bthen)
 {
-    ifexpr->value.ifexpr.bthen = (AST*)gc_addref(bthen);
+    ifexpr->value.ifexpr.bthen = bthen;
 }
 
 AST* ifexpr_else(AST* ifexpr)
@@ -224,7 +181,7 @@ AST* ifexpr_else(AST* ifexpr)
 
 void ifexpr_set_else(AST* ifexpr, AST* belse)
 {
-    ifexpr->value.ifexpr.belse = (AST*)gc_addref(belse);
+    ifexpr->value.ifexpr.belse = belse;
 }
 
 AST* Func(void)
@@ -247,18 +204,18 @@ AST* func_body(AST* func)
 
 void func_add_arg(AST* func, AST* arg)
 {
-    vec_push_back(func_args(func), gc_addref(arg));
+    vec_push_back(func_args(func), arg);
 }
 
 void func_set_body(AST* func, AST* body)
 {
-    func->value.func.body = (AST*)gc_addref(body);
+    func->value.func.body = body;
 }
 
 AST* FnApp(AST* fnapp)
 {
     AST* node = ast(AST_FNAPP);
-    node->value.fnapp.fn = (AST*)gc_addref(fnapp);
+    node->value.fnapp.fn = fnapp;
     vec_init(&(node->value.fnapp.args));
     return node;
 }
@@ -266,8 +223,7 @@ AST* FnApp(AST* fnapp)
 void fnapp_set_fn(AST* fnapp, AST* fn)
 {
     AST* old = fnapp->value.fnapp.fn;
-    fnapp->value.fnapp.fn = (AST*)gc_addref(fn);
-    gc_delref(old);
+    fnapp->value.fnapp.fn = fn;
 }
 
 AST* fnapp_fn(AST* fnapp)
@@ -282,15 +238,15 @@ vec_t* fnapp_args(AST* fnapp)
 
 void fnapp_add_arg(AST* fnapp, AST* arg)
 {
-    vec_push_back(&(fnapp->value.fnapp.args), gc_addref(arg));
+    vec_push_back(&(fnapp->value.fnapp.args), arg);
 }
 
 AST* Let(AST* temp, AST* val, AST* body)
 {
     AST* node = ast(AST_LET);
-    node->value.let.temp  = (AST*)gc_addref(temp);
-    node->value.let.value = (AST*)gc_addref(val);
-    node->value.let.body  = (AST*)gc_addref(body);
+    node->value.let.temp  = temp;
+    node->value.let.value = val;
+    node->value.let.body  = body;
     return node;
 }
 
@@ -311,7 +267,7 @@ AST* let_body(AST* let)
 
 void let_set_body(AST* let, AST* body)
 {
-    let->value.let.body = (AST*)gc_addref(body);
+    let->value.let.body = body;
 }
 
 AST* TempVar(void)
