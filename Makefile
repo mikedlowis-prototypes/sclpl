@@ -24,9 +24,7 @@ OBJS = source/main.o    \
        source/pprint.o  \
        source/parser.o  \
        source/lexer.o   \
-       source/ast.o     \
-       source/anf.o     \
-       source/codegen.o
+       source/ast.o
 
 TESTBIN  = testsclpl
 TESTOBJS = tests/atf.o        \

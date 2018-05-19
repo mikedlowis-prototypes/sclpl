@@ -22,31 +22,7 @@ static int emit_ast(void) {
     return 0;
 }
 
-static int emit_anf(void) {
-    AST* tree = NULL;
-    Parser* ctx = parser_new(NULL, stdin);
-    while(NULL != (tree = toplevel(ctx)))
-        pprint_tree(stdout, normalize(tree), 0);
-    return 0;
-}
-
-static int emit_csource(void) {
-    AST* tree = NULL;
-    Parser* ctx = parser_new(NULL, stdin);
-    while(NULL != (tree = normalize(toplevel(ctx))))
-        codegen(stdout, tree);
-    return 0;
-}
-
-static int emit_object(void) {
-    return 0;
-}
-
-static int emit_staticlib(void) {
-    return 0;
-}
-
-static int emit_program(void) {
+static int emit_binary(void) {
     return 0;
 }
 
@@ -75,14 +51,8 @@ int user_main(int argc, char **argv) {
         return emit_tokens();
     } else if (0 == strcmp("ast", Artifact)) {
         return emit_ast();
-    } else if (0 == strcmp("anf", Artifact)) {
-        return emit_anf();
-    } else if (0 == strcmp("src", Artifact)) {
-        return emit_csource();
     } else if (0 == strcmp("bin", Artifact)) {
-        return emit_program();
-    } else if (0 == strcmp("lib", Artifact)) {
-        return emit_staticlib();
+        return emit_binary();
     } else {
         fprintf(stderr, "Unknonwn artifact type: '%s'\n\n", Artifact);
         usage();
