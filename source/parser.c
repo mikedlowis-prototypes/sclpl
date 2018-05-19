@@ -21,7 +21,7 @@ static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
 static AST* token_to_tree(Tok* tok);
 static AST* func_app(Parser* p, AST* fn);
-static void optional_type(Parser* p);
+static void type_annotation(Parser* p);
 
 // Parsing Routines
 static void parser_free(void* obj);
@@ -57,7 +57,7 @@ static AST* definition(Parser* p)
     if (peek(p)->type == T_LPAR) {
         expr = function(p);
     } else {
-        optional_type(p);
+        type_annotation(p);
         expr = expression(p);
         expect(p, T_END);
     }
@@ -111,12 +111,12 @@ static AST* function(Parser* p)
     expect(p, T_LPAR);
     while(peek(p)->type != T_RPAR) {
         func_add_arg(func, Ident(expect(p,T_ID)));
-        optional_type(p);
+        type_annotation(p);
         if(peek(p)->type != T_RPAR)
             expect(p, T_COMMA);
     }
     expect(p, T_RPAR);
-    optional_type(p);
+    type_annotation(p);
     func_set_body(func, expr_block(p));
     expect(p, T_END);
     return func;
@@ -192,18 +192,16 @@ static AST* func_app(Parser* p, AST* fn)
     return app;
 }
 
-static void optional_type(Parser* p)
+static void type_annotation(Parser* p)
 {
-    if (accept(p, T_COLON)) {
-        expect(p, T_ID);
-        /* array type */
-        if (accept(p,T_LBRACK)) {
-            accept(p, T_INT);
-            expect(p, T_RBRACK);
-        /* reference type */
-        } else if (accept(p, T_AMP)) {
+    expect(p, T_ID);
+    /* array type */
+    if (accept(p,T_LBRACK)) {
+        accept(p, T_INT);
+        expect(p, T_RBRACK);
+    /* reference type */
+    } else if (accept(p, T_AMP)) {
 
-        }
     }
 }
 

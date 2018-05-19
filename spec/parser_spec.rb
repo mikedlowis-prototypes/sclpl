@@ -90,63 +90,49 @@ describe "sclpl grammar" do
   end
 
   context "definitions" do
-    it "should parse a value definition" do
-      expect(ast('def foo 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
-    end
-
-    it "should error on missing type for definiton" do
-      expect{ast('def foo : 123;')}.to raise_error /Error/
-    end
-
     it "should parse a value definition with type annotation" do
-      expect(ast('def foo:int 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
-    end
-
-    it "should parse a function definition" do
-      expect(ast('def foo() 123;')).to eq([
-        ['def', 'foo', ['fn', [],
-          ["let", ["$:0", "T_INT:123"], "$:0"]]] ])
+      expect(ast('def foo int 123;')).to eq([ ['def', 'foo', 'T_INT:123'] ])
     end
 
     it "should parse a function definition with return type annotation" do
-      expect(ast('def foo():int 123;')).to eq([
+      expect(ast('def foo() int 123;')).to eq([
         ['def', 'foo', ['fn', [],
           ["let", ["$:0", "T_INT:123"], "$:0"]]] ])
     end
 
     it "should error on a function definition with missing return type" do
       pending("TODO: fix the error message here")
-      expect(ast('def foo() : 123;')).to raise_error /Error/
+      expect(ast('def foo() 123;')).to raise_error /Error/
     end
 
     it "should parse a function definition  with multiple expressions in the body" do
-      expect(ast('def foo() 123 321;')).to eq([
+      expect(ast('def foo() int 123 321;')).to eq([
         ['def', 'foo', ['fn', [],
           ["let", ["$:0", "T_INT:123"],
             ["let", ["$:1", "T_INT:321"], "$:1"]]]]])
     end
 
     it "should parse a function definition with one definition and expression" do
-      expect(ast('def foo() def bar 123; add(bar,321);')).to eq([
+      expect(ast('def foo() int def bar int 123; add(bar,321);')).to eq([
         ['def', 'foo', ['fn', [],
           ["let", ["T_ID:bar", "T_INT:123"],
             ["let", ["$:0", ["T_ID:add", "T_ID:bar", "T_INT:321"]], "$:0"]]]]])
     end
 
     it "should parse a function definition with one argument" do
-      expect(ast('def foo(a) 123;')).to eq([
+      expect(ast('def foo(a int) int 123;')).to eq([
         ['def', 'foo', ['fn', ['T_ID:a'],
           ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
 
     it "should parse a function definition with two arguments" do
-      expect(ast('def foo(a,b) 123;')).to eq([
+      expect(ast('def foo(a int, b int) int 123;')).to eq([
         ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b'],
           ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
 
     it "should parse a function definition with three arguments" do
-      expect(ast('def foo(a,b,c) 123;')).to eq([
+      expect(ast('def foo(a int, b int, c int) int 123;')).to eq([
         ['def', 'foo', ['fn', ['T_ID:a', 'T_ID:b', 'T_ID:c'],
           ["let", ["$:0", "T_INT:123"], "$:0"]]]])
     end
@@ -164,60 +150,60 @@ describe "sclpl grammar" do
     end
 
     context "function literals" do
-      it "should parse a function with no params" do
-        expect(ast('fn() 123;')).to eq([
-          ["fn", [],
-            ["let", ["$:0", "T_INT:123"], "$:0"]]])
-      end
-
-      it "should parse a function with no params and a return type annotation" do
-        expect(ast('fn():int 123;')).to eq([
-          ["fn", [],
-            ["let", ["$:0", "T_INT:123"], "$:0"]]])
-      end
-
-      it "should parse a function with one param" do
-        expect(ast('fn(a) 123;')).to eq([
-          ["fn", ["T_ID:a"],
-            ["let", ["$:0", "T_INT:123"], "$:0"]]])
-      end
-
-      it "should parse a function with one param with type annotation" do
-        expect(ast('fn(a:int) 123;')).to eq([
-          ["fn", ["T_ID:a"],
-            ["let", ["$:0", "T_INT:123"], "$:0"]]])
-      end
-
-      it "should parse a function with two params" do
-        expect(ast('fn(a,b) 123;')).to eq([
-          ["fn", ["T_ID:a", "T_ID:b"],
-            ["let", ["$:0", "T_INT:123"], "$:0"]]])
-      end
-
-      it "should parse a literal with two sequential simple expressions" do
-        expect(ast('fn() 1 2;')).to eq([
-          ["fn", [],
-            ["let", ["$:0", "T_INT:1"],
-              ["let", ["$:1", "T_INT:2"],
-                "$:1"]]]
-        ])
-      end
-
-      it "should parse a literal with three sequential simple expressions" do
-        expect(ast('fn() 1 2 3;')).to eq([
-          ["fn", [],
-            ["let", ["$:0", "T_INT:1"],
-              ["let", ["$:1", "T_INT:2"],
-                ["let", ["$:2", "T_INT:3"],
-                  "$:2"]]]]
-        ])
-      end
-
-      it "should parse a literal with a complex expression" do
-        expect(ast('fn() foo(bar());')).to eq([
-          ["fn", [], ["let", ["$:0", ["T_ID:foo", ["T_ID:bar"]]], "$:0"]]
-        ])
-      end
+#      it "should parse a function with no params" do
+#        expect(ast('fn() 123;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+#      end
+#
+#      it "should parse a function with no params and a return type annotation" do
+#        expect(ast('fn():int 123;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+#      end
+#
+#      it "should parse a function with one param" do
+#        expect(ast('fn(a) 123;')).to eq([
+#          ["fn", ["T_ID:a"],
+#            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+#      end
+#
+#      it "should parse a function with one param with type annotation" do
+#        expect(ast('fn(a:int) 123;')).to eq([
+#          ["fn", ["T_ID:a"],
+#            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+#      end
+#
+#      it "should parse a function with two params" do
+#        expect(ast('fn(a,b) 123;')).to eq([
+#          ["fn", ["T_ID:a", "T_ID:b"],
+#            ["let", ["$:0", "T_INT:123"], "$:0"]]])
+#      end
+#
+#      it "should parse a literal with two sequential simple expressions" do
+#        expect(ast('fn() 1 2;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", "T_INT:1"],
+#              ["let", ["$:1", "T_INT:2"],
+#                "$:1"]]]
+#        ])
+#      end
+#
+#      it "should parse a literal with three sequential simple expressions" do
+#        expect(ast('fn() 1 2 3;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", "T_INT:1"],
+#              ["let", ["$:1", "T_INT:2"],
+#                ["let", ["$:2", "T_INT:3"],
+#                  "$:2"]]]]
+#        ])
+#      end
+#
+#      it "should parse a literal with a complex expression" do
+#        expect(ast('fn() foo(bar());')).to eq([
+#          ["fn", [], ["let", ["$:0", ["T_ID:foo", ["T_ID:bar"]]], "$:0"]]
+#        ])
+#      end
 
       #it "should normalize a literal with an if expression" do
       #  expect(ast('fn() if 1 2 else 3;;')).to eq([

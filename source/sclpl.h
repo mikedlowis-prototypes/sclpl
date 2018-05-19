@@ -199,54 +199,6 @@ SymTable* symbol_pop(SymTable* top);
 SymTable* symbol_get(const char* name);
 SymTable* symbol_map(SymTable* top, void (*apply)(SymTable*, void*), void* arg);
 
-/*
-Base Types:
-    bool
-    int
-    uint
-    u8 u16 u32 u64
-    i8 i16 i32 i64
-    uintptr intptr
-    rune
-    byte
-    string
-
-Reference:
-    u8&
-
-Array:
-    u8[] u8[10] u8[10][10]
-
-Function:
-    int (string[])
-
-Struct:
-
-Union:
-
-
-Examples:
-def main(args)
-    return 0;
-end
-
-def main(args : string[]) : int
-    return 0;
-end
-
-def main : int(string[])
-    fn(args)
-
-    end
-end
-
-def foo (123 : int);
-def foo : int 123;
-def foo 123;
-
-*/
-
-
 /* Pretty Printing
  *****************************************************************************/
 void pprint_token_type(FILE* file, Tok* token);
