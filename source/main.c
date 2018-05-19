@@ -36,7 +36,7 @@ void usage(void) {
     exit(1);
 }
 
-int user_main(int argc, char **argv) {
+int main(int argc, char **argv) {
     /* Option parsing */
     OPTBEGIN {
         case 'A': Artifact = EOPTARG(usage()); break;

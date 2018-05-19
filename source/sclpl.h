@@ -9,20 +9,39 @@
 #include <assert.h>
 #include <setjmp.h>
 
-/* Garbage Collection
- *****************************************************************************/
 typedef void (*destructor_t)(void*);
 
-void gc_init(void** stack_bottom);
-void gc_deinit(void);
-void gc_collect(void);
-void* gc_alloc(size_t size, destructor_t destructor);
-void* gc_addref(void* ptr);
-void gc_delref(void* ptr);
-void gc_swapref(void** dest, void* newref);
+static void fatal(char* estr) {
+    perror(estr);
+    exit(1);
+}
 
-// Redefine main
-extern int user_main(int argc, char** argv);
+static void* gc_alloc(size_t size, destructor_t destructor)
+{
+    void* ptr = malloc(size);
+    //fprintf(stderr, "%d\n", size);
+    if (!ptr) fatal("malloc()");
+    return ptr;
+}
+
+static void* gc_addref(void* ptr)
+{
+    return ptr;
+}
+
+static void gc_delref(void* ptr)
+{
+}
+
+static void gc_swapref(void** dest, void* newref)
+{
+    void* oldref = *dest;
+    *dest = gc_addref(newref);
+    gc_delref(oldref);
+}
+
+/* Garbage Collection
+ *****************************************************************************/
 
 /* Vector Implementation
  *****************************************************************************/
@@ -193,7 +212,6 @@ typedef struct SymTable {
 } SymTable;
 
 SymTable* symbol_new(void);
-//void symbol_free(SymTable* sym);
 SymTable* symbol_push(SymTable* top, SymTable* newtop);
 SymTable* symbol_pop(SymTable* top);
 SymTable* symbol_get(const char* name);
