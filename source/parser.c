@@ -24,7 +24,6 @@ static AST* func_app(Parser* p, AST* fn);
 static void type_annotation(Parser* p);
 
 // Parsing Routines
-static void parser_free(void* obj);
 static void fetch(Parser* parser);
 static Tok* peek(Parser* parser);
 static bool parser_eof(Parser* parser);
@@ -45,7 +44,8 @@ AST* toplevel(Parser* p)
         else if (accept(p, T_DEF))
             ret = definition(p);
         else
-            ret = expression(p);
+            error(p, "expressions are not allowed at the toplevel");
+            //ret = expression(p);
     }
     return ret;
 }

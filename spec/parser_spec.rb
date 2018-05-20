@@ -1,32 +1,6 @@
 require 'open3'
 
 describe "sclpl grammar" do
-  context "literals" do
-    it "should parse a string" do
-      expect(ast('"foo"')).to eq(['T_STRING:"foo"'])
-    end
-
-    it "should parse a character" do
-      expect(ast('\\c')).to eq(['T_CHAR:c'])
-    end
-
-    it "should parse an integer" do
-      expect(ast('123')).to eq(['T_INT:123'])
-    end
-
-    it "should parse a float" do
-      expect(ast('123.0')).to eq(['T_FLOAT:123.000000'])
-    end
-
-    it "should parse boolean" do
-      expect(ast('true')).to eq(['T_BOOL:true'])
-    end
-
-    it "should parse an identifier" do
-      expect(ast('foo')).to eq(['T_ID:foo'])
-    end
-  end
-
   context "requires" do
     it "should parse a require statement" do
       expect(ast('require "foo";')).to eq([ ['require', '"foo"'] ])
@@ -50,42 +24,6 @@ describe "sclpl grammar" do
 
     it "should error on too many parameters" do
       expect{ast('require foo bar;')}.to raise_error /Error/
-    end
-  end
-
-  context "if statements" do
-    it "should parse an if statement with no else clause" do
-      expect(ast('if 123 321 end')).to eq([
-        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
-    end
-
-    it "should parse an if statement with an optional then keyword" do
-      expect(ast('if 123 then 321 end')).to eq([
-        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
-    end
-
-    it "should parse an if statement with an else clause " do
-      expect(ast('if 123 321 else 456 end')).to eq([
-        ["if", "T_INT:123",
-          ["let", ["$:0", "T_INT:321"], "$:0"],
-          ["let", ["$:1", "T_INT:456"], "$:1"]]])
-    end
-
-    it "should parse an if statement with a then clause with multiple expressions" do
-      expect(ast('if 1 2 3 else 4 end')).to eq([
-        ["if", "T_INT:1",
-          ["let", ["$:0", "T_INT:2"],
-            ["let", ["$:1", "T_INT:3"], "$:1"]],
-          ["let", ["$:2", "T_INT:4"], "$:2"]]])
-    end
-
-    it "should parse an if statement with an else clause with multiple expressions" do
-      expect(ast('if 1 2 else 3 4 end')).to eq([
-        ["if", "T_INT:1",
-          ["let", ["$:0", "T_INT:2"], "$:0"],
-          ["let", ["$:1", "T_INT:3"],
-            ["let", ["$:2", "T_INT:4"], "$:2"]],
-      ]])
     end
   end
 
@@ -138,18 +76,80 @@ describe "sclpl grammar" do
     end
   end
 
-  context "expressions" do
-    context "parenthese grouping" do
-      it "should parse a parenthesized expression" do
-        expect(ast('(123)')).to eq(['T_INT:123'])
-      end
+#  context "literals" do
+#    it "should parse a string" do
+#      expect(ast('"foo"')).to eq(['T_STRING:"foo"'])
+#    end
+#
+#    it "should parse a character" do
+#      expect(ast('\\c')).to eq(['T_CHAR:c'])
+#    end
+#
+#    it "should parse an integer" do
+#      expect(ast('123')).to eq(['T_INT:123'])
+#    end
+#
+#    it "should parse a float" do
+#      expect(ast('123.0')).to eq(['T_FLOAT:123.000000'])
+#    end
+#
+#    it "should parse boolean" do
+#      expect(ast('true')).to eq(['T_BOOL:true'])
+#    end
+#
+#    it "should parse an identifier" do
+#      expect(ast('foo')).to eq(['T_ID:foo'])
+#    end
+#  end
+#
+#  context "if statements" do
+#    it "should parse an if statement with no else clause" do
+#      expect(ast('if 123 321 end')).to eq([
+#        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
+#    end
+#
+#    it "should parse an if statement with an optional then keyword" do
+#      expect(ast('if 123 then 321 end')).to eq([
+#        ["if", "T_INT:123", ["let", ["$:0", "T_INT:321"], "$:0"]]])
+#    end
+#
+#    it "should parse an if statement with an else clause " do
+#      expect(ast('if 123 321 else 456 end')).to eq([
+#        ["if", "T_INT:123",
+#          ["let", ["$:0", "T_INT:321"], "$:0"],
+#          ["let", ["$:1", "T_INT:456"], "$:1"]]])
+#    end
+#
+#    it "should parse an if statement with a then clause with multiple expressions" do
+#      expect(ast('if 1 2 3 else 4 end')).to eq([
+#        ["if", "T_INT:1",
+#          ["let", ["$:0", "T_INT:2"],
+#            ["let", ["$:1", "T_INT:3"], "$:1"]],
+#          ["let", ["$:2", "T_INT:4"], "$:2"]]])
+#    end
+#
+#    it "should parse an if statement with an else clause with multiple expressions" do
+#      expect(ast('if 1 2 else 3 4 end')).to eq([
+#        ["if", "T_INT:1",
+#          ["let", ["$:0", "T_INT:2"], "$:0"],
+#          ["let", ["$:1", "T_INT:3"],
+#            ["let", ["$:2", "T_INT:4"], "$:2"]],
+#      ]])
+#    end
+#  end
 
-      it "should parse a nested parenthesized expression" do
-        expect(ast('((123))')).to eq(['T_INT:123'])
-      end
-    end
-
-    context "function literals" do
+#  context "expressions" do
+#    context "parenthese grouping" do
+#      it "should parse a parenthesized expression" do
+#        expect(ast('(123)')).to eq(['T_INT:123'])
+#      end
+#
+#      it "should parse a nested parenthesized expression" do
+#        expect(ast('((123))')).to eq(['T_INT:123'])
+#      end
+#    end
+#
+#    context "function literals" do
 #      it "should parse a function with no params" do
 #        expect(ast('fn() 123;')).to eq([
 #          ["fn", [],
@@ -204,53 +204,55 @@ describe "sclpl grammar" do
 #          ["fn", [], ["let", ["$:0", ["T_ID:foo", ["T_ID:bar"]]], "$:0"]]
 #        ])
 #      end
+#
+#      it "should normalize a literal with an if expression" do
+#        expect(ast('fn() if 1 2 else 3;;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", ["if", "T_INT:1",
+#                              ["let", ["$:1", "T_INT:2"], "$:1"],
+#                              ["let", ["$:2", "T_INT:3"], "$:2"]]],
+#              "$:0"]]
+#        ])
+#      end
+#
+#      it "should normalize a literal with two sequential if expressions" do
+#        expect(ast('fn() if 1 2 else 3; if 1 2 else 3; ;')).to eq([
+#          ["fn", [],
+#            ["let", ["$:0", ["if", "T_INT:1",
+#                              ["let", ["$:1", "T_INT:2"], "$:1"],
+#                              ["let", ["$:2", "T_INT:3"], "$:2"]]],
+#              ["let", ["$:3", ["if", "T_INT:1",
+#                                ["let", ["$:4", "T_INT:2"], "$:4"],
+#                                ["let", ["$:5", "T_INT:3"], "$:5"]]],
+#                "$:3"]]]
+#        ])
+#      end
+#
+#    end
+#
+#    context "function application" do
+#      it "should parse an application with no params " do
+#        expect(ast('foo()')).to eq([["T_ID:foo"]])
+#      end
+#
+#      it "should parse an application with one param" do
+#        expect(ast('foo(a)')).to eq([["T_ID:foo", "T_ID:a"]])
+#      end
+#
+#      it "should parse an application with two params" do
+#        expect(ast('foo(a,b)')).to eq([["T_ID:foo", "T_ID:a", "T_ID:b"]])
+#      end
+#    end
+#  end
+#
+#  context "corner cases" do
+#    it "an unexpected terminator should error" do
+#      expect{ast(';')}.to raise_error /Error/
+#    end
+#
+#    it "an invalid literal should error" do
+#      expect{ast('\'')}.to raise_error /Error/
+#    end
+#  end
 
-      #it "should normalize a literal with an if expression" do
-      #  expect(ast('fn() if 1 2 else 3;;')).to eq([
-      #    ["fn", [],
-      #      ["let", ["$:0", ["if", "T_INT:1",
-      #                        ["let", ["$:1", "T_INT:2"], "$:1"],
-      #                        ["let", ["$:2", "T_INT:3"], "$:2"]]],
-      #        "$:0"]]
-      #  ])
-      #end
-
-      #it "should normalize a literal with two sequential if expressions" do
-      #  expect(ast('fn() if 1 2 else 3; if 1 2 else 3; ;')).to eq([
-      #    ["fn", [],
-      #      ["let", ["$:0", ["if", "T_INT:1",
-      #                        ["let", ["$:1", "T_INT:2"], "$:1"],
-      #                        ["let", ["$:2", "T_INT:3"], "$:2"]]],
-      #        ["let", ["$:3", ["if", "T_INT:1",
-      #                          ["let", ["$:4", "T_INT:2"], "$:4"],
-      #                          ["let", ["$:5", "T_INT:3"], "$:5"]]],
-      #          "$:3"]]]
-      #  ])
-      #end
-    end
-
-    context "function application" do
-      it "should parse an application with no params " do
-        expect(ast('foo()')).to eq([["T_ID:foo"]])
-      end
-
-      it "should parse an application with one param" do
-        expect(ast('foo(a)')).to eq([["T_ID:foo", "T_ID:a"]])
-      end
-
-      it "should parse an application with two params" do
-        expect(ast('foo(a,b)')).to eq([["T_ID:foo", "T_ID:a", "T_ID:b"]])
-      end
-    end
-  end
-
-  context "corner cases" do
-    it "an unexpected terminator should error" do
-      expect{ast(';')}.to raise_error /Error/
-    end
-
-    it "an invalid literal should error" do
-      expect{ast('\'')}.to raise_error /Error/
-    end
-  end
 end
