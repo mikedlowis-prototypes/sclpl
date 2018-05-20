@@ -45,15 +45,14 @@ AST* toplevel(Parser* p)
             ret = definition(p);
         else
             error(p, "expressions are not allowed at the toplevel");
-            //ret = expression(p);
     }
     return ret;
 }
 
 static AST* definition(Parser* p)
 {
-    Tok* id = expect(p, T_ID);
     AST* expr;
+    Tok* id = expect(p, T_ID);
     if (peek(p)->type == T_LPAR) {
         expr = function(p);
     } else {
@@ -87,9 +86,8 @@ static AST* expression(Parser* p)
         expr = literal(p);
     }
     /* Check if this is a function application */
-    if (peek(p)->type == T_LPAR) {
+    if (peek(p)->type == T_LPAR)
         expr = func_app(p, expr);
-    }
     return expr;
 }
 
