@@ -40,9 +40,9 @@ void vec_set(vec_t* vec, size_t index, void* data);
 /* Token Types
  *****************************************************************************/
 typedef enum {
-    T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE, T_LBRACK,
-    T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END, T_COLON, T_AMP,
-    T_REQUIRE, T_DEF, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
+    T_NONE, T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE,
+    T_LBRACK, T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END,
+    T_COLON, T_AMP, T_REQUIRE, T_DEF, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
 } TokType;
 
 typedef struct {
@@ -209,11 +209,11 @@ typedef struct {
     size_t lineno;
     FILE* input;
     char* prompt;
-    Tok* tok;
+    Tok tok;
 } Parser;
 
 // Lexer routines
-Tok* gettoken(Parser* ctx);
+void gettoken(Parser* ctx, Tok* tok);
 void fetchline(Parser* ctx);
 
 // Parser routines

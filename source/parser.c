@@ -39,12 +39,10 @@ AST* toplevel(Parser* p)
 {
     AST* ret = NULL;
     if (!match(p, T_END_FILE)) {
-        if (accept(p, T_REQUIRE))
-            ret = require(p);
-        else if (accept(p, T_DEF))
+        if (accept(p, T_DEF))
             ret = definition(p);
         else
-            error(p, "expressions are not allowed at the toplevel");
+            error(p, "only definitions are allowed at the toplevel");
     }
     return ret;
 }
@@ -208,27 +206,22 @@ static void type_annotation(Parser* p)
 Parser* parser_new(char* prompt, FILE* input)
 {
     Parser* parser  = emalloc(sizeof(Parser));
-    parser->line    = NULL;
-    parser->index   = 0;
-    parser->lineno  = 0;
+    memset(parser, 0, sizeof(Parser));
     parser->input   = input;
     parser->prompt  = prompt;
-    parser->tok     = NULL;
     return parser;
 }
 
 static void fetch(Parser* parser)
 {
-    parser->tok = gettoken(parser);
-    if (NULL == parser->tok)
-        parser->tok = &tok_eof;
+    gettoken(parser, &(parser->tok));
 }
 
 static Tok* peek(Parser* parser)
 {
-    if (NULL == parser->tok)
+    if (T_NONE == parser->tok.type)
         fetch(parser);
-    return parser->tok;
+    return &(parser->tok);
 }
 
 static bool parser_eof(Parser* parser)
@@ -238,8 +231,8 @@ static bool parser_eof(Parser* parser)
 
 static void parser_resume(Parser* parser)
 {
-    if ((NULL != parser->tok) && (&tok_eof != parser->tok))
-        parser->tok = NULL;
+    if ((T_NONE != parser->tok.type) && (T_END_FILE != parser->tok.type))
+        parser->tok.type = T_NONE;
     /* We ignore the rest of the current line and attempt to start parsing
      * again on the next line */
     fetchline(parser);
@@ -260,11 +253,9 @@ static bool match(Parser* parser, TokType type)
 static Tok* accept(Parser* parser, TokType type)
 {
     Tok* tok = peek(parser);
-    if (tok->type == type) {
-        parser->tok = NULL;
-        return tok;
-    }
-    return NULL;
+    if (tok->type == type)
+        parser->tok.type = T_NONE;
+    return tok;
 }
 
 static Tok* expect(Parser* parser, TokType type)

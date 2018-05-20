@@ -124,16 +124,10 @@ false {
 
 %%
 
-Tok* gettoken(Parser* ctx)
-{
-    Tok* tok = NULL;
-    int type = yylex();
-    if (type != T_END_FILE) {
-        tok = emalloc(sizeof(Tok));
-        tok->type = type;
+void gettoken(Parser* ctx, Tok* tok) {
+    tok->type = yylex();
+    if (tok->type != T_END_FILE)
         memcpy(&(tok->value), &Value, sizeof(Value));
-    }
-    return tok;
 }
 
 void fetchline(Parser* ctx)

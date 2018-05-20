@@ -6,10 +6,15 @@ char* Artifact = "bin";
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {
-    Tok* token = NULL;
+    Tok token = { 0 };
     Parser* ctx = parser_new(NULL, stdin);
-    while(NULL != (token = gettoken(ctx)))
-        pprint_token(stdout, token, true);
+    while (1) {
+        gettoken(ctx, &token);
+        if (token.type == T_END_FILE)
+            break;
+        else
+            pprint_token(stdout, &token, true);
+    }
     return 0;
 }
 
