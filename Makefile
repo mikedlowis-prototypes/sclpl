@@ -4,13 +4,13 @@
 # Update these variables according to your requirements.
 
 # tools
-CC = c99
+CC = cc
 LD = ${CC}
 
 # completed flags
 INCS      = -Isource/
 CPPFLAGS  =
-CFLAGS   += ${INCS} ${CPPFLAGS}
+CFLAGS   += -O0 -g ${INCS} ${CPPFLAGS}
 LDFLAGS  += ${LIBS}
 ARFLAGS   = rcs
 

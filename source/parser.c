@@ -8,20 +8,18 @@
 
 /* Private Declarations
  *****************************************************************************/
-// Sentinel EOF Token
-Tok tok_eof = { NULL, 0, 0, T_END_FILE, {0} };
-
 // Grammar Routines
-static AST* require(Parser* p);
+static AST* const_definition(Parser* p);
+static AST* const_expression(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
-static AST* if_stmnt(Parser* p);
 static AST* function(Parser* p);
+static void type_annotation(Parser* p);
 static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
+static AST* if_stmnt(Parser* p);
 static AST* token_to_tree(Tok* tok);
 static AST* func_app(Parser* p, AST* fn);
-static void type_annotation(Parser* p);
 
 // Parsing Routines
 static void fetch(Parser* parser);
@@ -35,20 +33,46 @@ static Tok* expect(Parser* parser, TokType type);
 
 /* Grammar Definition
  *****************************************************************************/
-AST* toplevel(Parser* p)
-{
+AST* toplevel(Parser* p) {
     AST* ret = NULL;
     if (!match(p, T_END_FILE)) {
         if (accept(p, T_DEF))
-            ret = definition(p);
+            ret = const_definition(p);
         else
             error(p, "only definitions are allowed at the toplevel");
     }
     return ret;
 }
 
-static AST* definition(Parser* p)
-{
+static AST* const_definition(Parser* p) {
+    AST* expr;
+    Tok* id = expect(p, T_ID);
+    if (peek(p)->type == T_LPAR) {
+        expr = function(p);
+    } else {
+        type_annotation(p);
+        expr = const_expression(p);
+        expect(p, T_END);
+    }
+    return Def(id, expr);
+}
+
+static AST* const_expression(Parser* p) {
+    AST* expr = NULL;
+    if (accept(p, T_LPAR)) {
+        expr = const_expression(p);
+        expect(p, T_RPAR);
+    } else if (accept(p, T_FN)) {
+        expr = function(p);
+    } else if (match(p, T_ID)) {
+        expr = Ident(expect(p,T_ID));
+    } else {
+        expr = literal(p);
+    }
+    return expr;
+}
+
+static AST* definition(Parser* p) {
     AST* expr;
     Tok* id = expect(p, T_ID);
     if (peek(p)->type == T_LPAR) {
@@ -61,15 +85,7 @@ static AST* definition(Parser* p)
     return Def(id, expr);
 }
 
-static AST* require(Parser* p)
-{
-    AST* ast = Require(expect(p, T_STRING));
-    expect(p, T_END);
-    return ast;
-}
-
-static AST* expression(Parser* p)
-{
+static AST* expression(Parser* p) {
     AST* expr = NULL;
     if (accept(p, T_LPAR)) {
         expr = expression(p);
@@ -89,20 +105,7 @@ static AST* expression(Parser* p)
     return expr;
 }
 
-static AST* if_stmnt(Parser* p)
-{
-    AST* ifexpr = IfExpr();
-    ifexpr_set_cond( ifexpr, expression(p) );
-    accept(p, T_THEN);
-    ifexpr_set_then( ifexpr, expr_block(p) );
-    if (accept(p, T_ELSE))
-        ifexpr_set_else( ifexpr, expr_block(p) );
-    expect(p,T_END);
-    return ifexpr;
-}
-
-static AST* function(Parser* p)
-{
+static AST* function(Parser* p) {
     AST* func = Func();
     expect(p, T_LPAR);
     while(peek(p)->type != T_RPAR) {
@@ -118,8 +121,19 @@ static AST* function(Parser* p)
     return func;
 }
 
-static AST* literal(Parser* p)
-{
+static void type_annotation(Parser* p) {
+    expect(p, T_ID);
+    /* array type */
+    if (accept(p,T_LBRACK)) {
+        accept(p, T_INT);
+        expect(p, T_RBRACK);
+    /* reference type */
+    } else if (accept(p, T_AMP)) {
+        // TODO: implement reference types
+    }
+}
+
+static AST* literal(Parser* p) {
     AST* ret = NULL;
     Tok* tok = peek(p);
     switch (tok->type) {
@@ -136,8 +150,7 @@ static AST* literal(Parser* p)
     return ret;
 }
 
-static AST* expr_block(Parser* p)
-{
+static AST* expr_block(Parser* p) {
     AST* block = NULL;
     vec_t exprs;
     vec_init(&exprs);
@@ -175,8 +188,18 @@ static AST* token_to_tree(Tok* tok)
     }
 }
 
-static AST* func_app(Parser* p, AST* fn)
-{
+static AST* if_stmnt(Parser* p) {
+    AST* ifexpr = IfExpr();
+    ifexpr_set_cond( ifexpr, expression(p) );
+    accept(p, T_THEN);
+    ifexpr_set_then( ifexpr, expr_block(p) );
+    if (accept(p, T_ELSE))
+        ifexpr_set_else( ifexpr, expr_block(p) );
+    expect(p,T_END);
+    return ifexpr;
+}
+
+static AST* func_app(Parser* p, AST* fn) {
     AST* app = FnApp(fn);
     expect(p,T_LPAR);
     while (peek(p)->type != T_RPAR) {
@@ -186,19 +209,6 @@ static AST* func_app(Parser* p, AST* fn)
     }
     expect(p,T_RPAR);
     return app;
-}
-
-static void type_annotation(Parser* p)
-{
-    expect(p, T_ID);
-    /* array type */
-    if (accept(p,T_LBRACK)) {
-        accept(p, T_INT);
-        expect(p, T_RBRACK);
-    /* reference type */
-    } else if (accept(p, T_AMP)) {
-
-    }
 }
 
 /* Parsing Routines
@@ -217,11 +227,11 @@ static void fetch(Parser* parser)
     gettoken(parser, &(parser->tok));
 }
 
-static Tok* peek(Parser* parser)
+static Tok* peek(Parser* p)
 {
-    if (T_NONE == parser->tok.type)
-        fetch(parser);
-    return &(parser->tok);
+    if (T_NONE == p->tok.type)
+        gettoken(p, &(p->tok));
+    return &(p->tok);
 }
 
 static bool parser_eof(Parser* parser)
@@ -265,4 +275,3 @@ static Tok* expect(Parser* parser, TokType type)
         error(parser, "Unexpected token");
     return tok;
 }
-

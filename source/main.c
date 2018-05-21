@@ -1,7 +1,7 @@
 #include <sclpl.h>
 
 char* ARGV0;
-char* Artifact = "bin";
+char* Artifact = "ast";
 
 /* Driver Modes
  *****************************************************************************/
