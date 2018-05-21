@@ -7,9 +7,9 @@ char* Artifact = "ast";
  *****************************************************************************/
 static int emit_tokens(void) {
     Tok token = { 0 };
-    Parser* ctx = parser_new(NULL, stdin);
+    Parser ctx = { .input = stdin };
     while (1) {
-        gettoken(ctx, &token);
+        gettoken(&ctx, &token);
         if (token.type == T_END_FILE)
             break;
         else
@@ -20,8 +20,8 @@ static int emit_tokens(void) {
 
 static int emit_ast(void) {
     AST* tree = NULL;
-    Parser* ctx = parser_new(NULL, stdin);
-    while(NULL != (tree = toplevel(ctx)))
+    Parser ctx = { .input = stdin };
+    while(NULL != (tree = toplevel(&ctx)))
         pprint_tree(stdout, tree, 0);
     return 0;
 }
@@ -49,7 +49,6 @@ int main(int argc, char **argv) {
     } OPTEND;
 
     /* Execute the main compiler process */
-
     if (0 == strcmp("tok", Artifact)) {
         return emit_tokens();
     } else if (0 == strcmp("ast", Artifact)) {

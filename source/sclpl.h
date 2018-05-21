@@ -204,17 +204,12 @@ void pprint_tree(FILE* file, AST* tree, int depth);
 /* Lexer and Parser Types
  *****************************************************************************/
 typedef struct {
-    char* line;
-    size_t index;
-    size_t lineno;
     FILE* input;
-    char* prompt;
     Tok tok;
 } Parser;
 
 // Lexer routines
 void gettoken(Parser* ctx, Tok* tok);
-void fetchline(Parser* ctx);
 
 // Parser routines
 Parser* parser_new(char* p_prompt, FILE* input);

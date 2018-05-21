@@ -15,14 +15,49 @@ static AST* if_stmnt(Parser* p);
 static AST* token_to_tree(Tok* tok);
 static AST* func_app(Parser* p, AST* fn);
 
-// Parsing Routines
-static void fetch(Parser* parser);
-static Tok* peek(Parser* parser);
-static void error(Parser* parser, const char* text);
-static bool match(Parser* parser, TokType type);
-static bool accept(Parser* parser, TokType type);
-static void expect(Parser* parser, TokType type);
-static Tok* expect_val(Parser* parser, TokType type);
+/* Parsing Routines
+ *****************************************************************************/
+static Tok* peek(Parser* p) {
+    if (T_NONE == p->tok.type)
+        gettoken(p, &(p->tok));
+    return &(p->tok);
+}
+
+static void error(Parser* parser, const char* text) {
+    Tok* tok = peek(parser);
+    fprintf(stderr, "<file>:%zu:%zu:Error: %s\n", tok->line, tok->col, text);
+    exit(1);
+}
+
+static bool match(Parser* parser, TokType type) {
+    return (peek(parser)->type == type);
+}
+
+static bool accept(Parser* parser, TokType type) {
+    if (peek(parser)->type == type) {
+        parser->tok.type = T_NONE;
+        return true;
+    }
+    return false;
+}
+
+static void expect(Parser* parser, TokType type) {
+    if (!accept(parser, type))
+        error(parser, "Unexpected token");
+}
+
+static Tok* expect_val(Parser* parser, TokType type) {
+    Tok* tok = NULL;
+    if (peek(parser)->type == type) {
+        tok = calloc(1, sizeof(Tok));
+        *tok = *(peek(parser));
+        parser->tok.type = T_NONE;
+    } else {
+        error(parser, "Unexpected token");
+    }
+    return tok;
+}
+
 
 /* Grammar Definition
  *****************************************************************************/
@@ -201,55 +236,4 @@ static AST* func_app(Parser* p, AST* fn) {
     }
     expect(p,T_RPAR);
     return app;
-}
-
-/* Parsing Routines
- *****************************************************************************/
-Parser* parser_new(char* prompt, FILE* input) {
-    Parser* parser  = emalloc(sizeof(Parser));
-    memset(parser, 0, sizeof(Parser));
-    parser->input   = input;
-    parser->prompt  = prompt;
-    return parser;
-}
-
-static Tok* peek(Parser* p) {
-    if (T_NONE == p->tok.type)
-        gettoken(p, &(p->tok));
-    return &(p->tok);
-}
-
-static void error(Parser* parser, const char* text) {
-    Tok* tok = peek(parser);
-    fprintf(stderr, "<file>:%zu:%zu:Error: %s\n", tok->line, tok->col, text);
-    exit(1);
-}
-
-static bool match(Parser* parser, TokType type) {
-    return (peek(parser)->type == type);
-}
-
-static bool accept(Parser* parser, TokType type) {
-    if (peek(parser)->type == type) {
-        parser->tok.type = T_NONE;
-        return true;
-    }
-    return false;
-}
-
-static void expect(Parser* parser, TokType type) {
-    if (!accept(parser, type))
-        error(parser, "Unexpected token");
-}
-
-static Tok* expect_val(Parser* parser, TokType type) {
-    Tok* tok = NULL;
-    if (peek(parser)->type == type) {
-        tok = calloc(1, sizeof(Tok));
-        *tok = *(peek(parser));
-        parser->tok.type = T_NONE;
-    } else {
-        error(parser, "Unexpected token");
-    }
-    return tok;
 }
