@@ -75,13 +75,13 @@ AST* toplevel(Parser* p) {
 static AST* const_definition(Parser* p) {
     AST* expr;
     Tok* id = expect_val(p, T_ID);
-    if (peek(p)->type == T_LPAR) {
-        expr = function(p);
-    } else {
+//    if (peek(p)->type == T_LPAR) {
+//        expr = function(p);
+//    } else {
         type_annotation(p);
         expr = const_expression(p);
         expect(p, T_END);
-    }
+//    }
     return Def(id, expr);
 }
 
@@ -90,63 +90,12 @@ static AST* const_expression(Parser* p) {
     if (accept(p, T_LPAR)) {
         expr = const_expression(p);
         expect(p, T_RPAR);
-    } else if (accept(p, T_FN)) {
-        expr = function(p);
     } else if (match(p, T_ID)) {
         expr = Ident(expect_val(p, T_ID));
     } else {
         expr = literal(p);
     }
     return expr;
-}
-
-static AST* definition(Parser* p) {
-    AST* expr;
-    Tok* id = expect_val(p, T_ID);
-    if (peek(p)->type == T_LPAR) {
-        expr = function(p);
-    } else {
-        type_annotation(p);
-        expr = expression(p);
-        expect(p, T_END);
-    }
-    return Def(id, expr);
-}
-
-static AST* expression(Parser* p) {
-    AST* expr = NULL;
-    if (accept(p, T_LPAR)) {
-        expr = expression(p);
-        expect(p, T_RPAR);
-    } else if (accept(p, T_IF)) {
-        expr = if_stmnt(p);
-    } else if (accept(p, T_FN)) {
-        expr = function(p);
-    } else if (match(p, T_ID)) {
-        expr = Ident(expect_val(p,T_ID));
-    } else {
-        expr = literal(p);
-    }
-    /* Check if this is a function application */
-    if (peek(p)->type == T_LPAR)
-        expr = func_app(p, expr);
-    return expr;
-}
-
-static AST* function(Parser* p) {
-    AST* func = Func();
-    expect(p, T_LPAR);
-    while(peek(p)->type != T_RPAR) {
-        func_add_arg(func, Ident(expect_val(p,T_ID)));
-        type_annotation(p);
-        if(peek(p)->type != T_RPAR)
-            expect(p, T_COMMA);
-    }
-    expect(p, T_RPAR);
-    type_annotation(p);
-    func_set_body(func, expr_block(p));
-    expect(p, T_END);
-    return func;
 }
 
 static void type_annotation(Parser* p) {
@@ -178,6 +127,69 @@ static AST* literal(Parser* p) {
     return ret;
 }
 
+static AST* token_to_tree(Tok* tok) {
+    switch (tok->type) {
+        case T_BOOL:   return Bool(tok);
+        case T_CHAR:   return Char(tok);
+        case T_STRING: return String(tok);
+        case T_INT:    return Integer(tok);
+        case T_FLOAT:  return Float(tok);
+        case T_ID:     return Ident(tok);
+        default:       return NULL;
+    }
+}
+
+
+#if 0
+static AST* definition(Parser* p) {
+    AST* expr;
+    Tok* id = expect_val(p, T_ID);
+//    if (peek(p)->type == T_LPAR) {
+//        expr = function(p);
+//    } else {
+        type_annotation(p);
+        expr = expression(p);
+        expect(p, T_END);
+//    }
+    return Def(id, expr);
+}
+
+static AST* expression(Parser* p) {
+    AST* expr = NULL;
+    if (accept(p, T_LPAR)) {
+        expr = expression(p);
+        expect(p, T_RPAR);
+    } else if (accept(p, T_IF)) {
+        expr = if_stmnt(p);
+    } else if (match(p, T_ID)) {
+        expr = Ident(expect_val(p,T_ID));
+    } else {
+        expr = literal(p);
+    }
+    /* Check if this is a function application */
+    if (peek(p)->type == T_LPAR)
+        expr = func_app(p, expr);
+    return expr;
+}
+
+/*
+static AST* function(Parser* p) {
+    AST* func = Func();
+    expect(p, T_LPAR);
+    while(peek(p)->type != T_RPAR) {
+        func_add_arg(func, Ident(expect_val(p,T_ID)));
+        type_annotation(p);
+        if(peek(p)->type != T_RPAR)
+            expect(p, T_COMMA);
+    }
+    expect(p, T_RPAR);
+    type_annotation(p);
+    func_set_body(func, expr_block(p));
+    expect(p, T_END);
+    return func;
+}
+*/
+
 static AST* expr_block(Parser* p) {
     AST* block = NULL;
     vec_t exprs;
@@ -203,18 +215,6 @@ static AST* expr_block(Parser* p) {
     return block;
 }
 
-static AST* token_to_tree(Tok* tok) {
-    switch (tok->type) {
-        case T_BOOL:   return Bool(tok);
-        case T_CHAR:   return Char(tok);
-        case T_STRING: return String(tok);
-        case T_INT:    return Integer(tok);
-        case T_FLOAT:  return Float(tok);
-        case T_ID:     return Ident(tok);
-        default:       return NULL;
-    }
-}
-
 static AST* if_stmnt(Parser* p) {
     AST* ifexpr = IfExpr();
     ifexpr_set_cond( ifexpr, expression(p) );
@@ -237,3 +237,4 @@ static AST* func_app(Parser* p, AST* fn) {
     expect(p,T_RPAR);
     return app;
 }
+#endif

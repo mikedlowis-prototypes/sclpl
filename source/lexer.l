@@ -32,18 +32,22 @@ NOSPACE [^ \t\r\n]
 
 <<EOF>> { return T_END_FILE; }
 
-"end" { return T_END;    }
-"("   { return T_LPAR;   }
-")"   { return T_RPAR;   }
-"["   { return T_LBRACK; }
-"]"   { return T_RBRACK; }
-"{"   { return T_LBRACE; }
-"}"   { return T_RBRACE; }
-";"   { return T_END;    }
-","   { return T_COMMA;  }
-"'"   { return T_SQUOTE; }
-":"   { return T_COLON;  }
-"&"   { return T_AMP;    }
+"let"  { return T_LET;    }
+"if"   { return T_IF;     }
+"then" { return T_THEN;   }
+"else" { return T_ELSE;   }
+"end"  { return T_END;    }
+"("    { return T_LPAR;   }
+")"    { return T_RPAR;   }
+"["    { return T_LBRACK; }
+"]"    { return T_RBRACK; }
+"{"    { return T_LBRACE; }
+"}"    { return T_RBRACE; }
+";"    { return T_END;    }
+","    { return T_COMMA;  }
+"'"    { return T_SQUOTE; }
+":"    { return T_COLON;  }
+"&"    { return T_AMP;    }
 
 \\.       { Value.character = yytext[1];    return T_CHAR; }
 \\space   { Value.character = ' ';          return T_CHAR; }
@@ -51,7 +55,6 @@ NOSPACE [^ \t\r\n]
 \\return  { Value.character = '\r';         return T_CHAR; }
 \\tab     { Value.character = '\t';         return T_CHAR; }
 \\vtab    { Value.character = '\v';         return T_CHAR; }
-\\[a-z]+  { Value.text = dupstring(yytext); return T_ID;   }
 
 0b[01]+ {
     Value.integer = strtol(&yytext[2], NULL, 2);
@@ -71,11 +74,6 @@ NOSPACE [^ \t\r\n]
 0h[0-9a-fA-F]+ {
     Value.integer = strtol(&yytext[2], NULL, 16);
     return T_INT;
-}
-
-0[b0dh][0-9a-fA-F]+ {
-    Value.text = dupstring(yytext);
-    return T_ID;
 }
 
 [+-]?[0-9]+ {
@@ -105,22 +103,12 @@ false {
     return T_BOOL;
 }
 
-"require" { return T_REQUIRE; }
-"let"     { return T_LET;     }
-"if"      { return T_IF;      }
-"fn"      { return T_FN;      }
-"then"    { return T_THEN;    }
-"else"    { return T_ELSE;    }
-
 [a-zA-Z_][a-zA-Z0-9_]* {
     Value.text = dupstring(yytext);
     return T_ID;
 }
 
-[^ \r\t\n\[\]\{\}\(\)'\",;:]+ {
-    Value.text = dupstring(yytext);
-    return T_ID;
-}
+. { return T_ERROR; }
 
 %%
 
@@ -129,8 +117,3 @@ void gettoken(Parser* ctx, Tok* tok) {
     if (tok->type != T_END_FILE)
         memcpy(&(tok->value), &Value, sizeof(Value));
 }
-
-void fetchline(Parser* ctx)
-{
-}
-
