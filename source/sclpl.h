@@ -42,7 +42,7 @@ void vec_set(vec_t* vec, size_t index, void* data);
 typedef enum {
     T_NONE, T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING, T_LBRACE, T_RBRACE,
     T_LBRACK, T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE, T_DQUOTE, T_END,
-    T_COLON, T_AMP, T_REQUIRE, T_DEF, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
+    T_COLON, T_AMP, T_REQUIRE, T_LET, T_IF, T_FN, T_THEN, T_ELSE, T_END_FILE
 } TokType;
 
 typedef struct {
@@ -208,13 +208,7 @@ typedef struct {
     Tok tok;
 } Parser;
 
-// Lexer routines
 void gettoken(Parser* ctx, Tok* tok);
-
-// Parser routines
-Parser* parser_new(char* p_prompt, FILE* input);
-
-// Grammar Routines
 AST* toplevel(Parser* p);
 
 /* Option Parsing

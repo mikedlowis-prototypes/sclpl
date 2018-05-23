@@ -64,7 +64,7 @@ static Tok* expect_val(Parser* parser, TokType type) {
 AST* toplevel(Parser* p) {
     AST* ret = NULL;
     if (!match(p, T_END_FILE)) {
-        if (accept(p, T_DEF))
+        if (accept(p, T_LET))
             ret = const_definition(p);
         else
             error(p, "only definitions are allowed at the toplevel");
@@ -184,7 +184,7 @@ static AST* expr_block(Parser* p) {
     vec_init(&exprs);
     /* Build all expressions into let forms with no bodies */
     do {
-        if (accept(p, T_DEF)) {
+        if (accept(p, T_LET)) {
             AST* def = definition(p);
             Tok name = { .value.text = def_name(def) };
             vec_push_back(&exprs, Let(Ident(&name), def_value(def), NULL));

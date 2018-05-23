@@ -106,7 +106,7 @@ false {
 }
 
 "require" { return T_REQUIRE; }
-"def"     { return T_DEF;     }
+"let"     { return T_LET;     }
 "if"      { return T_IF;      }
 "fn"      { return T_FN;      }
 "then"    { return T_THEN;    }

@@ -130,7 +130,7 @@ void pprint_tree(FILE* file, AST* tree, int depth)
             break;
 
         case AST_DEF:
-            printf("(def %s ", def_name(tree));
+            printf("(let %s ", def_name(tree));
             pprint_tree(file, def_value(tree), depth);
             printf(")");
             break;
