@@ -63,7 +63,7 @@ typedef struct {
  *****************************************************************************/
 typedef enum {
     AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_REQ, AST_DEF, AST_IF, AST_FUNC, AST_FNAPP, AST_LET, AST_TEMP
+    AST_DEF, AST_IF, AST_FUNC, AST_FNAPP
 } ASTType;
 
 typedef struct AST {
@@ -91,12 +91,6 @@ typedef struct AST {
             struct AST* fn;
             vec_t args;
         } fnapp;
-        /* Let Expression */
-        struct {
-            struct AST* temp;
-            struct AST* value;
-            struct AST* body;
-        } let;
         /* String, Symbol, Identifier */
         char* text;
         /* Character */
@@ -138,14 +132,6 @@ bool bool_value(AST* val);
 AST* Ident(Tok* val);
 char* ident_value(AST* val);
 
-/* Temp Variable */
-AST* TempVar(void);
-intptr_t temp_value(AST* val);
-
-/* Require */
-AST* Require(Tok* name);
-char* require_name(AST* req);
-
 /* Definition */
 AST* Def(Tok* name, AST* value);
 char* def_name(AST* def);
@@ -173,26 +159,6 @@ AST* fnapp_fn(AST* fnapp);
 void fnapp_set_fn(AST* fnapp, AST* fn);
 vec_t* fnapp_args(AST* fnapp);
 void fnapp_add_arg(AST* func, AST* arg);
-
-/* Let Expression */
-AST* Let(AST* temp, AST* val, AST* body);
-AST* let_var(AST* let);
-AST* let_val(AST* let);
-AST* let_body(AST* let);
-void let_set_body(AST* let, AST* body);
-
-/* Symbol Table
- *****************************************************************************/
-typedef struct SymTable {
-    struct SymTable* next;
-    char* name;
-} SymTable;
-
-SymTable* symbol_new(void);
-SymTable* symbol_push(SymTable* top, SymTable* newtop);
-SymTable* symbol_pop(SymTable* top);
-SymTable* symbol_get(const char* name);
-SymTable* symbol_map(SymTable* top, void (*apply)(SymTable*, void*), void* arg);
 
 /* Pretty Printing
  *****************************************************************************/

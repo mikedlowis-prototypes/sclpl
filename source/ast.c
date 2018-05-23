@@ -113,20 +113,6 @@ char* ident_value(AST* val)
     return val->value.text;
 }
 
-AST* Require(Tok* name)
-{
-    AST* node = ast(AST_REQ);
-    node->value.text = name->value.text;
-    return node;
-}
-
-char* require_name(AST* req)
-{
-    assert(req != NULL);
-    assert(req->type == AST_REQ);
-    return req->value.text;
-}
-
 AST* Def(Tok* name, AST* value)
 {
     AST* node = ast(AST_DEF);
@@ -241,39 +227,3 @@ void fnapp_add_arg(AST* fnapp, AST* arg)
     vec_push_back(&(fnapp->value.fnapp.args), arg);
 }
 
-AST* Let(AST* temp, AST* val, AST* body)
-{
-    AST* node = ast(AST_LET);
-    node->value.let.temp  = temp;
-    node->value.let.value = val;
-    node->value.let.body  = body;
-    return node;
-}
-
-AST* let_var(AST* let)
-{
-    return let->value.let.temp;
-}
-
-AST* let_val(AST* let)
-{
-    return let->value.let.value;
-}
-
-AST* let_body(AST* let)
-{
-    return let->value.let.body;
-}
-
-void let_set_body(AST* let, AST* body)
-{
-    let->value.let.body = body;
-}
-
-AST* TempVar(void)
-{
-    static intptr_t val = 0;
-    AST* node = ast(AST_TEMP);
-    node->value.integer = val++;
-    return node;
-}
