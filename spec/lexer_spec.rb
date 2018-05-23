@@ -109,10 +109,6 @@ describe "lexer" do
     it "should recognize 'c'" do
       expect(lexer('\c')).to eq ['T_CHAR:\c']
     end
-
-    it "should recognize invalid named characters as identifiers" do
-      expect(lexer('\foobar')).to eq ['T_ID:\foobar']
-    end
   end
 
   context "numbers" do
@@ -127,10 +123,6 @@ describe "lexer" do
 
       it "should recognize negitve integer with sign" do
         expect(lexer('-123')).to eq ['T_INT:-123']
-      end
-
-      it "should recognize invalid ints as identifiers" do
-        expect(lexer('123a')).to eq ['T_ID:123a']
       end
     end
 
@@ -150,10 +142,6 @@ describe "lexer" do
       it "should recognize decimal integer" do
         expect(lexer('0hf0f')).to eq ['T_INT:3855']
       end
-
-      it "should recognize invalid radix ints as identifiers" do
-        expect(lexer('0b012')).to eq ['T_ID:0b012']
-      end
     end
 
     context "floating point" do
@@ -167,10 +155,6 @@ describe "lexer" do
 
       it "should recognize negative float with sign" do
         expect(lexer('-123.0')).to eq ['T_FLOAT:-123.000000']
-      end
-
-      it "should recognize invalid floats as identifiers" do
-        expect(lexer('123..0')).to eq ['T_ID:123..0']
       end
     end
   end

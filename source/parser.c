@@ -7,6 +7,8 @@ static AST* const_definition(Parser* p);
 static AST* const_expression(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
+static AST* identifier(Parser* p);
+
 static AST* function(Parser* p);
 static void type_annotation(Parser* p);
 static AST* literal(Parser* p);
@@ -91,7 +93,7 @@ static AST* const_expression(Parser* p) {
         expr = const_expression(p);
         expect(p, T_RPAR);
     } else if (match(p, T_ID)) {
-        expr = Ident(expect_val(p, T_ID));
+        expr = identifier(p);
     } else {
         expr = literal(p);
     }
@@ -119,7 +121,8 @@ static AST* literal(Parser* p) {
         case T_STRING:
         case T_INT:
         case T_FLOAT:
-            ret = token_to_tree(expect_val(p, tok->type));
+            ret = token_to_tree(tok);
+            tok->type = T_NONE;
             break;
         default:
             error(p, "Expected a literal");
@@ -136,6 +139,18 @@ static AST* token_to_tree(Tok* tok) {
         case T_FLOAT:  return Float(tok);
         case T_ID:     return Ident(tok);
         default:       return NULL;
+    }
+}
+
+static AST* identifier(Parser* p) {
+    Tok* tok = peek(p);
+    if (tok->type == T_ID) {
+        AST* ast = Ident(tok);
+        tok->type = T_NONE;
+        return ast;
+    } else {
+        error(p, "Expected an identifier");
+        return NULL;
     }
 }
 
