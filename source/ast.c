@@ -67,7 +67,6 @@ intptr_t integer_value(AST* val)
 intptr_t temp_value(AST* val)
 {
     assert(val != NULL);
-    assert(val->type == AST_TEMP);
     return val->value.integer;
 }
 
@@ -113,117 +112,25 @@ char* ident_value(AST* val)
     return val->value.text;
 }
 
-AST* Def(Tok* name, AST* value)
+AST* Let(Tok* name, AST* value)
 {
-    AST* node = ast(AST_DEF);
-    node->value.def.name = name->value.text;
-    node->value.def.value = value;
+    AST* node = ast(AST_LET);
+    node->value.let.name = name->value.text;
+    node->value.let.value = value;
     return node;
 }
 
-char* def_name(AST* def)
+char* let_name(AST* let)
 {
-    assert(def != NULL);
-    assert(def->type == AST_DEF);
-    return def->value.def.name;
+    assert(let != NULL);
+    assert(let->type == AST_LET);
+    return let->value.let.name;
 }
 
-AST* def_value(AST* def)
+AST* let_value(AST* let)
 {
-    assert(def != NULL);
-    assert(def->type == AST_DEF);
-    return def->value.def.value;
-}
-
-AST* IfExpr(void)
-{
-    return ast(AST_IF);
-}
-
-AST* ifexpr_cond(AST* ifexpr)
-{
-    return ifexpr->value.ifexpr.cond;
-}
-
-void ifexpr_set_cond(AST* ifexpr, AST* cond)
-{
-    ifexpr->value.ifexpr.cond = cond;
-}
-
-AST* ifexpr_then(AST* ifexpr)
-{
-    return ifexpr->value.ifexpr.bthen;
-}
-
-void ifexpr_set_then(AST* ifexpr, AST* bthen)
-{
-    ifexpr->value.ifexpr.bthen = bthen;
-}
-
-AST* ifexpr_else(AST* ifexpr)
-{
-    return ifexpr->value.ifexpr.belse;
-}
-
-void ifexpr_set_else(AST* ifexpr, AST* belse)
-{
-    ifexpr->value.ifexpr.belse = belse;
-}
-
-AST* Func(void)
-{
-    AST* node = ast(AST_FUNC);
-    vec_init(&(node->value.func.args));
-    node->value.func.body = NULL;
-    return node;
-}
-
-vec_t* func_args(AST* func)
-{
-    return &(func->value.func.args);
-}
-
-AST* func_body(AST* func)
-{
-    return func->value.func.body;
-}
-
-void func_add_arg(AST* func, AST* arg)
-{
-    vec_push_back(func_args(func), arg);
-}
-
-void func_set_body(AST* func, AST* body)
-{
-    func->value.func.body = body;
-}
-
-AST* FnApp(AST* fnapp)
-{
-    AST* node = ast(AST_FNAPP);
-    node->value.fnapp.fn = fnapp;
-    vec_init(&(node->value.fnapp.args));
-    return node;
-}
-
-void fnapp_set_fn(AST* fnapp, AST* fn)
-{
-    AST* old = fnapp->value.fnapp.fn;
-    fnapp->value.fnapp.fn = fn;
-}
-
-AST* fnapp_fn(AST* fnapp)
-{
-    return fnapp->value.fnapp.fn;
-}
-
-vec_t* fnapp_args(AST* fnapp)
-{
-    return &(fnapp->value.fnapp.args);
-}
-
-void fnapp_add_arg(AST* fnapp, AST* arg)
-{
-    vec_push_back(&(fnapp->value.fnapp.args), arg);
+    assert(let != NULL);
+    assert(let->type == AST_LET);
+    return let->value.let.value;
 }
 

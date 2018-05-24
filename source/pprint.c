@@ -1,9 +1,3 @@
-/**
-  @file prettyprint.c
-  @brief See header for details
-  $Revision$
-  $HeadURL$
-  */
 #include <sclpl.h>
 
 static void print_indent(FILE* file, int depth) {
@@ -95,7 +89,6 @@ static const char* tree_type_to_string(ASTType type) {
         case AST_INT:    return "T_INT";
         case AST_FLOAT:  return "T_FLOAT";
         case AST_BOOL:   return "T_BOOL";
-        case AST_TEMP:   return "$";
         default:         return "???";
     }
 }
@@ -110,7 +103,6 @@ static void pprint_literal(FILE* file, AST* tree, int depth)
         case AST_CHAR:   printf("%c",     char_value(tree));    break;
         case AST_INT:    printf("%ld",    integer_value(tree)); break;
         case AST_FLOAT:  printf("%lf",    float_value(tree));   break;
-        case AST_TEMP:   printf("%ld",    temp_value(tree));    break;
         case AST_BOOL:
             printf("%s", bool_value(tree) ? "true" : "false");
             break;
@@ -125,54 +117,9 @@ void pprint_tree(FILE* file, AST* tree, int depth)
     }
     print_indent(file, depth);
     switch (tree->type) {
-        case AST_REQ:
-            printf("(require \"%s\")", require_name(tree));
-            break;
-
-        case AST_DEF:
-            printf("(let %s ", def_name(tree));
-            pprint_tree(file, def_value(tree), depth);
-            printf(")");
-            break;
-
-        case AST_IF:
-            printf("(if ");
-            pprint_tree(file, ifexpr_cond(tree), depth);
-            printf(" ");
-            pprint_tree(file, ifexpr_then(tree), depth);
-            printf(" ");
-            pprint_tree(file, ifexpr_else(tree), depth);
-            printf(")");
-            break;
-
-        case AST_FUNC:
-            printf("(fn (");
-            for (size_t i = 0; i < vec_size(func_args(tree)); i++) {
-                printf(" ");
-                pprint_literal(file, vec_at(func_args(tree), i), depth);
-            }
-            printf(")");
-            pprint_tree(file, func_body(tree), depth);
-            printf(")");
-            break;
-
-        case AST_FNAPP:
-            printf("(");
-            pprint_tree(file, fnapp_fn(tree), depth);
-            for (size_t i = 0; i < vec_size(fnapp_args(tree)); i++) {
-                printf(" ");
-                pprint_tree(file, vec_at(fnapp_args(tree), i), depth);
-            }
-            printf(")");
-            break;
-
         case AST_LET:
-            printf("(let (");
-            pprint_tree(file, let_var(tree), depth);
-            printf(" ");
-            pprint_tree(file, let_val(tree), depth);
-            printf(") ");
-            pprint_tree(file, let_body(tree), depth);
+            printf("(let %s ", let_name(tree));
+            pprint_tree(file, let_value(tree), depth);
             printf(")");
             break;
 

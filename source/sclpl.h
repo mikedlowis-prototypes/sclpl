@@ -62,8 +62,7 @@ typedef struct {
 /* AST Types
  *****************************************************************************/
 typedef enum {
-    AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT,
-    AST_DEF, AST_IF, AST_FUNC, AST_FNAPP
+    AST_LET, AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT
 } ASTType;
 
 typedef struct AST {
@@ -74,23 +73,7 @@ typedef struct AST {
             char* name;
             struct AST* type;
             struct AST* value;
-        } def;
-        /* If Expression */
-        struct {
-            struct AST* cond;
-            struct AST* bthen;
-            struct AST* belse;
-        } ifexpr;
-        /* Function */
-        struct {
-            vec_t args;
-            struct AST* body;
-        } func;
-        /* Function Application */
-        struct {
-            struct AST* fn;
-            vec_t args;
-        } fnapp;
+        } let;
         /* String, Symbol, Identifier */
         char* text;
         /* Character */
@@ -133,32 +116,9 @@ AST* Ident(Tok* val);
 char* ident_value(AST* val);
 
 /* Definition */
-AST* Def(Tok* name, AST* value);
-char* def_name(AST* def);
-AST* def_value(AST* def);
-
-/* If Expression */
-AST* IfExpr(void);
-AST* ifexpr_cond(AST* ifexpr);
-void ifexpr_set_cond(AST* ifexpr, AST* cond);
-AST* ifexpr_then(AST* ifexpr);
-void ifexpr_set_then(AST* ifexpr, AST* bthen);
-AST* ifexpr_else(AST* ifexpr);
-void ifexpr_set_else(AST* ifexpr, AST* belse);
-
-/* Function */
-AST* Func(void);
-vec_t* func_args(AST* func);
-AST* func_body(AST* func);
-void func_add_arg(AST* func, AST* arg);
-void func_set_body(AST* func, AST* body);
-
-/* Function Application */
-AST* FnApp(AST* fn);
-AST* fnapp_fn(AST* fnapp);
-void fnapp_set_fn(AST* fnapp, AST* fn);
-vec_t* fnapp_args(AST* fnapp);
-void fnapp_add_arg(AST* func, AST* arg);
+AST* Let(Tok* name, AST* value);
+char* let_name(AST* let);
+AST* let_value(AST* let);
 
 /* Pretty Printing
  *****************************************************************************/

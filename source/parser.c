@@ -84,7 +84,7 @@ static AST* const_definition(Parser* p) {
         expr = const_expression(p);
         expect(p, T_END);
 //    }
-    return Def(id, expr);
+    return Let(id, expr);
 }
 
 static AST* const_expression(Parser* p) {
@@ -153,6 +153,25 @@ static AST* identifier(Parser* p) {
         return NULL;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #if 0
