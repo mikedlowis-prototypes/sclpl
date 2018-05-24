@@ -48,6 +48,7 @@ NOSPACE [^ \t\r\n]
 "'"    { return T_SQUOTE; }
 ":"    { return T_COLON;  }
 "&"    { return T_AMP;    }
+"="    { return T_ASSIGN; }
 
 \\.       { Value.character = yytext[1];    return T_CHAR; }
 \\space   { Value.character = ' ';          return T_CHAR; }

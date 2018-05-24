@@ -1,14 +1,10 @@
 #include <sclpl.h>
 
-/* Private Declarations
- *****************************************************************************/
-// Grammar Routines
 static AST* const_definition(Parser* p);
 static AST* const_expression(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
 static AST* identifier(Parser* p);
-
 static AST* function(Parser* p);
 static void type_annotation(Parser* p);
 static AST* literal(Parser* p);
@@ -81,6 +77,7 @@ static AST* const_definition(Parser* p) {
 //        expr = function(p);
 //    } else {
         type_annotation(p);
+        expect(p, T_ASSIGN);
         expr = const_expression(p);
         expect(p, T_END);
 //    }
@@ -153,122 +150,3 @@ static AST* identifier(Parser* p) {
         return NULL;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-static AST* definition(Parser* p) {
-    AST* expr;
-    Tok* id = expect_val(p, T_ID);
-//    if (peek(p)->type == T_LPAR) {
-//        expr = function(p);
-//    } else {
-        type_annotation(p);
-        expr = expression(p);
-        expect(p, T_END);
-//    }
-    return Def(id, expr);
-}
-
-static AST* expression(Parser* p) {
-    AST* expr = NULL;
-    if (accept(p, T_LPAR)) {
-        expr = expression(p);
-        expect(p, T_RPAR);
-    } else if (accept(p, T_IF)) {
-        expr = if_stmnt(p);
-    } else if (match(p, T_ID)) {
-        expr = Ident(expect_val(p,T_ID));
-    } else {
-        expr = literal(p);
-    }
-    /* Check if this is a function application */
-    if (peek(p)->type == T_LPAR)
-        expr = func_app(p, expr);
-    return expr;
-}
-
-/*
-static AST* function(Parser* p) {
-    AST* func = Func();
-    expect(p, T_LPAR);
-    while(peek(p)->type != T_RPAR) {
-        func_add_arg(func, Ident(expect_val(p,T_ID)));
-        type_annotation(p);
-        if(peek(p)->type != T_RPAR)
-            expect(p, T_COMMA);
-    }
-    expect(p, T_RPAR);
-    type_annotation(p);
-    func_set_body(func, expr_block(p));
-    expect(p, T_END);
-    return func;
-}
-*/
-
-static AST* expr_block(Parser* p) {
-    AST* block = NULL;
-    vec_t exprs;
-    vec_init(&exprs);
-    /* Build all expressions into let forms with no bodies */
-    do {
-        if (accept(p, T_LET)) {
-            AST* def = definition(p);
-            Tok name = { .value.text = def_name(def) };
-            vec_push_back(&exprs, Let(Ident(&name), def_value(def), NULL));
-        } else {
-            vec_push_back(&exprs, Let(TempVar(), expression(p), NULL));
-        }
-    } while(!match(p, T_END) && !match(p, T_ELSE));
-    /* Now nest all of the let forms making sure that the last one returns
-     * it's definition as its body */
-    for (int i = vec_size(&exprs); i > 0; i--) {
-        AST* let = (AST*)vec_at(&exprs,i-1);
-        let_set_body(let, (block == NULL) ? let_var(let) : block);
-        block = let;
-    }
-    vec_deinit(&exprs);
-    return block;
-}
-
-static AST* if_stmnt(Parser* p) {
-    AST* ifexpr = IfExpr();
-    ifexpr_set_cond( ifexpr, expression(p) );
-    accept(p, T_THEN);
-    ifexpr_set_then( ifexpr, expr_block(p) );
-    if (accept(p, T_ELSE))
-        ifexpr_set_else( ifexpr, expr_block(p) );
-    expect(p,T_END);
-    return ifexpr;
-}
-
-static AST* func_app(Parser* p, AST* fn) {
-    AST* app = FnApp(fn);
-    expect(p,T_LPAR);
-    while (peek(p)->type != T_RPAR) {
-        fnapp_add_arg(app, expression(p));
-        if (peek(p)->type != T_RPAR)
-            expect(p, T_COMMA);
-    }
-    expect(p,T_RPAR);
-    return app;
-}
-#endif
