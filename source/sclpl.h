@@ -59,6 +59,30 @@ typedef struct {
     } value;
 } Tok;
 
+/* Datatype Types
+ *****************************************************************************/
+typedef enum {
+    VOID, INT, UINT, ARRAY, REF, PTR, FUNC
+} Kind;
+
+typedef struct Type {
+    Kind kind;
+    union {
+        struct Type* type;
+        ssize_t bits;
+        struct {
+            struct Type* type;
+            size_t count;
+        } array;
+    } value;
+} Type;
+
+Type* IntType(ssize_t nbits);
+Type* UIntType(ssize_t nbits);
+Type* ArrayOf(Type* type);
+Type* RefTo(Type* type);
+Type* PtrTo(Type* type);
+
 /* AST Types
  *****************************************************************************/
 typedef enum {
