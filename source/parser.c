@@ -6,7 +6,7 @@ static AST* definition(Parser* p);
 static AST* expression(Parser* p);
 static AST* identifier(Parser* p);
 static AST* function(Parser* p);
-static void type_annotation(Parser* p);
+static Type* type_annotation(Parser* p);
 static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
 static AST* if_stmnt(Parser* p);
@@ -65,6 +65,10 @@ AST* toplevel(Parser* p) {
         TokType type = peek(p)->type;
         if (accept(p, T_LET) || accept(p, T_VAR))
             ret = const_definition(p, (type == T_LET));
+//        else if (accept(p, T_TYPE))
+//            ret = type_definition(p);
+//        else if (accept(p, T_FUN))
+//            ret = func_definition(p);
         else
             error(p, "only definitions are allowed at the toplevel");
     }
@@ -93,16 +97,9 @@ static AST* const_expression(Parser* p) {
     return expr;
 }
 
-static void type_annotation(Parser* p) {
+static Type* type_annotation(Parser* p) {
     expect(p, T_ID);
-    /* array type */
-    if (accept(p,T_LBRACK)) {
-        accept(p, T_INT);
-        expect(p, T_RBRACK);
-    /* reference type */
-    } else if (accept(p, T_AMP)) {
-        // TODO: implement reference types
-    }
+    return NULL;
 }
 
 static AST* literal(Parser* p) {
