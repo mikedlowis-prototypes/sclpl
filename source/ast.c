@@ -3,7 +3,7 @@
 static AST* ast(ASTType type) {
     AST* tree = emalloc(sizeof(AST));
     memset(tree, 0, sizeof(AST));
-    tree->type = type;
+    tree->nodetype = type;
     return tree;
 }
 
@@ -14,7 +14,7 @@ AST* String(Tok* val) {
 }
 
 char* string_value(AST* val) {
-    assert(val->type == AST_STRING);
+    assert(val->nodetype == AST_STRING);
     return val->value.text;
 }
 
@@ -25,7 +25,7 @@ AST* Symbol(Tok* val) {
 }
 
 char* symbol_value(AST* val) {
-    assert(val->type == AST_SYMBOL);
+    assert(val->nodetype == AST_SYMBOL);
     return val->value.text;
 }
 
@@ -36,7 +36,7 @@ AST* Char(Tok* val) {
 }
 
 uint32_t char_value(AST* val) {
-    assert(val->type == AST_CHAR);
+    assert(val->nodetype == AST_CHAR);
     return val->value.character;
 }
 
@@ -47,7 +47,7 @@ AST* Integer(Tok* val) {
 }
 
 intptr_t integer_value(AST* val) {
-    assert(val->type == AST_INT);
+    assert(val->nodetype == AST_INT);
     return val->value.integer;
 }
 
@@ -58,7 +58,7 @@ AST* Float(Tok* val) {
 }
 
 double float_value(AST* val) {
-    assert(val->type == AST_FLOAT);
+    assert(val->nodetype == AST_FLOAT);
     return val->value.floating;
 }
 
@@ -69,7 +69,7 @@ AST* Bool(Tok* val) {
 }
 
 bool bool_value(AST* val) {
-    assert(val->type == AST_BOOL);
+    assert(val->nodetype == AST_BOOL);
     return val->value.boolean;
 }
 
@@ -80,23 +80,29 @@ AST* Ident(Tok* val) {
 }
 
 char* ident_value(AST* val) {
-    assert(val->type == AST_IDENT);
+    assert(val->nodetype == AST_IDENT);
     return val->value.text;
 }
 
-AST* Let(Tok* name, AST* value) {
-    AST* node = ast(AST_LET);
-    node->value.let.name = name->value.text;
-    node->value.let.value = value;
+AST* Var(Tok* name, AST* value, bool constant) {
+    AST* node = ast(AST_VAR);
+    node->value.var.name = name->value.text;
+    node->value.var.value = value;
+    node->value.var.constant = constant;
     return node;
 }
 
-char* let_name(AST* let) {
-    assert(let->type == AST_LET);
-    return let->value.let.name;
+char* var_name(AST* var) {
+    assert(var->nodetype == AST_VAR);
+    return var->value.var.name;
 }
 
-AST* let_value(AST* let) {
-    assert(let->type == AST_LET);
-    return let->value.let.value;
+AST* var_value(AST* var) {
+    assert(var->nodetype == AST_VAR);
+    return var->value.var.value;
+}
+
+bool var_const(AST* var) {
+    assert(var->nodetype == AST_VAR);
+    return var->value.var.constant;
 }

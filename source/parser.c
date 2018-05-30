@@ -1,6 +1,6 @@
 #include <sclpl.h>
 
-static AST* const_definition(Parser* p);
+static AST* const_definition(Parser* p, bool constant);
 static AST* const_expression(Parser* p);
 static AST* definition(Parser* p);
 static AST* expression(Parser* p);
@@ -62,26 +62,22 @@ static Tok* expect_val(Parser* parser, TokType type) {
 AST* toplevel(Parser* p) {
     AST* ret = NULL;
     if (!match(p, T_END_FILE)) {
-        if (accept(p, T_LET))
-            ret = const_definition(p);
+        TokType type = peek(p)->type;
+        if (accept(p, T_LET) || accept(p, T_VAR))
+            ret = const_definition(p, (type == T_LET));
         else
             error(p, "only definitions are allowed at the toplevel");
     }
     return ret;
 }
 
-static AST* const_definition(Parser* p) {
+static AST* const_definition(Parser* p, bool constant) {
     AST* expr;
     Tok* id = expect_val(p, T_ID);
-//    if (peek(p)->type == T_LPAR) {
-//        expr = function(p);
-//    } else {
-        type_annotation(p);
-        expect(p, T_ASSIGN);
-        expr = const_expression(p);
-        expect(p, T_END);
-//    }
-    return Let(id, expr);
+    type_annotation(p);
+    expect(p, T_ASSIGN);
+    expr = const_expression(p);
+    return Var(id, expr, constant);
 }
 
 static AST* const_expression(Parser* p) {

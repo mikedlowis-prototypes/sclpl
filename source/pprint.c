@@ -95,8 +95,8 @@ static const char* tree_type_to_string(ASTType type) {
 
 static void pprint_literal(FILE* file, AST* tree, int depth)
 {
-    printf("%s:", tree_type_to_string(tree->type));
-    switch(tree->type) {
+    printf("%s:", tree_type_to_string(tree->nodetype));
+    switch(tree->nodetype) {
         case AST_STRING: printf("\"%s\"", string_value(tree));  break;
         case AST_SYMBOL: printf("%s",     symbol_value(tree));  break;
         case AST_IDENT:  printf("%s",     ident_value(tree));   break;
@@ -116,11 +116,13 @@ void pprint_tree(FILE* file, AST* tree, int depth)
         return;
     }
     print_indent(file, depth);
-    switch (tree->type) {
-        case AST_LET:
-            printf("(let %s ", let_name(tree));
-            pprint_tree(file, let_value(tree), depth);
-            printf(")");
+    switch (tree->nodetype) {
+        case AST_VAR:
+            printf("(%s %s ",
+                (var_const(tree) ? "let" : "var"),
+                var_name(tree));
+            pprint_tree(file, var_value(tree), depth);
+            printf(")\n");
             break;
 
         default:

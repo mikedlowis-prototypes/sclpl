@@ -30,9 +30,12 @@ NOSPACE [^ \t\r\n]
 
 %%
 
-<<EOF>> { return T_END_FILE; }
+[ \t\r\n] { /* whitespace is insignificant */ }
+<<EOF>>   { return T_END_FILE; }
 
 "let"  { return T_LET;    }
+"var"  { return T_VAR;    }
+
 "if"   { return T_IF;     }
 "then" { return T_THEN;   }
 "else" { return T_ELSE;   }

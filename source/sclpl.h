@@ -40,9 +40,10 @@ void vec_set(vec_t* vec, size_t index, void* data);
 /* Token Types
  *****************************************************************************/
 typedef enum {
-    T_NONE, T_ERROR, T_END_FILE, T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING,
+    T_NONE, T_ERROR, T_END_FILE, T_LET, T_VAR,
+    T_ID, T_CHAR, T_INT, T_FLOAT, T_BOOL, T_STRING,
     T_LBRACE, T_RBRACE, T_LBRACK, T_RBRACK, T_LPAR, T_RPAR, T_COMMA, T_SQUOTE,
-    T_DQUOTE, T_END, T_COLON, T_AMP, T_LET, T_IF, T_THEN, T_ELSE, T_ASSIGN
+    T_DQUOTE, T_END, T_COLON, T_AMP, T_IF, T_THEN, T_ELSE, T_ASSIGN
 } TokType;
 
 typedef struct {
@@ -86,18 +87,19 @@ Type* PtrTo(Type* type);
 /* AST Types
  *****************************************************************************/
 typedef enum {
-    AST_LET, AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT
+    AST_VAR, AST_STRING, AST_SYMBOL, AST_CHAR, AST_INT, AST_FLOAT, AST_BOOL, AST_IDENT
 } ASTType;
 
 typedef struct AST {
-    ASTType type;
+    ASTType nodetype;
+    Type* datatype;
     union {
         /* Definition Node */
         struct {
             char* name;
-            struct AST* type;
             struct AST* value;
-        } let;
+            bool constant;
+        } var;
         /* String, Symbol, Identifier */
         char* text;
         /* Character */
@@ -140,9 +142,10 @@ AST* Ident(Tok* val);
 char* ident_value(AST* val);
 
 /* Definition */
-AST* Let(Tok* name, AST* value);
-char* let_name(AST* let);
-AST* let_value(AST* let);
+AST* Var(Tok* name, AST* value, bool constant);
+char* var_name(AST* var);
+AST* var_value(AST* var);
+bool var_const(AST* var);
 
 /* Pretty Printing
  *****************************************************************************/
