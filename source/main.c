@@ -3,6 +3,27 @@
 char* ARGV0;
 char* Artifact = "ast";
 
+/* Builtin Types
+ *****************************************************************************/
+static void builtins(Parser* p) {
+#if 0
+    sym_add(&(p->syms), "void",   VoidType());
+    sym_add(&(p->syms), "bool",   UIntType(1u));
+    sym_add(&(p->syms), "byte",   UIntType(8u));
+    sym_add(&(p->syms), "uint",   UIntType(64u));
+    sym_add(&(p->syms), "u8",     UIntType(8u));
+    sym_add(&(p->syms), "u16",    UIntType(16u));
+    sym_add(&(p->syms), "u32",    UIntType(32u));
+    sym_add(&(p->syms), "u64",    UIntType(64u));
+    sym_add(&(p->syms), "int",    IntType(64u));
+    sym_add(&(p->syms), "i8",     IntType(8u));
+    sym_add(&(p->syms), "i16",    IntType(16u));
+    sym_add(&(p->syms), "i32",    IntType(32u));
+    sym_add(&(p->syms), "i64",    IntType(64u));
+    sym_add(&(p->syms), "string", ArrayType(sym_get(&(p->syms), "byte")));
+#endif
+}
+
 /* Driver Modes
  *****************************************************************************/
 static int emit_tokens(void) {

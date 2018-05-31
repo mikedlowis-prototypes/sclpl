@@ -70,7 +70,7 @@ typedef struct Type {
     Kind kind;
     union {
         struct Type* type;
-        ssize_t bits;
+        size_t bits;
         struct {
             struct Type* type;
             size_t count;
@@ -78,9 +78,10 @@ typedef struct Type {
     } value;
 } Type;
 
-Type* IntType(ssize_t nbits);
-Type* UIntType(ssize_t nbits);
-Type* ArrayOf(Type* type);
+Type* VoidType(void);
+Type* IntType(size_t nbits);
+Type* UIntType(size_t nbits);
+Type* ArrayOf(Type* type, size_t count);
 Type* RefTo(Type* type);
 Type* PtrTo(Type* type);
 
