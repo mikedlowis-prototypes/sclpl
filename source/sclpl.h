@@ -85,6 +85,23 @@ Type* ArrayOf(Type* type, size_t count);
 Type* RefTo(Type* type);
 Type* PtrTo(Type* type);
 
+/* Symbol Table
+ *****************************************************************************/
+typedef struct Sym {
+    struct Sym* next;
+    bool is_typedef;
+    char* name;
+    Type* type;
+} Sym;
+
+typedef struct {
+    Sym* syms;
+} SymTable;
+
+void sym_adddef(SymTable* syms, char* name, Type* type);
+void sym_addtype(SymTable* syms, char* name, Type* type);
+Type* sym_get(SymTable* syms, char* name);
+
 /* AST Types
  *****************************************************************************/
 typedef enum {
@@ -160,6 +177,7 @@ void pprint_tree(FILE* file, AST* tree, int depth);
 typedef struct {
     FILE* input;
     Tok tok;
+    SymTable syms;
 } Parser;
 
 void gettoken(Parser* ctx, Tok* tok);

@@ -24,7 +24,8 @@ OBJS = source/main.o    \
        source/parser.o  \
        source/lexer.o   \
        source/ast.o     \
-       source/types.o
+       source/types.o   \
+       source/syms.o
 
 .PHONY: all tests specs
 all: sclpl tests specs
