@@ -19,7 +19,8 @@ static void builtins(Parser* p) {
     sym_addtype(&(p->syms), "i16",    IntType(16u));
     sym_addtype(&(p->syms), "i32",    IntType(32u));
     sym_addtype(&(p->syms), "i64",    IntType(64u));
-    sym_addtype(&(p->syms), "string", ArrayOf(sym_get(&(p->syms), "byte"), -1));
+    sym_addtype(&(p->syms), "string",
+        ArrayOf(sym_get(&(p->syms), "byte")->type, -1));
 }
 
 /* Driver Modes
@@ -40,6 +41,7 @@ static int emit_tokens(void) {
 static int emit_ast(void) {
     AST* tree = NULL;
     Parser ctx = { .input = stdin };
+    builtins(&ctx);
     while(NULL != (tree = toplevel(&ctx)))
         pprint_tree(stdout, tree, 0);
     return 0;
