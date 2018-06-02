@@ -1,4 +1,5 @@
 #include <sclpl.h>
+#include <stdarg.h>
 
 static AST* const_definition(Parser* p, bool constant);
 static AST* const_expression(Parser* p);
@@ -21,9 +22,14 @@ static Tok* peek(Parser* p) {
     return &(p->tok);
 }
 
-static void error(Parser* parser, const char* text) {
+static void error(Parser* parser, const char* fmt, ...) {
     Tok* tok = peek(parser);
-    fprintf(stderr, "<file>:%zu:%zu:Error: %s\n", tok->line, tok->col, text);
+    va_list args;
+    va_start(args, fmt);
+    fprintf(stderr, "<file>:%zu:%zu: error: ", tok->line, tok->col);
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+    va_end(args);
     exit(1);
 }
 
@@ -76,11 +82,11 @@ AST* toplevel(Parser* p) {
 }
 
 static AST* const_definition(Parser* p, bool constant) {
-    AST* expr;
     Tok* id = expect_val(p, T_ID);
-    type_annotation(p);
+    Type* type = type_annotation(p);
     expect(p, T_ASSIGN);
-    expr = const_expression(p);
+    AST* expr = const_expression(p);
+    sym_add(&(p->syms), (constant ? SF_CONSTANT : 0), id->value.text, type);
     return Var(id, expr, constant);
 }
 
@@ -98,8 +104,10 @@ static AST* const_expression(Parser* p) {
 }
 
 static Type* type_annotation(Parser* p) {
-    expect(p, T_ID);
-    return NULL;
+    Tok* id = expect_val(p, T_ID);
+    Sym* sym = sym_get(&(p->syms), id->value.text);
+    if (!sym) error(p, "unknown type '%s'", id->value.text);
+    return sym->type;
 }
 
 static AST* literal(Parser* p) {

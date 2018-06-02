@@ -87,9 +87,15 @@ Type* PtrTo(Type* type);
 
 /* Symbol Table
  *****************************************************************************/
+typedef enum {
+    SF_TYPEDEF  = (1 << 0),
+    SF_CONSTANT = (1 << 1),
+} SymFlags;
+
 typedef struct Sym {
     struct Sym* next;
     bool is_typedef;
+    int flags;
     char* name;
     Type* type;
 } Sym;
@@ -98,8 +104,7 @@ typedef struct {
     Sym* syms;
 } SymTable;
 
-void sym_adddef(SymTable* syms, char* name, Type* type);
-void sym_addtype(SymTable* syms, char* name, Type* type);
+void sym_add(SymTable* syms, int flags, char* name, Type* type);
 Sym* sym_get(SymTable* syms, char* name);
 
 /* AST Types
@@ -182,6 +187,7 @@ typedef struct {
 
 void gettoken(Parser* ctx, Tok* tok);
 AST* toplevel(Parser* p);
+void codegen_init(Parser* p);
 
 /* Option Parsing
  *****************************************************************************/
