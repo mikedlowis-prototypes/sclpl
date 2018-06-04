@@ -37,3 +37,15 @@ Type* RefTo(Type* type) {
 Type* PtrTo(Type* type) {
     return NULL;
 }
+
+bool types_equal(Type* type1, Type* type2) {
+    if (type1->kind != type2->kind) return false;
+    switch (type1->kind) {
+        case ARRAY:
+            return (types_equal(type1->value.array.type, type2->value.array.type) &&
+                    (type1->value.array.count == type1->value.array.count));
+        default:
+            return true;
+    }
+}
+

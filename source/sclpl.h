@@ -84,6 +84,7 @@ Type* UIntType(size_t nbits);
 Type* ArrayOf(Type* type, size_t count);
 Type* RefTo(Type* type);
 Type* PtrTo(Type* type);
+bool types_equal(Type* type1, Type* type2);
 
 /* Symbol Table
  *****************************************************************************/

@@ -11,8 +11,8 @@ static Type* type_annotation(Parser* p);
 static AST* literal(Parser* p);
 static AST* expr_block(Parser* p);
 static AST* if_stmnt(Parser* p);
-static AST* token_to_tree(Tok* tok);
 static AST* func_app(Parser* p, AST* fn);
+static AST* token_to_tree(Parser* p, Tok* tok);
 
 /* Parsing Routines
  *****************************************************************************/
@@ -87,6 +87,8 @@ static AST* const_definition(Parser* p, bool constant) {
     expect(p, T_ASSIGN);
     AST* expr = const_expression(p);
     sym_add(&(p->syms), (constant ? SF_CONSTANT : 0), id->value.text, type);
+    if (!types_equal(type, expr->datatype))
+        error(p, "type mismatch");
     return Var(id, expr, constant);
 }
 
@@ -103,11 +105,15 @@ static AST* const_expression(Parser* p) {
     return expr;
 }
 
+static Type* get_typedef(Parser* p, char* typename) {
+   Sym* sym = sym_get(&(p->syms), typename);
+    if (!sym) error(p, "unknown type '%s'", typename);
+    return sym->type;
+}
+
 static Type* type_annotation(Parser* p) {
     Tok* id = expect_val(p, T_ID);
-    Sym* sym = sym_get(&(p->syms), id->value.text);
-    if (!sym) error(p, "unknown type '%s'", id->value.text);
-    return sym->type;
+    return get_typedef(p, id->value.text);
 }
 
 static AST* literal(Parser* p) {
@@ -119,23 +125,28 @@ static AST* literal(Parser* p) {
         case T_STRING:
         case T_INT:
         case T_FLOAT:
-            ret = token_to_tree(tok);
+            ret = token_to_tree(p, tok);
             tok->type = T_NONE;
             break;
         default:
-            error(p, "Expected a literal");
+            error(p, "not a valid literal");
     }
     return ret;
 }
 
-static AST* token_to_tree(Tok* tok) {
+static AST* add_type(Parser* p, AST* ast, char* typename) {
+    ast->datatype = get_typedef(p, typename);
+    return ast;
+}
+
+static AST* token_to_tree(Parser* p, Tok* tok) {
     switch (tok->type) {
-        case T_BOOL:   return Bool(tok);
-        case T_CHAR:   return Char(tok);
-        case T_STRING: return String(tok);
-        case T_INT:    return Integer(tok);
-        case T_FLOAT:  return Float(tok);
-        case T_ID:     return Ident(tok);
+        case T_BOOL:   return add_type(p, Bool(tok), "bool");
+        case T_CHAR:   return add_type(p, Char(tok), "char");
+        case T_STRING: return add_type(p, String(tok), "string");
+        case T_INT:    return add_type(p, Integer(tok), "int");
+        case T_FLOAT:  return add_type(p, Float(tok), "float");
+        case T_ID:     return add_type(p, Ident(tok), tok->value.text);
         default:       return NULL;
     }
 }
